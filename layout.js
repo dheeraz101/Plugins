@@ -5,7 +5,7 @@ let onDrag, onDrop;
 export const meta = {
   id: 'layout-sections',
   name: 'Layout System',
-  version: '7.1.1',
+  version: '7.1.2',
   compat: '>=3.3.0'
 };
 
@@ -21,9 +21,10 @@ export function setup(api) {
     .bb-layout-root {
       position: absolute;
       inset: 0;
-      index: -1;
+      z-index: 0;
       padding: 60px 20px 20px;
-      display: grid;
+      display: flex;
+      flex-direction: column;
       pointer-events: none;
     }
 
@@ -32,16 +33,27 @@ export function setup(api) {
       gap: 20px;
       width: 100%;
       height: 100%;
+      flex: 1;
     }
 
     .bb-zone {
-      index: 0;
-      border: 2px dashed rgba(255,255,255,0.08);
+      min-height: 120px;
+      min-width: 60px;
+      z-index: 0;
+      border: 2px dashed rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.04);
       border-radius: 14px;
-      background: rgba(255,255,255,0.02);
       transition: 0.2s;
       pointer-events: auto;
       display: flex;
+    }
+
+    /* dark mode override */
+    @media (prefers-color-scheme: dark) {
+      .bb-zone {
+        border: 2px dashed rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.04);
+      }
     }
 
     .bb-zone.highlight {
@@ -56,6 +68,22 @@ export function setup(api) {
       width: 100% !important;
       height: 100% !important;
       transform: none !important;
+    }
+
+    #bb-toolbar button {
+      background: #7c6fff;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .bb-zone:empty::after {
+      content: "Drop here";
+      margin: auto;
+      font-size: 12px;
+      opacity: 0.4;
     }
   `, { global: true });
 
