@@ -5,7 +5,7 @@ let onDrag, onDrop;
 export const meta = {
   id: 'layout-sections',
   name: 'Layout System',
-  version: '7.1.2',
+  version: '7.1.3',
   compat: '>=3.3.0'
 };
 
@@ -40,8 +40,8 @@ export function setup(api) {
       min-height: 120px;
       min-width: 60px;
       z-index: 0;
-      border: 2px dashed rgba(0,0,0,0.15);
-      background: rgba(0,0,0,0.04);
+      border: 2px dashed rgba(0,0,0,0.25);
+      background: rgba(0,0,0,0.06);
       border-radius: 14px;
       transition: 0.2s;
       pointer-events: auto;
@@ -51,8 +51,8 @@ export function setup(api) {
     /* dark mode override */
     @media (prefers-color-scheme: dark) {
       .bb-zone {
-        border: 2px dashed rgba(255,255,255,0.12);
-        background: rgba(255,255,255,0.04);
+        border: 2px dashed rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.06);
       }
     }
 
@@ -68,6 +68,10 @@ export function setup(api) {
       width: 100% !important;
       height: 100% !important;
       transform: none !important;
+    }
+
+    .bb-plugin-container {
+      z-index: 10; /* 🔥 force plugins above zones */
     }
 
     #bb-toolbar button {
@@ -90,7 +94,8 @@ export function setup(api) {
   // ROOT
   rootEl = document.createElement('div');
   rootEl.className = 'bb-layout-root';
-  container.appendChild(rootEl);
+  document.getElementById('board').appendChild(rootEl);
+  document.querySelectorAll('#bb-btn-layout-2, #bb-btn-layout-3').forEach(b => b.remove());
 
   // BUTTONS
   api.registerToolbarButton({
@@ -109,7 +114,7 @@ export function setup(api) {
   onDrag = ({ el }) => {
     const rect = el.getBoundingClientRect();
 
-    document.querySelectorAll('.bb-zone').forEach(z => {
+    rootEl.querySelectorAll('.bb-zone').forEach(z => {
       const r = z.getBoundingClientRect();
       const hit = rect.left < r.right && rect.right > r.left &&
                   rect.top < r.bottom && rect.bottom > r.top;
@@ -131,7 +136,7 @@ export function setup(api) {
 
     const er = el.getBoundingClientRect();
 
-    document.querySelectorAll('.bb-zone').forEach(z => {
+    rootEl.querySelectorAll('.bb-zone').forEach(z => {
       const r = z.getBoundingClientRect();
 
       const cx = er.left + er.width / 2;
@@ -196,7 +201,7 @@ function createLayout(cols) {
 function saveLayout() {
   if (!currentApi) return;
 
-  const zones = [...document.querySelectorAll('.bb-zone')].map(z =>
+  const zones = [...rootEl.querySelectorAll('.bb-zone')].map(z =>
     [...z.children].map(c => c.dataset.pluginId)
   );
 
@@ -210,7 +215,7 @@ function loadLayout() {
 
   createLayout(data.length);
 
-  const zones = document.querySelectorAll('.bb-zone');
+  const zones = rootEl.querySelectorAll('.bb-zone');
 
   data.forEach((ids, i) => {
     ids.forEach(id => {
