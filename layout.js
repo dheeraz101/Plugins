@@ -5,7 +5,7 @@ let onDrag, onDrop;
 export const meta = {
   id: 'layout-sections',
   name: 'Layout System',
-  version: '7.0.0',
+  version: '7.1.0',
   compat: '>=3.3.0'
 };
 
@@ -87,25 +87,30 @@ export function setup(api) {
   };
 
   onDrop = ({ el }) => {
-    if (!el || el.dataset.pluginId === 'plugin-manager') return;
+    if (!el) return;
+
+    const id = el.dataset.pluginId;
+
+    // ❌ BLOCK INVALID
+    if (
+      !id ||
+      id === meta.id ||
+      id === 'plugin-manager'
+    ) return;
+
+    const er = el.getBoundingClientRect();
 
     document.querySelectorAll('.bb-zone').forEach(z => {
       const r = z.getBoundingClientRect();
-      const er = el.getBoundingClientRect();
 
-      const hit = er.left < r.right && er.right > r.left &&
-                  er.top < r.bottom && er.bottom > r.top;
+      const cx = er.left + er.width / 2;
+      const cy = er.top + er.height / 2;
 
-      if (hit) {
-        z.appendChild(el);
+      const hit = cx > r.left && cx < r.right && cy > r.top && cy < r.bottom;
 
-        el.dataset.docked = 'true';
-
-        api.bus.emit('plugin:docked', {
-          pluginId: el.dataset.pluginId,
-          el,
-          target: z
-        });
+      // ❌ PREVENT DOM LOOP
+      if (hit && !z.contains(el)) {
+        currentApi.mountPlugin(id, z);
       }
 
       z.classList.remove('highlight');
