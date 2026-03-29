@@ -5,7 +5,7 @@ let onDrag, onDrop;
 export const meta = {
   id: 'layout-sections',
   name: 'Layout System',
-  version: '7.1.0',
+  version: '7.1.1',
   compat: '>=3.3.0'
 };
 
@@ -21,6 +21,7 @@ export function setup(api) {
     .bb-layout-root {
       position: absolute;
       inset: 0;
+      index: -1;
       padding: 60px 20px 20px;
       display: grid;
       pointer-events: none;
@@ -34,6 +35,7 @@ export function setup(api) {
     }
 
     .bb-zone {
+      index: 0;
       border: 2px dashed rgba(255,255,255,0.08);
       border-radius: 14px;
       background: rgba(255,255,255,0.02);
@@ -44,7 +46,8 @@ export function setup(api) {
 
     .bb-zone.highlight {
       border-color: #7c6fff;
-      background: rgba(124,111,255,0.1);
+      background: rgba(124,111,255,0.15);
+      transform: scale(1.02);
     }
 
     .bb-zone > .bb-plugin-container {
@@ -108,8 +111,15 @@ export function setup(api) {
 
       const hit = cx > r.left && cx < r.right && cy > r.top && cy < r.bottom;
 
-      // ❌ PREVENT DOM LOOP
-      if (hit && !z.contains(el)) {
+      const parent = el.parentElement;
+      const sameZone = parent === z;
+
+      if (
+        hit &&
+        !sameZone &&
+        !el.contains(z) &&   // 🔥 prevents reverse nesting
+        !z.contains(el)      // 🔥 prevents forward nesting
+      ) {
         currentApi.mountPlugin(id, z);
       }
 
@@ -129,11 +139,27 @@ export function setup(api) {
 function createLayout(cols) {
   if (!rootEl) return;
 
+  // 🔥 STEP 1: collect existing plugins
+  const existing = [...document.querySelectorAll('.bb-zone .bb-plugin-container')];
+
+  // 🔥 STEP 2: rebuild layout
   rootEl.innerHTML = `
     <div class="bb-layout-grid" style="grid-template-columns: repeat(${cols},1fr)">
       ${'<div class="bb-zone"></div>'.repeat(cols)}
     </div>
   `;
+
+  const zones = rootEl.querySelectorAll('.bb-zone');
+
+  // 🔥 STEP 3: re-distribute plugins
+  existing.forEach((el, i) => {
+    const zone = zones[i % zones.length];
+    const id = el.dataset.pluginId;
+
+    if (zone && id) {
+      currentApi.mountPlugin(id, zone);
+    }
+  });
 
   saveLayout();
 }
@@ -162,7 +188,7 @@ function loadLayout() {
     ids.forEach(id => {
       const el = document.querySelector(`[data-plugin-id="${id}"]`);
       if (el && zones[i]) {
-        zones[i].appendChild(el);
+        currentApi.mountPlugin(id, zones[i]);
         el.dataset.docked = 'true';
       }
     });
