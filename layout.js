@@ -1,31 +1,31 @@
 let currentApi = null;
 let rootEl = null;
+let zones = [];
 let onDrag, onDrop;
 
 export const meta = {
   id: 'layout-sections',
   name: 'Layout System',
-  version: '7.1.3',
+  version: '8.0.0',
   compat: '>=3.3.0'
 };
 
 export function setup(api) {
   currentApi = api;
-  const { container, bus, storage } = api;
+  const { container, bus } = api;
 
-  // SYSTEM PERMISSION (important)
   api.setPluginPermissions(meta.id, { isSystem: true });
 
-  // GLOBAL CSS (intentional)
+  // ✅ SAFE GLOBAL CSS (no plugin override)
   api.injectCSS(meta.id, `
     .bb-layout-root {
       position: absolute;
       inset: 0;
-      z-index: 0;
       padding: 60px 20px 20px;
       display: flex;
       flex-direction: column;
       pointer-events: none;
+      z-index: 0;
     }
 
     .bb-layout-grid {
@@ -38,22 +38,12 @@ export function setup(api) {
 
     .bb-zone {
       min-height: 120px;
-      min-width: 60px;
-      z-index: 0;
-      border: 2px dashed rgba(0,0,0,0.25);
-      background: rgba(0,0,0,0.06);
+      border: 2px dashed rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.04);
       border-radius: 14px;
       transition: 0.2s;
       pointer-events: auto;
       display: flex;
-    }
-
-    /* dark mode override */
-    @media (prefers-color-scheme: dark) {
-      .bb-zone {
-        border: 2px dashed rgba(255,255,255,0.2);
-        background: rgba(255,255,255,0.06);
-      }
     }
 
     .bb-zone.highlight {
@@ -70,19 +60,6 @@ export function setup(api) {
       transform: none !important;
     }
 
-    .bb-plugin-container {
-      z-index: 10; /* 🔥 force plugins above zones */
-    }
-
-    #bb-toolbar button {
-      background: #7c6fff;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
     .bb-zone:empty::after {
       content: "Drop here";
       margin: auto;
@@ -91,13 +68,11 @@ export function setup(api) {
     }
   `, { global: true });
 
-  // ROOT
-  rootEl = document.createElement('div');
-  rootEl.className = 'bb-layout-root';
-  document.getElementById('board').appendChild(rootEl);
-  document.querySelectorAll('#bb-btn-layout-2, #bb-btn-layout-3').forEach(b => b.remove());
+  // ✅ USE CONTAINER (no board hacks)
+  container.innerHTML = `<div class="bb-layout-root"></div>`;
+  rootEl = container.firstChild;
 
-  // BUTTONS
+  // Toolbar
   api.registerToolbarButton({
     id: 'layout-2',
     label: '2 Col',
@@ -110,55 +85,25 @@ export function setup(api) {
     onClick: () => createLayout(3)
   });
 
-  // EVENTS
+  // Events
   onDrag = ({ el }) => {
-    const rect = el.getBoundingClientRect();
-
-    rootEl.querySelectorAll('.bb-zone').forEach(z => {
-      const r = z.getBoundingClientRect();
-      const hit = rect.left < r.right && rect.right > r.left &&
-                  rect.top < r.bottom && rect.bottom > r.top;
-      z.classList.toggle('highlight', hit);
-    });
+    const zone = getZoneFromCenter(el);
+    highlightZones(zone);
   };
 
   onDrop = ({ el }) => {
     if (!el) return;
 
     const id = el.dataset.pluginId;
+    if (!id || id === meta.id || id === 'plugin-manager') return;
 
-    // ❌ BLOCK INVALID
-    if (
-      !id ||
-      id === meta.id ||
-      id === 'plugin-manager'
-    ) return;
+    const zone = getZoneFromCenter(el);
+    if (!zone) return;
 
-    const er = el.getBoundingClientRect();
+    if (el.parentElement === zone) return;
 
-    rootEl.querySelectorAll('.bb-zone').forEach(z => {
-      const r = z.getBoundingClientRect();
-
-      const cx = er.left + er.width / 2;
-      const cy = er.top + er.height / 2;
-
-      const hit = cx > r.left && cx < r.right && cy > r.top && cy < r.bottom;
-
-      const parent = el.parentElement;
-      const sameZone = parent === z;
-
-      if (
-        hit &&
-        !sameZone &&
-        !el.contains(z) &&   // 🔥 prevents reverse nesting
-        !z.contains(el)      // 🔥 prevents forward nesting
-      ) {
-        currentApi.mountPlugin(id, z);
-      }
-
-      z.classList.remove('highlight');
-    });
-
+    currentApi.mountPlugin(id, zone);
+    clearHighlights();
     saveLayout();
   };
 
@@ -168,27 +113,57 @@ export function setup(api) {
   loadLayout();
 }
 
-// CREATE
+/* ------------------ CORE LOGIC ------------------ */
+
+// ✅ CENTER POINT DETECTION ONLY
+function getZoneFromCenter(el) {
+  const r = el.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+
+  for (const z of zones) {
+    const zr = z.getBoundingClientRect();
+    if (cx > zr.left && cx < zr.right && cy > zr.top && cy < zr.bottom) {
+      return z;
+    }
+  }
+  return null;
+}
+
+function highlightZones(activeZone) {
+  zones.forEach(z => {
+    z.classList.toggle('highlight', z === activeZone);
+  });
+}
+
+function clearHighlights() {
+  zones.forEach(z => z.classList.remove('highlight'));
+}
+
+/* ------------------ LAYOUT ------------------ */
+
 function createLayout(cols) {
   if (!rootEl) return;
 
-  // 🔥 STEP 1: collect existing plugins
-  const existing = [...document.querySelectorAll('.bb-zone .bb-plugin-container')];
+  // collect existing plugin ids
+  const existing = zones.flatMap(z =>
+    [...z.children].map(el => el.dataset.pluginId)
+  );
 
-  // 🔥 STEP 2: rebuild layout
+  // rebuild clean
   rootEl.innerHTML = `
     <div class="bb-layout-grid" style="grid-template-columns: repeat(${cols},1fr)">
-      ${'<div class="bb-zone"></div>'.repeat(cols)}
+      ${Array.from({ length: cols }, (_, i) =>
+        `<div class="bb-zone" data-zone="${i}"></div>`
+      ).join('')}
     </div>
   `;
 
-  const zones = rootEl.querySelectorAll('.bb-zone');
+  zones = [...rootEl.querySelectorAll('.bb-zone')];
 
-  // 🔥 STEP 3: re-distribute plugins
-  existing.forEach((el, i) => {
+  // redistribute safely
+  existing.forEach((id, i) => {
     const zone = zones[i % zones.length];
-    const id = el.dataset.pluginId;
-
     if (zone && id) {
       currentApi.mountPlugin(id, zone);
     }
@@ -197,38 +172,40 @@ function createLayout(cols) {
   saveLayout();
 }
 
-// SAVE
+/* ------------------ STORAGE ------------------ */
+
 function saveLayout() {
   if (!currentApi) return;
 
-  const zones = [...rootEl.querySelectorAll('.bb-zone')].map(z =>
-    [...z.children].map(c => c.dataset.pluginId)
+  const data = zones.map(z =>
+    [...z.children].map(el => el.dataset.pluginId)
   );
 
-  currentApi.storage.setForPlugin(meta.id, 'layout', zones);
+  currentApi.storage.setForPlugin(meta.id, 'layout', data);
 }
 
-// LOAD
 function loadLayout() {
   const data = currentApi.storage.getForPlugin(meta.id, 'layout');
-  if (!data) return;
+
+  if (!data) {
+    createLayout(2); // default
+    return;
+  }
 
   createLayout(data.length);
 
-  const zones = rootEl.querySelectorAll('.bb-zone');
-
-  data.forEach((ids, i) => {
-    ids.forEach(id => {
+  data.forEach((pluginIds, i) => {
+    pluginIds.forEach(id => {
       const el = document.querySelector(`[data-plugin-id="${id}"]`);
       if (el && zones[i]) {
         currentApi.mountPlugin(id, zones[i]);
-        el.dataset.docked = 'true';
       }
     });
   });
 }
 
-// CLEANUP
+/* ------------------ CLEANUP ------------------ */
+
 export function teardown() {
   if (!currentApi) return;
 
@@ -240,8 +217,7 @@ export function teardown() {
   currentApi.removeToolbarButton('layout-2');
   currentApi.removeToolbarButton('layout-3');
 
-  rootEl?.remove();
-
   rootEl = null;
+  zones = [];
   currentApi = null;
 }
