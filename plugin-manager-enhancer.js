@@ -390,6 +390,9 @@ export function setup(api) {
       tab.addEventListener('click', () => {
         searchInput.value = '';
         applySearch(pmRoot, '');
+        // Clear state guards so re-org happens
+        const ip = pmRoot.querySelector('#installed');
+        if (ip) delete ip.dataset.pmeState;
         setTimeout(() => {
           applyViewMode(pmRoot);
           organizeInstalled(pmRoot);
@@ -431,11 +434,17 @@ export function setup(api) {
     const cards = Array.from(panel.querySelectorAll('.pm-card'));
     if (cards.length === 0) return;
 
-    panel.querySelectorAll('.pme-section').forEach(el => el.remove());
-
     const plugins = currentApi.registry.getAll();
     const active = plugins.filter(p => p.enabled);
     const paused = plugins.filter(p => !p.enabled);
+
+    // Guard: skip if already organized with same state
+    const stateKey = `${active.length}:${paused.length}:${cards.length}`;
+    if (panel.dataset.pmeState === stateKey) return;
+    panel.dataset.pmeState = stateKey;
+
+    // Remove old sections
+    panel.querySelectorAll('.pme-section').forEach(el => el.remove());
 
     // Inject/update pills
     cards.forEach(card => {
