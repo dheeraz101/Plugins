@@ -5,7 +5,7 @@ let enhanceInterval = null;
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '2.2.0',
+  version: '2.3.0',
   compat: '>=3.3.0'
 };
 
@@ -120,31 +120,72 @@ export function setup(api) {
     .pm-panel::-webkit-scrollbar-track { background: transparent !important; }
     .pm-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1) !important; border-radius: 8px !important; }
 
-    /* ========== GRID VIEW ========== */
-    .pm-panel.pme-grid .pm-card {
-      display: inline-block !important;
-      vertical-align: top !important;
-      width: calc(33.333% - 8px) !important;
-      margin: 0 10px 12px 0 !important;
+    /* ============================================================
+       GRID VIEW — applies to ALL visible panels (installed + community)
+       ============================================================ */
+    .pm-panel.pme-grid {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 12px !important;
     }
-    .pm-panel.pme-grid .pm-card:nth-child(3n) {
-      margin-right: 0 !important;
+    .pm-panel.pme-grid .pm-card {
+      width: calc(33.333% - 8px) !important;
+      margin: 0 !important;
+      flex-shrink: 0 !important;
     }
 
-    /* ========== LIST VIEW ========== */
+    /* Grid: flex column so buttons sit at bottom */
+    .pm-panel.pme-grid .pm-card {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    .pm-panel.pme-grid .pm-card > div:first-child {
+      flex: 1 !important;
+    }
+    .pm-panel.pme-grid .pm-card > div:last-child,
+    .pm-panel.pme-grid .pme-comm-footer {
+      margin-top: auto !important;
+      padding-top: 10px !important;
+    }
+
+    /* ============================================================
+       LIST VIEW — applies to ALL visible panels
+       ============================================================ */
+    .pm-panel.pme-list {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
+    }
     .pm-panel.pme-list .pm-card {
       display: flex !important;
       align-items: center !important;
       gap: 14px !important;
       padding: 14px 18px !important;
       border-radius: 10px !important;
-      margin-bottom: 6px !important;
+      margin: 0 !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
     }
-    .pm-panel.pme-list .pm-card > div:first-child { flex-shrink: 0 !important; }
-    .pm-panel.pme-list .pm-card > div:nth-child(2) { flex: 1 !important; min-width: 0 !important; }
-    .pm-panel.pme-list .pm-card > div:last-child { flex-shrink: 0 !important; margin-top: 0 !important; }
+    .pm-panel.pme-list .pm-card > div:first-child {
+      flex-shrink: 0 !important;
+    }
+    .pm-panel.pme-list .pm-card > div:nth-child(2) {
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
 
-    /* ========== CARDS ========== */
+    /* List: push action buttons to FAR RIGHT */
+    .pm-panel.pme-list .pm-card > div:last-child:not(.pme-comm-footer),
+    .pm-panel.pme-list .pm-card .pme-comm-footer {
+      margin-left: auto !important;
+      flex-shrink: 0 !important;
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+    }
+
+    /* ============================================================
+       CARDS — base styling
+       ============================================================ */
     .pm-card {
       background: rgba(255,255,255,0.03) !important;
       border: 1px solid rgba(255,255,255,0.06) !important;
@@ -158,17 +199,6 @@ export function setup(api) {
       background: rgba(255,255,255,0.06) !important;
       border-color: rgba(255,255,255,0.12) !important;
       box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
-    }
-
-    /* Grid: flex column, push buttons to bottom */
-    .pm-panel.pme-grid .pm-card {
-      display: flex !important;
-      flex-direction: column !important;
-    }
-    .pm-panel.pme-grid .pm-card > div:first-child { flex: 1 !important; }
-    .pm-panel.pme-grid .pm-card > div:last-child {
-      margin-top: auto !important;
-      padding-top: 10px !important;
     }
 
     /* ========== CARD TYPOGRAPHY ========== */
@@ -194,25 +224,11 @@ export function setup(api) {
       gap: 6px !important;
       line-height: 1 !important;
     }
-    .pm-btn.primary {
-      background: #a78bfa !important;
-      color: #fff !important;
-    }
-    .pm-btn.primary:hover {
-      background: #8b5cf6 !important;
-      transform: translateY(-1px) !important;
-    }
-    .pm-btn.secondary {
-      background: rgba(255,255,255,0.06) !important;
-      color: #ddd !important;
-    }
-    .pm-btn.danger {
-      background: rgba(232,72,77,0.1) !important;
-      color: #ff6b6b !important;
-    }
-    .pm-btn.danger:hover {
-      background: rgba(232,72,77,0.2) !important;
-    }
+    .pm-btn.primary { background: #a78bfa !important; color: #fff !important; }
+    .pm-btn.primary:hover { background: #8b5cf6 !important; transform: translateY(-1px) !important; }
+    .pm-btn.secondary { background: rgba(255,255,255,0.06) !important; color: #ddd !important; }
+    .pm-btn.danger { background: rgba(232,72,77,0.1) !important; color: #ff6b6b !important; }
+    .pm-btn.danger:hover { background: rgba(232,72,77,0.2) !important; }
 
     /* ========== COMMUNITY ICON BUTTONS ========== */
     .pme-icon-btn {
@@ -228,6 +244,7 @@ export function setup(api) {
       transition: all 0.2s ease !important;
       line-height: 1 !important;
       padding: 0 !important;
+      flex-shrink: 0 !important;
     }
     .pme-icon-btn.install {
       background: rgba(167,139,250,0.15) !important;
@@ -245,25 +262,29 @@ export function setup(api) {
       opacity: 0.5 !important;
     }
 
-    /* Community card: name + button row */
-    .pm-panel.pme-grid .pme-comm-footer {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      margin-top: auto !important;
-      padding-top: 10px !important;
-    }
-    .pm-panel.pme-list .pme-comm-footer {
+    /* Community footer */
+    .pme-comm-footer {
       display: flex !important;
       align-items: center !important;
       gap: 8px !important;
-      flex-shrink: 0 !important;
-      margin-left: auto !important;
     }
     .pme-comm-status {
       font-size: 10px !important;
       color: #555 !important;
       letter-spacing: 0.02em !important;
+    }
+
+    /* Grid community footer: space between */
+    .pm-panel.pme-grid .pme-comm-footer {
+      justify-content: space-between !important;
+      margin-top: auto !important;
+      padding-top: 10px !important;
+    }
+
+    /* List community footer: push to far right */
+    .pm-panel.pme-list .pme-comm-footer {
+      margin-left: auto !important;
+      flex-shrink: 0 !important;
     }
 
     /* ========== STATS BAR ========== */
@@ -285,6 +306,7 @@ export function setup(api) {
     .pme-section {
       display: flex !important; align-items: center !important; gap: 10px !important;
       padding: 16px 4px 12px !important; clear: both !important;
+      flex-basis: 100% !important; width: 100% !important;
     }
     .pme-section-dot { width: 8px !important; height: 8px !important; border-radius: 50% !important; flex-shrink: 0 !important; }
     .pme-section-label {
@@ -354,7 +376,6 @@ export function setup(api) {
         toolbar.querySelectorAll('.pme-view-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         applyViewMode(pmRoot);
-        organizeInstalled(pmRoot);
       };
     });
 
@@ -379,13 +400,13 @@ export function setup(api) {
     });
   }
 
-  // ───────── VIEW MODE ─────────
+  // ───────── VIEW MODE — applies to ALL panels ─────────
   function applyViewMode(pmRoot) {
     pmRoot.querySelectorAll('.pm-panel').forEach(p => {
       p.classList.remove('pme-grid', 'pme-list');
-      if (p.style.display !== 'none') {
-        p.classList.add(viewMode === 'grid' ? 'pme-grid' : 'pme-list');
-      }
+      // Always apply class regardless of display state
+      // (community might become visible later)
+      p.classList.add(viewMode === 'grid' ? 'pme-grid' : 'pme-list');
     });
   }
 
@@ -402,7 +423,7 @@ export function setup(api) {
     updateStats(pmRoot);
   }
 
-  // ───────── ORGANIZE INSTALLED: Active ↑ Paused ↓ ─────────
+  // ───────── ORGANIZE INSTALLED ─────────
   function organizeInstalled(pmRoot) {
     const panel = pmRoot.querySelector('#installed');
     if (!panel || panel.style.display === 'none') return;
@@ -410,14 +431,13 @@ export function setup(api) {
     const cards = Array.from(panel.querySelectorAll('.pm-card'));
     if (cards.length === 0) return;
 
-    // Remove old section headers
     panel.querySelectorAll('.pme-section').forEach(el => el.remove());
 
     const plugins = currentApi.registry.getAll();
     const active = plugins.filter(p => p.enabled);
     const paused = plugins.filter(p => !p.enabled);
 
-    // Inject/update status pills on each card
+    // Inject/update pills
     cards.forEach(card => {
       const toggleBtn = card.querySelector('[data-act="toggle"]');
       if (!toggleBtn) return;
@@ -435,11 +455,9 @@ export function setup(api) {
       pill.innerHTML = `<span class="pme-pill-dot"></span>${plugin.enabled ? 'Active' : 'Paused'}`;
     });
 
-    // Only reorder if we have both active and paused
     if (active.length > 0 && paused.length > 0) {
       const activeCards = [];
       const pausedCards = [];
-
       cards.forEach(card => {
         const toggleBtn = card.querySelector('[data-act="toggle"]');
         if (!toggleBtn) { activeCards.push(card); return; }
@@ -448,12 +466,10 @@ export function setup(api) {
         else pausedCards.push(card);
       });
 
-      // Detach all
       [...activeCards, ...pausedCards].forEach(c => {
         if (c.parentNode === panel) panel.removeChild(c);
       });
 
-      // ACTIVE section header
       const activeHeader = document.createElement('div');
       activeHeader.className = 'pme-section';
       activeHeader.innerHTML = `
@@ -462,11 +478,8 @@ export function setup(api) {
         <div class="pme-section-count">${activeCards.length}</div>
       `;
       panel.appendChild(activeHeader);
-
-      // Active cards
       activeCards.forEach(c => panel.appendChild(c));
 
-      // PAUSED section header
       const pausedHeader = document.createElement('div');
       pausedHeader.className = 'pme-section';
       pausedHeader.innerHTML = `
@@ -475,11 +488,8 @@ export function setup(api) {
         <div class="pme-section-count">${pausedCards.length}</div>
       `;
       panel.appendChild(pausedHeader);
-
-      // Paused cards
       pausedCards.forEach(c => panel.appendChild(c));
     } else {
-      // Only one group — still show a section header
       const onlyActive = paused.length === 0;
       const header = document.createElement('div');
       header.className = 'pme-section';
@@ -488,14 +498,13 @@ export function setup(api) {
         <div class="pme-section-label">${onlyActive ? 'Active' : 'Paused'}</div>
         <div class="pme-section-count">${cards.length}</div>
       `;
-      // Insert before first card
       const firstCard = panel.querySelector('.pm-card');
       if (firstCard) panel.insertBefore(header, firstCard);
       else panel.appendChild(header);
     }
   }
 
-  // ───────── ENHANCE COMMUNITY: icon buttons ─────────
+  // ───────── ENHANCE COMMUNITY ─────────
   function enhanceCommunity(pmRoot) {
     const panel = pmRoot.querySelector('#community');
     if (!panel || panel.style.display === 'none') return;
@@ -506,7 +515,6 @@ export function setup(api) {
     const installed = new Set(currentApi.registry.getAll().map(p => p.id));
 
     cards.forEach(card => {
-      // Skip if already enhanced
       if (card.dataset.pmeComm) return;
 
       const installBtn = card.querySelector('[data-install]');
@@ -514,7 +522,6 @@ export function setup(api) {
       const pluginId = installBtn?.dataset.install || '';
 
       if (installBtn) {
-        // Has install button — replace with icon
         const footer = document.createElement('div');
         footer.className = 'pme-comm-footer';
 
@@ -529,11 +536,8 @@ export function setup(api) {
             <button class="pme-icon-btn install" title="Install" data-install="${pluginId}" data-url="${installBtn.dataset.url}">↓</button>
           `;
         }
-
-        // Replace the button row
         installBtn.parentElement.replaceWith(footer);
       } else if (existingDisabled) {
-        // Already installed — replace with greyed icon
         const footer = document.createElement('div');
         footer.className = 'pme-comm-footer';
         footer.innerHTML = `
@@ -546,7 +550,7 @@ export function setup(api) {
       card.dataset.pmeComm = '1';
     });
 
-    // Re-bind install clicks
+    // Bind install clicks
     panel.querySelectorAll('.pme-icon-btn.install').forEach(btn => {
       if (btn.dataset.pmeBound) return;
       btn.dataset.pmeBound = '1';
@@ -563,7 +567,6 @@ export function setup(api) {
         try {
           await currentApi.reloadPlugin(newDef.id);
           currentApi.notify(`✅ Installed ${newDef.id}`, 'success');
-          // Update this button to installed state
           btn.className = 'pme-icon-btn installed';
           btn.title = 'Already installed';
           btn.textContent = '✓';
@@ -577,7 +580,7 @@ export function setup(api) {
     });
   }
 
-  // ───────── UPDATE STATS ─────────
+  // ───────── STATS ─────────
   function updateStats(pmRoot) {
     const statsEl = pmRoot.querySelector('#pme-stats');
     if (!statsEl) return;
@@ -636,7 +639,7 @@ export function setup(api) {
     }
   });
 
-  console.log('⚡ PM Enhancer v2.2.0');
+  console.log('⚡ PM Enhancer v2.3.0');
 }
 
 export function teardown() {
