@@ -1,27 +1,24 @@
 let currentApi = null;
-let observer = null;
 let enhancerStyle = null;
+let enhanceInterval = null;
 
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '1.0.0',
+  version: '2.0.0',
   compat: '>=3.3.0'
 };
 
 export function setup(api) {
   currentApi = api;
   let viewMode = api.storage.getForPlugin(meta.id, 'viewMode') || 'grid';
-  let searchQuery = '';
 
-  // ───────── ENHANCER STYLES (overrides existing PM styles) ─────────
+  // ───────── CSS-ONLY ENHANCEMENTS ─────────
   enhancerStyle = document.createElement('style');
   enhancerStyle.id = 'pme-styles';
   enhancerStyle.textContent = `
 
-    /* ========== ENHANCED PLUGIN MANAGER ========== */
-
-    /* Make PM window bigger & prettier */
+    /* ========== WINDOW ========== */
     .pm-root {
       width: 960px !important;
       height: 82vh !important;
@@ -31,43 +28,73 @@ export function setup(api) {
       background: #0e0e14 !important;
       border: 1px solid rgba(255,255,255,0.08) !important;
       box-shadow: 0 24px 80px rgba(0,0,0,0.7) !important;
+      overflow: hidden !important;
     }
 
-    /* Header polish */
+    /* ========== HEADER — pretext-inspired spacing ========== */
     .pm-header {
-      padding: 18px 24px !important;
+      padding: 20px 24px !important;
       background: rgba(255,255,255,0.015) !important;
       border-bottom: 1px solid rgba(255,255,255,0.06) !important;
     }
+    .pm-header b {
+      font-size: 16px !important;
+      letter-spacing: -0.025em !important;
+      line-height: 1.3 !important;
+    }
+    #pm-stats {
+      font-size: 11px !important;
+      color: #555 !important;
+      margin-top: 4px !important;
+      letter-spacing: 0.01em !important;
+      line-height: 1.4 !important;
+    }
 
-    /* Tabs polish */
+    /* ========== TABS ========== */
     .pm-tabs {
       background: rgba(0,0,0,0.3) !important;
       padding: 0 16px !important;
+      border-bottom: 1px solid rgba(255,255,255,0.05) !important;
     }
     .pm-tab {
       font-weight: 600 !important;
       font-size: 13px !important;
-      padding: 13px 20px !important;
+      padding: 14px 22px !important;
+      letter-spacing: -0.01em !important;
+      line-height: 1.3 !important;
+      transition: all 0.2s ease !important;
     }
     .pm-tab.active {
       color: #a78bfa !important;
       border-bottom-color: #a78bfa !important;
     }
-
-    /* Body area */
-    .pm-body {
-      background: #111118 !important;
-      display: flex !important;
-      flex-direction: column !important;
+    .pm-tab:hover {
+      color: #bbb !important;
     }
 
-    /* ========== TOOLBAR (injected by enhancer) ========== */
+    /* ========== PANEL ========== */
+    .pm-body {
+      background: #111118 !important;
+    }
+    .pm-panel {
+      padding: 20px 20px 40px !important;
+    }
+    .pm-panel::-webkit-scrollbar { width: 6px !important; }
+    .pm-panel::-webkit-scrollbar-track { background: transparent !important; }
+    .pm-panel::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.1) !important;
+      border-radius: 8px !important;
+    }
+    .pm-panel::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.18) !important;
+    }
+
+    /* ========== INJECTED TOOLBAR ========== */
     .pme-toolbar {
       display: flex !important;
       align-items: center !important;
       gap: 10px !important;
-      padding: 12px 20px !important;
+      padding: 10px 20px !important;
       border-bottom: 1px solid rgba(255,255,255,0.05) !important;
       background: rgba(0,0,0,0.15) !important;
       flex-shrink: 0 !important;
@@ -87,20 +114,25 @@ export function setup(api) {
     }
     .pme-search {
       width: 100% !important;
-      padding: 9px 14px 9px 36px !important;
+      padding: 8px 14px 8px 36px !important;
       background: rgba(255,255,255,0.05) !important;
       border: 1px solid rgba(255,255,255,0.08) !important;
       border-radius: 10px !important;
       color: #fff !important;
       font-size: 13px !important;
       outline: none !important;
-      transition: all 0.2s !important;
+      transition: border-color 0.2s, background 0.2s !important;
       box-sizing: border-box !important;
       font-family: inherit !important;
+      letter-spacing: -0.01em !important;
+      line-height: 1.5 !important;
     }
     .pme-search:focus {
       border-color: #a78bfa !important;
       background: rgba(255,255,255,0.08) !important;
+    }
+    .pme-search::placeholder {
+      color: #555 !important;
     }
     .pme-view-btns {
       display: flex !important;
@@ -113,11 +145,12 @@ export function setup(api) {
       padding: 6px 10px !important;
       background: none !important;
       border: none !important;
-      color: #666 !important;
+      color: #555 !important;
       cursor: pointer !important;
       border-radius: 6px !important;
       font-size: 14px !important;
       transition: all 0.15s !important;
+      line-height: 1 !important;
     }
     .pme-view-btn.active {
       background: rgba(167,139,250,0.2) !important;
@@ -125,180 +158,201 @@ export function setup(api) {
     }
     .pme-view-btn:hover { color: #aaa !important; }
 
-    /* ========== SECTION HEADERS ========== */
-    .pme-section {
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-      padding: 10px 4px 8px !important;
-    }
-    .pme-section-dot {
-      width: 8px !important;
-      height: 8px !important;
-      border-radius: 50% !important;
-    }
-    .pme-section-dot.green { background: #2ecc71 !important; }
-    .pme-section-dot.yellow { background: #f39c12 !important; }
-    .pme-section-title {
-      font-size: 11px !important;
-      font-weight: 700 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.08em !important;
-      color: #888 !important;
-    }
-    .pme-section-count {
-      font-size: 10px !important;
-      color: #555 !important;
-      background: rgba(255,255,255,0.04) !important;
-      padding: 2px 8px !important;
-      border-radius: 10px !important;
-    }
-
-    /* ========== ENHANCED CARDS (GRID MODE) ========== */
-    .pme-grid-wrap {
-      display: grid !important;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
-      gap: 10px !important;
-      margin-bottom: 16px !important;
-    }
-
-    /* ========== ENHANCED CARDS (LIST MODE) ========== */
-    .pme-list-wrap {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 4px !important;
-      margin-bottom: 16px !important;
-    }
-
-    /* ========== CARD STYLING ========== */
+    /* ========== CARDS ========== */
     .pm-card {
       background: rgba(255,255,255,0.03) !important;
       border: 1px solid rgba(255,255,255,0.06) !important;
       border-radius: 14px !important;
-      padding: 16px !important;
-      margin-bottom: 0 !important;
-      transition: all 0.2s !important;
+      padding: 18px !important;
+      margin-bottom: 10px !important;
+      transition: all 0.2s ease !important;
     }
     .pm-card:hover {
       background: rgba(255,255,255,0.06) !important;
       border-color: rgba(255,255,255,0.12) !important;
-      transform: translateY(-1px) !important;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3) !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
     }
 
-    /* List mode card */
-    .pm-card.pme-list-card {
+    /* Card typography — pretext-style */
+    .pm-card b {
+      font-size: 15px !important;
+      letter-spacing: -0.02em !important;
+      line-height: 1.35 !important;
+    }
+    .pm-card div[style*="font-size:11px"] {
+      line-height: 1.45 !important;
+      letter-spacing: 0.01em !important;
+    }
+
+    /* ========== GRID MODE ========== */
+    .pm-panel.pme-grid-view .pm-card {
+      display: inline-block !important;
+      width: calc(33.333% - 8px) !important;
+      margin-right: 10px !important;
+      margin-bottom: 10px !important;
+      vertical-align: top !important;
+    }
+
+    /* ========== LIST MODE ========== */
+    .pm-panel.pme-list-view .pm-card {
       display: flex !important;
-      align-items: center !important;
+      align-items: flex-start !important;
       gap: 14px !important;
-      padding: 12px 16px !important;
+      padding: 14px 18px !important;
       border-radius: 10px !important;
     }
-    .pm-card.pme-list-card:hover {
-      transform: none !important;
+    .pm-panel.pme-list-view .pm-card > div:first-child {
+      flex-shrink: 0 !important;
+    }
+    .pm-panel.pme-list-view .pm-card > div:nth-child(2) {
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
+    .pm-panel.pme-list-view .pm-card > div:last-child {
+      flex-shrink: 0 !important;
+      margin-top: 0 !important;
     }
 
-    /* ========== STATUS BADGE ========== */
-    .pme-status {
-      display: inline-flex !important;
-      align-items: center !important;
-      gap: 4px !important;
-      font-size: 10px !important;
-      font-weight: 600 !important;
-      padding: 3px 8px !important;
-      border-radius: 6px !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.05em !important;
-    }
-    .pme-status.active {
-      background: rgba(46,204,113,0.12) !important;
-      color: #2ecc71 !important;
-    }
-    .pme-status.paused {
-      background: rgba(243,156,18,0.12) !important;
-      color: #f39c12 !important;
-    }
-    .pme-status-dot {
-      width: 5px !important;
-      height: 5px !important;
-      border-radius: 50% !important;
-    }
-    .pme-status.active .pme-status-dot { background: #2ecc71 !important; }
-    .pme-status.paused .pme-status-dot { background: #f39c12 !important; }
-
-    /* ========== BETTER BUTTONS ========== */
+    /* ========== BUTTONS ========== */
     .pm-btn {
       padding: 7px 16px !important;
       border-radius: 8px !important;
       font-weight: 600 !important;
       font-size: 12px !important;
-      transition: all 0.15s !important;
+      transition: all 0.15s ease !important;
+      letter-spacing: -0.01em !important;
+      line-height: 1.4 !important;
     }
     .pm-btn.primary {
       background: #a78bfa !important;
+      color: #fff !important;
     }
     .pm-btn.primary:hover {
       background: #8b5cf6 !important;
+      transform: translateY(-1px) !important;
+    }
+    .pm-btn.secondary {
+      background: rgba(255,255,255,0.06) !important;
+    }
+    .pm-btn.danger {
+      background: rgba(232,72,77,0.1) !important;
+      color: #ff6b6b !important;
+    }
+    .pm-btn.danger:hover {
+      background: rgba(232,72,77,0.2) !important;
     }
 
-    /* ========== STATS BAR ========== */
-    .pme-stats-bar {
+    /* ========== INSTALL BUTTON ========== */
+    .pm-btn.primary[data-act="install"] {
+      width: 100% !important;
+      padding: 9px 16px !important;
+      border-radius: 10px !important;
+    }
+
+    /* ========== COMMUNITY CARD DESCRIPTION ========== */
+    .pm-card div[style*="line-height:1.4"] {
+      font-size: 13px !important;
+      color: #999 !important;
+      line-height: 1.55 !important;
+      letter-spacing: 0.005em !important;
+    }
+
+    /* ========== STATS BAR (injected) ========== */
+    .pme-stats {
       display: flex !important;
       gap: 16px !important;
-      padding: 10px 20px !important;
+      padding: 10px 24px !important;
       border-top: 1px solid rgba(255,255,255,0.04) !important;
       background: rgba(0,0,0,0.2) !important;
       flex-shrink: 0 !important;
+      font-size: 11px !important;
+      color: #555 !important;
+      letter-spacing: 0.01em !important;
+      line-height: 1.4 !important;
     }
-    .pme-stat {
+    .pme-stats b { color: #a78bfa !important; font-weight: 700 !important; }
+    .pme-stats .pme-green { color: #2ecc71 !important; }
+    .pme-stats .pme-orange { color: #f39c12 !important; }
+    .pme-stats .pme-right { margin-left: auto !important; }
+
+    /* ========== SECTION DIVIDER (injected before paused group) ========== */
+    .pme-divider {
       display: flex !important;
       align-items: center !important;
-      gap: 6px !important;
+      gap: 10px !important;
+      padding: 14px 4px 10px !important;
+      margin-top: 4px !important;
+    }
+    .pme-divider-dot {
+      width: 7px !important;
+      height: 7px !important;
+      border-radius: 50% !important;
+    }
+    .pme-divider-text {
       font-size: 11px !important;
-      color: #666 !important;
-    }
-    .pme-stat-val {
-      color: #a78bfa !important;
       font-weight: 700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.08em !important;
+      color: #666 !important;
+      line-height: 1 !important;
+    }
+    .pme-divider-count {
+      font-size: 10px !important;
+      color: #444 !important;
+      background: rgba(255,255,255,0.04) !important;
+      padding: 2px 8px !important;
+      border-radius: 10px !important;
+      line-height: 1.3 !important;
     }
 
-    /* ========== EMPTY STATE ========== */
-    .pme-empty {
-      text-align: center !important;
-      padding: 40px 20px !important;
-      color: #555 !important;
+    /* ========== STATUS PILL (injected into cards) ========== */
+    .pme-pill {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+      font-size: 9px !important;
+      font-weight: 700 !important;
+      padding: 3px 8px !important;
+      border-radius: 6px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.06em !important;
+      line-height: 1 !important;
+      margin-left: 8px !important;
+      vertical-align: middle !important;
     }
-    .pme-empty-icon { font-size: 36px !important; margin-bottom: 8px !important; opacity: 0.5 !important; }
-    .pme-empty-text { font-size: 13px !important; font-weight: 500 !important; }
-
-    /* ========== SCROLLBAR ========== */
-    .pm-panel::-webkit-scrollbar { width: 6px !important; }
-    .pm-panel::-webkit-scrollbar-track { background: transparent !important; }
-    .pm-panel::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.1) !important;
-      border-radius: 8px !important;
+    .pme-pill-on {
+      background: rgba(46,204,113,0.12) !important;
+      color: #2ecc71 !important;
     }
+    .pme-pill-off {
+      background: rgba(243,156,18,0.12) !important;
+      color: #f39c12 !important;
+    }
+    .pme-pill-dot {
+      width: 4px !important;
+      height: 4px !important;
+      border-radius: 50% !important;
+    }
+    .pme-pill-on .pme-pill-dot { background: #2ecc71 !important; }
+    .pme-pill-off .pme-pill-dot { background: #f39c12 !important; }
 
-    /* ========== COMMUNITY CARDS ========== */
-    .pme-community-card .pm-card {
-      min-height: auto !important;
+    /* ========== HIDE CARDS THAT DON'T MATCH SEARCH ========== */
+    .pme-hidden { display: none !important; }
+
+    /* ========== MODAL ========== */
+    .bb-modal-overlay {
+      z-index: 2147483648 !important;
     }
   `;
   document.head.appendChild(enhancerStyle);
 
-  // ───────── INJECT TOOLBAR & STATS INTO EXISTING PM ─────────
-  function enhancePluginManager() {
-    const pmRoot = document.querySelector('.pm-root');
-    if (!pmRoot || pmRoot.dataset.pmeEnhanced) return;
-    pmRoot.dataset.pmeEnhanced = 'true';
+  // ───────── INJECT TOOLBAR + STATS INTO PM ─────────
+  function injectToolbar(pmRoot) {
+    if (pmRoot.querySelector('.pme-toolbar')) return; // already injected
 
-    const pmBody = pmRoot.querySelector('.pm-body');
-    const installedPanel = pmRoot.querySelector('#installed');
-    const communityPanel = pmRoot.querySelector('#community');
+    const pmTabs = pmRoot.querySelector('.pm-tabs');
+    if (!pmTabs) return;
 
-    if (!pmBody || !installedPanel) return;
-
-    // Inject toolbar between tabs and body
     const toolbar = document.createElement('div');
     toolbar.className = 'pme-toolbar';
     toolbar.innerHTML = `
@@ -311,349 +365,286 @@ export function setup(api) {
         <button class="pme-view-btn ${viewMode==='list'?'active':''}" data-view="list" title="List view">☰</button>
       </div>
     `;
+    pmTabs.after(toolbar);
 
-    // Inject stats bar at bottom
-    const statsBar = document.createElement('div');
-    statsBar.className = 'pme-stats-bar';
-    statsBar.id = 'pme-stats-bar';
+    // Stats bar at bottom
+    if (!pmRoot.querySelector('.pme-stats')) {
+      const stats = document.createElement('div');
+      stats.className = 'pme-stats';
+      stats.id = 'pme-stats';
+      pmRoot.appendChild(stats);
+    }
 
-    // Insert toolbar before the body, stats after
-    pmBody.parentNode.insertBefore(toolbar, pmBody);
-    pmBody.parentNode.appendChild(statsBar);
-
-    // View toggle buttons
+    // View toggle
     toolbar.querySelectorAll('.pme-view-btn').forEach(btn => {
       btn.onclick = () => {
         viewMode = btn.dataset.view;
         api.storage.setForPlugin(meta.id, 'viewMode', viewMode);
         toolbar.querySelectorAll('.pme-view-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        reRenderInstalled();
-        reRenderCommunity();
+        applyViewMode(pmRoot);
+        organizeInstalled(pmRoot);
       };
     });
 
-    // Search input
+    // Search
     const searchInput = toolbar.querySelector('#pme-search');
-    const debouncedSearch = api.debounce(e => {
-      searchQuery = e.target.value.toLowerCase();
-      reRenderInstalled();
-      reRenderCommunity();
+    const doSearch = api.debounce(() => {
+      applySearch(pmRoot, searchInput.value.toLowerCase());
     }, 200);
-    searchInput.addEventListener('input', debouncedSearch);
+    searchInput.addEventListener('input', doSearch);
 
-    // Clear search on tab switch
+    // Clear search on tab switch — hook into existing tabs
     pmRoot.querySelectorAll('.pm-tab').forEach(tab => {
-      const origOnClick = tab.onclick;
-      tab.onclick = (e) => {
-        searchQuery = '';
+      if (tab.dataset.pmeHooked) return;
+      tab.dataset.pmeHooked = '1';
+      tab.addEventListener('click', () => {
         searchInput.value = '';
-        if (origOnClick) origOnClick.call(tab, e);
-        // Re-render after tab switch settles
+        applySearch(pmRoot, '');
+        // Re-apply after the PM switches panels
         setTimeout(() => {
-          reRenderInstalled();
-          reRenderCommunity();
-        }, 50);
-      };
+          applyViewMode(pmRoot);
+          organizeInstalled(pmRoot);
+          updateStats(pmRoot);
+        }, 80);
+      });
     });
 
-    // Initial render
-    reRenderInstalled();
+    applyViewMode(pmRoot);
   }
 
-  // ───────── RE-RENDER INSTALLED PANEL ─────────
-  function reRenderInstalled() {
-    const installedPanel = document.querySelector('#installed');
-    if (!installedPanel || installedPanel.style.display === 'none') return;
-
-    const cards = installedPanel.querySelectorAll('.pm-card');
-    if (cards.length === 0) return;
-
-    const plugins = currentApi.registry.getAll();
-    const active = plugins.filter(p => p.enabled);
-    const paused = plugins.filter(p => !p.enabled);
-
-    // Filter by search
-    const matchSearch = (p) => !searchQuery ||
-      (p.name||p.id).toLowerCase().includes(searchQuery) ||
-      p.id.toLowerCase().includes(searchQuery);
-
-    const fActive = active.filter(matchSearch);
-    const fPaused = paused.filter(matchSearch);
-
-    // Update stats bar
-    const statsBar = document.querySelector('#pme-stats-bar');
-    if (statsBar) {
-      statsBar.innerHTML = `
-        <div class="pme-stat"><span class="pme-stat-val">${plugins.length}</span> plugins</div>
-        <div class="pme-stat"><span class="pme-stat-val" style="color:#2ecc71">${active.length}</span> active</div>
-        <div class="pme-stat"><span class="pme-stat-val" style="color:#f39c12">${paused.length}</span> paused</div>
-        <div style="margin-left:auto" class="pme-stat">View: <span class="pme-stat-val">${viewMode === 'grid' ? 'Grid' : 'List'}</span></div>
-      `;
-    }
-
-    // If no search, just re-organize the existing cards
-    if (!searchQuery) {
-      organizeCards(installedPanel, plugins, 'installed');
-      return;
-    }
-
-    // With search, show/hide cards
-    const allCards = installedPanel.querySelectorAll('.pm-card');
-    allCards.forEach(card => {
-      const id = card.querySelector('[data-id]')?.dataset.id;
-      const p = plugins.find(x => x.id === id);
-      if (p && matchSearch(p)) {
-        card.style.display = '';
-      } else {
-        card.style.display = 'none';
+  // ───────── VIEW MODE (grid/list class on active panel) ─────────
+  function applyViewMode(pmRoot) {
+    const panels = pmRoot.querySelectorAll('.pm-panel');
+    panels.forEach(p => {
+      p.classList.remove('pme-grid-view', 'pme-list-view');
+      if (p.style.display !== 'none') {
+        p.classList.add(viewMode === 'grid' ? 'pme-grid-view' : 'pme-list-view');
       }
     });
   }
 
-  // ───────── RE-RENDER COMMUNITY PANEL ─────────
-  function reRenderCommunity() {
-    const communityPanel = document.querySelector('#community');
-    if (!communityPanel || communityPanel.style.display === 'none') return;
-
-    const cards = communityPanel.querySelectorAll('.pm-card');
-    if (cards.length === 0) return;
-
-    if (!searchQuery) {
-      // Reset visibility
-      cards.forEach(c => c.style.display = '');
-      organizeCards(communityPanel, null, 'community');
-      return;
+  // ───────── SEARCH FILTER ─────────
+  function applySearch(pmRoot, query) {
+    // Installed panel
+    const installedPanel = pmRoot.querySelector('#installed');
+    if (installedPanel && installedPanel.style.display !== 'none') {
+      const cards = installedPanel.querySelectorAll('.pm-card');
+      cards.forEach(card => {
+        if (!query) {
+          card.classList.remove('pme-hidden');
+          return;
+        }
+        const text = card.textContent.toLowerCase();
+        card.classList.toggle('pme-hidden', !text.includes(query));
+      });
+      // Re-organize sections after search
+      organizeInstalled(pmRoot);
     }
 
-    cards.forEach(card => {
-      const text = card.textContent.toLowerCase();
-      card.style.display = text.includes(searchQuery) ? '' : 'none';
-    });
+    // Community panel
+    const communityPanel = pmRoot.querySelector('#community');
+    if (communityPanel && communityPanel.style.display !== 'none') {
+      const cards = communityPanel.querySelectorAll('.pm-card');
+      cards.forEach(card => {
+        if (!query) {
+          card.classList.remove('pme-hidden');
+          return;
+        }
+        const text = card.textContent.toLowerCase();
+        card.classList.toggle('pme-hidden', !text.includes(query));
+      });
+    }
+
+    updateStats(pmRoot);
   }
 
-  // ───────── ORGANIZE CARDS INTO SECTIONS (ACTIVE/PAUSED) ─────────
-  function organizeCards(panel, plugins, panelType) {
-    if (!plugins && panelType === 'installed') return;
-
-    // Remove old sections
-    panel.querySelectorAll('.pme-section, .pme-grid-wrap, .pme-list-wrap, .pme-empty').forEach(el => el.remove());
+  // ───────── ORGANIZE INSTALLED: Active on top, Paused below ─────────
+  function organizeInstalled(pmRoot) {
+    const panel = pmRoot.querySelector('#installed');
+    if (!panel || panel.style.display === 'none') return;
 
     const cards = Array.from(panel.querySelectorAll('.pm-card'));
     if (cards.length === 0) return;
 
-    if (panelType === 'installed' && plugins) {
-      const active = plugins.filter(p => p.enabled);
-      const paused = plugins.filter(p => !p.enabled);
+    // Remove old dividers
+    panel.querySelectorAll('.pme-divider').forEach(el => el.remove());
 
-      const activeCards = [];
-      const pausedCards = [];
+    // Separate active/paused by checking button text
+    let firstPausedIndex = -1;
+    const plugins = currentApi.registry.getAll();
 
+    cards.forEach((card, i) => {
+      // Don't touch hidden cards
+      if (card.classList.contains('pme-hidden')) return;
+
+      const toggleBtn = card.querySelector('[data-act="toggle"]');
+      if (!toggleBtn) return; // system protected card
+
+      const id = toggleBtn.dataset.id;
+      const plugin = plugins.find(p => p.id === id);
+      if (!plugin) return;
+
+      // Inject status pill if not present
+      if (!card.querySelector('.pme-pill')) {
+        const nameEl = card.querySelector('b');
+        if (nameEl) {
+          const pill = document.createElement('span');
+          pill.className = `pme-pill ${plugin.enabled ? 'pme-pill-on' : 'pme-pill-off'}`;
+          pill.innerHTML = `<span class="pme-pill-dot"></span>${plugin.enabled ? 'Active' : 'Paused'}`;
+          nameEl.insertAdjacentElement('afterend', pill);
+        }
+      }
+
+      // Update pill state
+      const pill = card.querySelector('.pme-pill');
+      if (pill) {
+        pill.className = `pme-pill ${plugin.enabled ? 'pme-pill-on' : 'pme-pill-off'}`;
+        pill.innerHTML = `<span class="pme-pill-dot"></span>${plugin.enabled ? 'Active' : 'Paused'}`;
+      }
+
+      // Track first paused card position
+      if (!plugin.enabled && firstPausedIndex === -1) {
+        firstPausedIndex = i;
+      }
+
+      // Move paused cards to the bottom: if we find a paused card before an active one, swap
+      // Actually, let's just reorder: collect all active, then all paused
+    });
+
+    // Reorder: active first, then paused
+    let activeCards = [];
+    let pausedCards = [];
+
+    cards.forEach(card => {
+      if (card.classList.contains('pme-hidden')) return;
+      const toggleBtn = card.querySelector('[data-act="toggle"]');
+      if (!toggleBtn) return; // system card — put in active
+      const id = toggleBtn.dataset.id;
+      const plugin = plugins.find(p => p.id === id);
+      if (!plugin || plugin.enabled) {
+        activeCards.push(card);
+      } else {
+        pausedCards.push(card);
+      }
+    });
+
+    // Only reorder if we have both groups
+    if (activeCards.length > 0 && pausedCards.length > 0) {
+      // Detach all cards
       cards.forEach(card => {
-        const toggleBtn = card.querySelector('[data-act="toggle"]');
-        const id = toggleBtn?.dataset.id;
-        if (!id) return;
-
-        // Add status badge if not present
-        if (!card.querySelector('.pme-status')) {
-          const p = plugins.find(x => x.id === id);
-          const isPaused = !p?.enabled;
-          const badge = document.createElement('span');
-          badge.className = `pme-status ${isPaused ? 'paused' : 'active'}`;
-          badge.innerHTML = `<span class="pme-status-dot"></span>${isPaused ? 'Paused' : 'Active'}`;
-          badge.style.marginLeft = '8px';
-
-          const nameEl = card.querySelector('b');
-          if (nameEl) nameEl.parentNode.appendChild(badge);
-        }
-
-        // Style for list mode
-        if (viewMode === 'list') {
-          card.classList.add('pme-list-card');
-        } else {
-          card.classList.remove('pme-list-card');
-        }
-
-        const p = plugins.find(x => x.id === id);
-        if (p?.enabled) activeCards.push(card);
-        else pausedCards.push(card);
+        if (card.parentNode === panel) panel.removeChild(card);
       });
 
-      // Clear panel and rebuild with sections
-      const fragment = document.createDocumentFragment();
+      // Re-attach: active first
+      activeCards.forEach(card => panel.appendChild(card));
 
-      if (activeCards.length > 0) {
-        fragment.appendChild(createSection('green', 'Active', activeCards.length));
-        if (viewMode === 'grid') {
-          const wrap = document.createElement('div');
-          wrap.className = 'pme-grid-wrap';
-          activeCards.forEach(c => wrap.appendChild(c));
-          fragment.appendChild(wrap);
-        } else {
-          const wrap = document.createElement('div');
-          wrap.className = 'pme-list-wrap';
-          activeCards.forEach(c => wrap.appendChild(c));
-          fragment.appendChild(wrap);
-        }
-      }
+      // Divider before paused
+      const divider = document.createElement('div');
+      divider.className = 'pme-divider';
+      divider.innerHTML = `
+        <div class="pme-divider-dot" style="background:#f39c12"></div>
+        <div class="pme-divider-text">Paused</div>
+        <div class="pme-divider-count">${pausedCards.length}</div>
+      `;
+      panel.appendChild(divider);
 
-      if (pausedCards.length > 0) {
-        fragment.appendChild(createSection('yellow', 'Paused', pausedCards.length));
-        if (viewMode === 'grid') {
-          const wrap = document.createElement('div');
-          wrap.className = 'pme-grid-wrap';
-          pausedCards.forEach(c => wrap.appendChild(c));
-          fragment.appendChild(wrap);
-        } else {
-          const wrap = document.createElement('div');
-          wrap.className = 'pme-list-wrap';
-          pausedCards.forEach(c => wrap.appendChild(c));
-          fragment.appendChild(wrap);
-        }
-      }
-
-      if (activeCards.length === 0 && pausedCards.length === 0) {
-        fragment.appendChild(createEmpty('No plugins match your search'));
-      }
-
-      // Insert fragment at top of panel (before any leftover elements)
-      panel.insertBefore(fragment, panel.firstChild);
-
-    } else if (panelType === 'community') {
-      // Community: just apply grid/list wrapping
-      const visibleCards = cards.filter(c => c.style.display !== 'none');
-
-      if (visibleCards.length === 0) return;
-
-      // Add list card class
-      visibleCards.forEach(card => {
-        if (viewMode === 'list') {
-          card.classList.add('pme-list-card');
-        } else {
-          card.classList.remove('pme-list-card');
-        }
-      });
-
-      const wrap = document.createElement('div');
-      wrap.className = viewMode === 'grid' ? 'pme-grid-wrap' : 'pme-list-wrap';
-
-      // Move cards into wrap
-      visibleCards.forEach(c => wrap.appendChild(c));
-      panel.insertBefore(wrap, panel.firstChild);
+      // Paused cards
+      pausedCards.forEach(card => panel.appendChild(card));
     }
   }
 
-  function createSection(color, title, count) {
-    const div = document.createElement('div');
-    div.className = 'pme-section';
-    div.innerHTML = `
-      <div class="pme-section-dot ${color}"></div>
-      <div class="pme-section-title">${title}</div>
-      <div class="pme-section-count">${count}</div>
-    `;
-    return div;
+  // ───────── UPDATE STATS BAR ─────────
+  function updateStats(pmRoot) {
+    const statsEl = pmRoot.querySelector('#pme-stats');
+    if (!statsEl) return;
+
+    const plugins = currentApi.registry.getAll();
+    const active = plugins.filter(p => p.enabled).length;
+    const paused = plugins.filter(p => !p.enabled).length;
+
+    // Count visible cards in current panel
+    const installedPanel = pmRoot.querySelector('#installed');
+    const communityPanel = pmRoot.querySelector('#community');
+    let visible = 0, total = 0;
+
+    if (installedPanel && installedPanel.style.display !== 'none') {
+      const cards = installedPanel.querySelectorAll('.pm-card');
+      total = cards.length;
+      visible = Array.from(cards).filter(c => !c.classList.contains('pme-hidden')).length;
+      statsEl.innerHTML = `
+        <span><b>${plugins.length}</b> plugins</span>
+        <span><b class="pme-green">${active}</b> active</span>
+        <span><b class="pme-orange">${paused}</b> paused</span>
+        <span class="pme-right">${viewMode === 'grid' ? '⊞ Grid' : '☰ List'}</span>
+      `;
+    } else if (communityPanel && communityPanel.style.display !== 'none') {
+      const cards = communityPanel.querySelectorAll('.pm-card');
+      total = cards.length;
+      visible = Array.from(cards).filter(c => !c.classList.contains('pme-hidden')).length;
+      statsEl.innerHTML = `
+        <span><b>${total}</b> available</span>
+        <span><b class="pme-green">${plugins.length}</b> installed</span>
+        <span class="pme-right">${visible} shown · ${viewMode === 'grid' ? '⊞ Grid' : '☰ List'}</span>
+      `;
+    }
   }
 
-  function createEmpty(text) {
-    const div = document.createElement('div');
-    div.className = 'pme-empty';
-    div.innerHTML = `
-      <div class="pme-empty-icon">🔍</div>
-      <div class="pme-empty-text">${text}</div>
-    `;
-    return div;
-  }
-
-  // ───────── MUTATION OBSERVER ─────────
-  // Watch for PM being opened (display changes from none to flex)
-  observer = new MutationObserver(() => {
+  // ───────── MAIN ENHANCE LOOP ─────────
+  function enhance() {
     const pmRoot = document.querySelector('.pm-root');
-    if (pmRoot && pmRoot.style.display !== 'none' && pmRoot.style.display !== '') {
-      enhancePluginManager();
-    }
-  });
+    if (!pmRoot) return;
 
-  // Also observe for PM root being added to DOM
-  const bodyObserver = new MutationObserver((mutations) => {
-    for (const m of mutations) {
-      for (const node of m.addedNodes) {
-        if (node.classList?.contains('pm-root')) {
-          setTimeout(enhancePluginManager, 100);
-        }
-      }
-    }
-  });
-  bodyObserver.observe(api.boardEl, { childList: true, subtree: true });
+    const isVisible = pmRoot.style.display !== 'none' && pmRoot.style.display !== '';
+    if (!isVisible) return;
 
-  // Observe existing PM if present
-  const existingPM = document.querySelector('.pm-root');
-  if (existingPM) {
-    observer.observe(existingPM, { attributes: true, attributeFilter: ['style'] });
-    if (existingPM.style.display !== 'none') {
-      setTimeout(enhancePluginManager, 200);
-    }
+    injectToolbar(pmRoot);
+    applyViewMode(pmRoot);
+    organizeInstalled(pmRoot);
+    updateStats(pmRoot);
   }
 
-  // Also listen for right-click (PM opens on contextmenu)
-  api.boardEl.addEventListener('contextmenu', () => {
-    setTimeout(enhancePluginManager, 300);
-  });
+  // Poll every 500ms when PM is open — more reliable than MutationObserver
+  enhanceInterval = setInterval(enhance, 500);
 
-  // Re-organize when installed panel content changes
-  const installedPanel = document.querySelector('#installed');
-  if (installedPanel) {
-    const panelObserver = new MutationObserver(api.debounce(() => {
-      const pmRoot = document.querySelector('.pm-root');
-      if (pmRoot && pmRoot.style.display !== 'none') {
-        setTimeout(() => {
-          reRenderInstalled();
-          reRenderCommunity();
-        }, 100);
-      }
-    }, 150));
-    panelObserver.observe(installedPanel, { childList: true });
-  }
+  // Also trigger on right-click (PM opens)
+  const contextHandler = (e) => {
+    if (e.target.closest('.pm-root')) return;
+    setTimeout(enhance, 300);
+    setTimeout(enhance, 600);
+  };
+  api.boardEl.addEventListener('contextmenu', contextHandler);
 
-  // Toolbar button to open PM
-  api.registerToolbarButton({
-    id: 'pme-open-pm',
-    label: '⚙️ Plugins',
-    onClick: () => {
-      const pmRoot = document.querySelector('.pm-root');
-      if (pmRoot) {
-        pmRoot.style.display = 'flex';
-        setTimeout(enhancePluginManager, 100);
-      }
-    }
-  });
-
-  // Keyboard shortcut
+  // Keyboard shortcut to toggle PM
   const unregister = api.registerShortcut('ctrl+shift+p', () => {
     const pmRoot = document.querySelector('.pm-root');
     if (pmRoot) {
       const isOpen = pmRoot.style.display !== 'none' && pmRoot.style.display !== '';
       pmRoot.style.display = isOpen ? 'none' : 'flex';
-      if (!isOpen) setTimeout(enhancePluginManager, 100);
+      if (!isOpen) {
+        setTimeout(enhance, 200);
+        setTimeout(enhance, 500);
+      }
     }
   });
 
-  console.log('⚡ Plugin Manager Enhancer v1.0.0 — enhancing your PM in-place');
+  console.log('⚡ Plugin Manager Enhancer v2.0.0 — enhancing PM in-place');
 }
 
 export function teardown() {
-  if (observer) observer.disconnect();
+  if (enhanceInterval) clearInterval(enhanceInterval);
   if (enhancerStyle) enhancerStyle.remove();
+  // Clean up injected elements
+  document.querySelectorAll('.pme-toolbar, .pme-stats, .pme-divider, .pme-pill').forEach(el => el.remove());
+  // Clean up classes
+  document.querySelectorAll('.pme-hidden').forEach(el => el.classList.remove('pme-hidden'));
+  document.querySelectorAll('.pme-grid-view, .pme-list-view').forEach(el => {
+    el.classList.remove('pme-grid-view', 'pme-list-view');
+  });
+  // Remove hooks
+  document.querySelectorAll('[data-pme-hooked]').forEach(el => delete el.dataset.pmeHooked);
   if (currentApi) {
-    currentApi.removeToolbarButton('pme-open-pm');
+    currentApi.removeToolbarButton && currentApi.removeToolbarButton('pme-open-pm');
   }
-  // Remove enhancer elements
-  document.querySelectorAll('.pme-toolbar, .pme-stats-bar, .pme-section, .pme-grid-wrap, .pme-list-wrap').forEach(el => el.remove());
-  // Remove list card class
-  document.querySelectorAll('.pme-list-card').forEach(el => el.classList.remove('pme-list-card'));
-  // Remove status badges
-  document.querySelectorAll('.pme-status').forEach(el => el.remove());
-  // Remove enhanced flag
-  const pmRoot = document.querySelector('.pm-root');
-  if (pmRoot) delete pmRoot.dataset.pmeEnhanced;
   currentApi = null;
 }
