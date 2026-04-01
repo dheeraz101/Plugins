@@ -5,7 +5,7 @@ let enhanceInterval = null;
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '2.1.0',
+  version: '2.2.0',
   compat: '>=3.3.0'
 };
 
@@ -41,11 +41,6 @@ export function setup(api) {
       letter-spacing: -0.025em !important;
       line-height: 1.3 !important;
     }
-    #pm-stats {
-      font-size: 11px !important;
-      color: #555 !important;
-      margin-top: 4px !important;
-    }
 
     /* ========== TABS ========== */
     .pm-tabs {
@@ -70,6 +65,8 @@ export function setup(api) {
       background: #111118 !important;
       display: flex !important;
       flex-direction: column !important;
+      flex: 1 !important;
+      overflow: hidden !important;
     }
 
     /* ========== TOOLBAR ========== */
@@ -118,12 +115,12 @@ export function setup(api) {
       flex: 1 !important;
       overflow-y: auto !important;
     }
-    .pm-panel::after { height: 20px !important; }
+    .pm-panel::after { content: "" !important; display: block !important; height: 20px !important; }
     .pm-panel::-webkit-scrollbar { width: 6px !important; }
     .pm-panel::-webkit-scrollbar-track { background: transparent !important; }
     .pm-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1) !important; border-radius: 8px !important; }
 
-    /* ========== GRID VIEW — ALL PANELS ========== */
+    /* ========== GRID VIEW ========== */
     .pm-panel.pme-grid .pm-card {
       display: inline-block !important;
       vertical-align: top !important;
@@ -143,19 +140,11 @@ export function setup(api) {
       border-radius: 10px !important;
       margin-bottom: 6px !important;
     }
-    .pm-panel.pme-list .pm-card > div:first-child {
-      flex-shrink: 0 !important;
-    }
-    .pm-panel.pme-list .pm-card > div:nth-child(2) {
-      flex: 1 !important;
-      min-width: 0 !important;
-    }
-    .pm-panel.pme-list .pm-card > div:last-child {
-      flex-shrink: 0 !important;
-      margin-top: 0 !important;
-    }
+    .pm-panel.pme-list .pm-card > div:first-child { flex-shrink: 0 !important; }
+    .pm-panel.pme-list .pm-card > div:nth-child(2) { flex: 1 !important; min-width: 0 !important; }
+    .pm-panel.pme-list .pm-card > div:last-child { flex-shrink: 0 !important; margin-top: 0 !important; }
 
-    /* ========== CARDS — UNIFORM HEIGHT ========== */
+    /* ========== CARDS ========== */
     .pm-card {
       background: rgba(255,255,255,0.03) !important;
       border: 1px solid rgba(255,255,255,0.06) !important;
@@ -171,36 +160,25 @@ export function setup(api) {
       box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
     }
 
-    /* Grid cards: flex column so button stays at bottom */
+    /* Grid: flex column, push buttons to bottom */
     .pm-panel.pme-grid .pm-card {
       display: flex !important;
       flex-direction: column !important;
     }
-    .pm-panel.pme-grid .pm-card > div:first-child {
-      flex: 1 !important;
-    }
+    .pm-panel.pme-grid .pm-card > div:first-child { flex: 1 !important; }
     .pm-panel.pme-grid .pm-card > div:last-child {
       margin-top: auto !important;
       padding-top: 10px !important;
     }
 
-    /* ========== CARD TEXT — PRETEXT SPACING ========== */
+    /* ========== CARD TYPOGRAPHY ========== */
     .pm-card b {
       font-size: 15px !important;
       letter-spacing: -0.02em !important;
       line-height: 1.35 !important;
     }
-    .pm-card div[style*="font-size:11px"] {
-      font-size: 11px !important;
-      line-height: 1.45 !important;
-    }
-    .pm-card div[style*="font-size:13px"] {
-      font-size: 13px !important;
-      line-height: 1.55 !important;
-      color: #999 !important;
-    }
 
-    /* ========== UNIFORM BUTTONS ========== */
+    /* ========== BUTTONS — UNIFORM ========== */
     .pm-btn {
       display: inline-flex !important;
       align-items: center !important;
@@ -213,6 +191,8 @@ export function setup(api) {
       transition: all 0.15s ease !important;
       white-space: nowrap !important;
       min-height: 34px !important;
+      gap: 6px !important;
+      line-height: 1 !important;
     }
     .pm-btn.primary {
       background: #a78bfa !important;
@@ -234,46 +214,86 @@ export function setup(api) {
       background: rgba(232,72,77,0.2) !important;
     }
 
-    /* Full-width install button in grid cards */
-    .pm-panel.pme-grid .pm-btn[data-install],
-    .pm-panel.pme-grid .pm-btn.primary {
-      width: 100% !important;
+    /* ========== COMMUNITY ICON BUTTONS ========== */
+    .pme-icon-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 38px !important;
+      height: 38px !important;
+      border-radius: 10px !important;
+      border: none !important;
+      cursor: pointer !important;
+      font-size: 18px !important;
+      transition: all 0.2s ease !important;
+      line-height: 1 !important;
+      padding: 0 !important;
+    }
+    .pme-icon-btn.install {
+      background: rgba(167,139,250,0.15) !important;
+      color: #a78bfa !important;
+    }
+    .pme-icon-btn.install:hover {
+      background: rgba(167,139,250,0.3) !important;
+      transform: scale(1.1) !important;
+    }
+    .pme-icon-btn.installed {
+      background: rgba(255,255,255,0.04) !important;
+      color: #444 !important;
+      cursor: default !important;
+      filter: grayscale(1) !important;
+      opacity: 0.5 !important;
     }
 
-    /* Button row in grid cards */
-    .pm-panel.pme-grid .pm-card > div:last-child {
+    /* Community card: name + button row */
+    .pm-panel.pme-grid .pme-comm-footer {
       display: flex !important;
-      gap: 6px !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      margin-top: auto !important;
+      padding-top: 10px !important;
+    }
+    .pm-panel.pme-list .pme-comm-footer {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      flex-shrink: 0 !important;
+      margin-left: auto !important;
+    }
+    .pme-comm-status {
+      font-size: 10px !important;
+      color: #555 !important;
+      letter-spacing: 0.02em !important;
     }
 
     /* ========== STATS BAR ========== */
     .pme-stats {
-      display: flex !important; gap: 16px !important;
-      padding: 10px 24px !important;
+      display: flex !important; align-items: center !important;
+      gap: 20px !important;
+      padding: 12px 24px !important;
       border-top: 1px solid rgba(255,255,255,0.04) !important;
       background: rgba(0,0,0,0.2) !important;
       flex-shrink: 0 !important;
-      font-size: 11px !important; color: #555 !important;
+      font-size: 12px !important; color: #555 !important;
     }
     .pme-stats b { color: #a78bfa !important; font-weight: 700 !important; }
-    .pme-stats .pme-green { color: #2ecc71 !important; }
-    .pme-stats .pme-orange { color: #f39c12 !important; }
-    .pme-stats .pme-right { margin-left: auto !important; }
+    .pme-stats .sg { color: #2ecc71 !important; }
+    .pme-stats .so { color: #f39c12 !important; }
+    .pme-stats .sr { margin-left: auto !important; color: #444 !important; }
 
     /* ========== SECTION DIVIDER ========== */
-    .pme-divider {
+    .pme-section {
       display: flex !important; align-items: center !important; gap: 10px !important;
-      padding: 14px 4px 10px !important; margin-top: 4px !important;
-      clear: both !important;
+      padding: 16px 4px 12px !important; clear: both !important;
     }
-    .pme-divider-dot { width: 7px !important; height: 7px !important; border-radius: 50% !important; }
-    .pme-divider-text {
+    .pme-section-dot { width: 8px !important; height: 8px !important; border-radius: 50% !important; flex-shrink: 0 !important; }
+    .pme-section-label {
       font-size: 11px !important; font-weight: 700 !important;
       text-transform: uppercase !important; letter-spacing: 0.08em !important;
-      color: #666 !important;
+      color: #888 !important;
     }
-    .pme-divider-count {
-      font-size: 10px !important; color: #444 !important;
+    .pme-section-count {
+      font-size: 10px !important; color: #555 !important;
       background: rgba(255,255,255,0.04) !important;
       padding: 2px 8px !important; border-radius: 10px !important;
     }
@@ -334,6 +354,7 @@ export function setup(api) {
         toolbar.querySelectorAll('.pme-view-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         applyViewMode(pmRoot);
+        organizeInstalled(pmRoot);
       };
     });
 
@@ -342,14 +363,18 @@ export function setup(api) {
       applySearch(pmRoot, searchInput.value.toLowerCase());
     }, 200));
 
-    // Hook tab clicks to clear search and re-apply
     pmRoot.querySelectorAll('.pm-tab').forEach(tab => {
       if (tab.dataset.pmeHooked) return;
       tab.dataset.pmeHooked = '1';
       tab.addEventListener('click', () => {
         searchInput.value = '';
         applySearch(pmRoot, '');
-        setTimeout(() => applyViewMode(pmRoot), 80);
+        setTimeout(() => {
+          applyViewMode(pmRoot);
+          organizeInstalled(pmRoot);
+          enhanceCommunity(pmRoot);
+          updateStats(pmRoot);
+        }, 100);
       });
     });
   }
@@ -377,7 +402,7 @@ export function setup(api) {
     updateStats(pmRoot);
   }
 
-  // ───────── ORGANIZE INSTALLED ─────────
+  // ───────── ORGANIZE INSTALLED: Active ↑ Paused ↓ ─────────
   function organizeInstalled(pmRoot) {
     const panel = pmRoot.querySelector('#installed');
     if (!panel || panel.style.display === 'none') return;
@@ -385,12 +410,14 @@ export function setup(api) {
     const cards = Array.from(panel.querySelectorAll('.pm-card'));
     if (cards.length === 0) return;
 
-    // Remove old dividers
-    panel.querySelectorAll('.pme-divider').forEach(el => el.remove());
+    // Remove old section headers
+    panel.querySelectorAll('.pme-section').forEach(el => el.remove());
 
     const plugins = currentApi.registry.getAll();
+    const active = plugins.filter(p => p.enabled);
+    const paused = plugins.filter(p => !p.enabled);
 
-    // Inject/update pills
+    // Inject/update status pills on each card
     cards.forEach(card => {
       const toggleBtn = card.querySelector('[data-act="toggle"]');
       if (!toggleBtn) return;
@@ -408,40 +435,146 @@ export function setup(api) {
       pill.innerHTML = `<span class="pme-pill-dot"></span>${plugin.enabled ? 'Active' : 'Paused'}`;
     });
 
-    // Separate and reorder
-    const activeCards = [];
-    const pausedCards = [];
-    cards.forEach(card => {
-      if (card.classList.contains('pme-hidden')) return;
-      const toggleBtn = card.querySelector('[data-act="toggle"]');
-      if (!toggleBtn) { activeCards.push(card); return; }
-      const plugin = plugins.find(p => p.id === toggleBtn.dataset.id);
-      if (!plugin || plugin.enabled) activeCards.push(card);
-      else pausedCards.push(card);
-    });
+    // Only reorder if we have both active and paused
+    if (active.length > 0 && paused.length > 0) {
+      const activeCards = [];
+      const pausedCards = [];
 
-    if (activeCards.length > 0 && pausedCards.length > 0) {
-      // Detach all visible cards
+      cards.forEach(card => {
+        const toggleBtn = card.querySelector('[data-act="toggle"]');
+        if (!toggleBtn) { activeCards.push(card); return; }
+        const plugin = plugins.find(p => p.id === toggleBtn.dataset.id);
+        if (!plugin || plugin.enabled) activeCards.push(card);
+        else pausedCards.push(card);
+      });
+
+      // Detach all
       [...activeCards, ...pausedCards].forEach(c => {
         if (c.parentNode === panel) panel.removeChild(c);
       });
 
-      // Re-attach active
+      // ACTIVE section header
+      const activeHeader = document.createElement('div');
+      activeHeader.className = 'pme-section';
+      activeHeader.innerHTML = `
+        <div class="pme-section-dot" style="background:#2ecc71"></div>
+        <div class="pme-section-label">Active</div>
+        <div class="pme-section-count">${activeCards.length}</div>
+      `;
+      panel.appendChild(activeHeader);
+
+      // Active cards
       activeCards.forEach(c => panel.appendChild(c));
 
-      // Divider
-      const div = document.createElement('div');
-      div.className = 'pme-divider';
-      div.innerHTML = `
-        <div class="pme-divider-dot" style="background:#f39c12"></div>
-        <div class="pme-divider-text">Paused</div>
-        <div class="pme-divider-count">${pausedCards.length}</div>
+      // PAUSED section header
+      const pausedHeader = document.createElement('div');
+      pausedHeader.className = 'pme-section';
+      pausedHeader.innerHTML = `
+        <div class="pme-section-dot" style="background:#f39c12"></div>
+        <div class="pme-section-label">Paused</div>
+        <div class="pme-section-count">${pausedCards.length}</div>
       `;
-      panel.appendChild(div);
+      panel.appendChild(pausedHeader);
 
-      // Re-attach paused
+      // Paused cards
       pausedCards.forEach(c => panel.appendChild(c));
+    } else {
+      // Only one group — still show a section header
+      const onlyActive = paused.length === 0;
+      const header = document.createElement('div');
+      header.className = 'pme-section';
+      header.innerHTML = `
+        <div class="pme-section-dot" style="background:${onlyActive ? '#2ecc71' : '#f39c12'}"></div>
+        <div class="pme-section-label">${onlyActive ? 'Active' : 'Paused'}</div>
+        <div class="pme-section-count">${cards.length}</div>
+      `;
+      // Insert before first card
+      const firstCard = panel.querySelector('.pm-card');
+      if (firstCard) panel.insertBefore(header, firstCard);
+      else panel.appendChild(header);
     }
+  }
+
+  // ───────── ENHANCE COMMUNITY: icon buttons ─────────
+  function enhanceCommunity(pmRoot) {
+    const panel = pmRoot.querySelector('#community');
+    if (!panel || panel.style.display === 'none') return;
+
+    const cards = panel.querySelectorAll('.pm-card');
+    if (cards.length === 0) return;
+
+    const installed = new Set(currentApi.registry.getAll().map(p => p.id));
+
+    cards.forEach(card => {
+      // Skip if already enhanced
+      if (card.dataset.pmeComm) return;
+
+      const installBtn = card.querySelector('[data-install]');
+      const existingDisabled = card.querySelector('button[disabled]');
+      const pluginId = installBtn?.dataset.install || '';
+
+      if (installBtn) {
+        // Has install button — replace with icon
+        const footer = document.createElement('div');
+        footer.className = 'pme-comm-footer';
+
+        if (installed.has(pluginId)) {
+          footer.innerHTML = `
+            <span class="pme-comm-status">Installed</span>
+            <button class="pme-icon-btn installed" title="Already installed">✓</button>
+          `;
+        } else {
+          footer.innerHTML = `
+            <span class="pme-comm-status">Available</span>
+            <button class="pme-icon-btn install" title="Install" data-install="${pluginId}" data-url="${installBtn.dataset.url}">↓</button>
+          `;
+        }
+
+        // Replace the button row
+        installBtn.parentElement.replaceWith(footer);
+      } else if (existingDisabled) {
+        // Already installed — replace with greyed icon
+        const footer = document.createElement('div');
+        footer.className = 'pme-comm-footer';
+        footer.innerHTML = `
+          <span class="pme-comm-status">Installed</span>
+          <button class="pme-icon-btn installed" title="Already installed">✓</button>
+        `;
+        existingDisabled.parentElement.replaceWith(footer);
+      }
+
+      card.dataset.pmeComm = '1';
+    });
+
+    // Re-bind install clicks
+    panel.querySelectorAll('.pme-icon-btn.install').forEach(btn => {
+      if (btn.dataset.pmeBound) return;
+      btn.dataset.pmeBound = '1';
+      btn.onclick = async () => {
+        const newDef = {
+          id: btn.dataset.install,
+          url: btn.dataset.url,
+          name: btn.dataset.install,
+          enabled: true,
+          source: 'registry'
+        };
+        const registry = currentApi.registry.getAll();
+        currentApi.registry.save([...registry, newDef]);
+        try {
+          await currentApi.reloadPlugin(newDef.id);
+          currentApi.notify(`✅ Installed ${newDef.id}`, 'success');
+          // Update this button to installed state
+          btn.className = 'pme-icon-btn installed';
+          btn.title = 'Already installed';
+          btn.textContent = '✓';
+          btn.onclick = null;
+          const status = btn.parentElement.querySelector('.pme-comm-status');
+          if (status) status.textContent = 'Installed';
+        } catch {
+          currentApi.notify('Install failed', 'error');
+        }
+      };
+    });
   }
 
   // ───────── UPDATE STATS ─────────
@@ -458,17 +591,18 @@ export function setup(api) {
 
     if (installedPanel && installedPanel.style.display !== 'none') {
       statsEl.innerHTML = `
-        <span><b>${plugins.length}</b> plugins</span>
-        <span><b class="pme-green">${active}</b> active</span>
-        <span><b class="pme-orange">${paused}</b> paused</span>
-        <span class="pme-right">${viewMode === 'grid' ? '⊞ Grid' : '☰ List'}</span>
+        <span><b>${plugins.length}</b> total</span>
+        <span><b class="sg">${active}</b> active</span>
+        <span><b class="so">${paused}</b> paused</span>
+        <span class="sr">${viewMode === 'grid' ? '⊞ Grid' : '☰ List'}</span>
       `;
     } else if (communityPanel && communityPanel.style.display !== 'none') {
       const total = communityPanel.querySelectorAll('.pm-card').length;
+      const instCount = new Set(currentApi.registry.getAll().map(p => p.id)).size;
       statsEl.innerHTML = `
         <span><b>${total}</b> available</span>
-        <span><b class="pme-green">${plugins.length}</b> installed</span>
-        <span class="pme-right">${viewMode === 'grid' ? '⊞ Grid' : '☰ List'}</span>
+        <span><b class="sg">${instCount}</b> installed</span>
+        <span class="sr">${viewMode === 'grid' ? '⊞ Grid' : '☰ List'}</span>
       `;
     }
   }
@@ -481,19 +615,18 @@ export function setup(api) {
     injectToolbar(pmRoot);
     applyViewMode(pmRoot);
     organizeInstalled(pmRoot);
+    enhanceCommunity(pmRoot);
     updateStats(pmRoot);
   }
 
   enhanceInterval = setInterval(enhance, 600);
 
-  // Also on right-click
   api.boardEl.addEventListener('contextmenu', (e) => {
     if (e.target.closest('.pm-root')) return;
     setTimeout(enhance, 300);
     setTimeout(enhance, 700);
   });
 
-  // Ctrl+Shift+P
   api.registerShortcut('ctrl+shift+p', () => {
     const pmRoot = document.querySelector('.pm-root');
     if (pmRoot) {
@@ -503,15 +636,16 @@ export function setup(api) {
     }
   });
 
-  console.log('⚡ PM Enhancer v2.1.0');
+  console.log('⚡ PM Enhancer v2.2.0');
 }
 
 export function teardown() {
   if (enhanceInterval) clearInterval(enhanceInterval);
   if (enhancerStyle) enhancerStyle.remove();
-  document.querySelectorAll('.pme-toolbar, .pme-stats, .pme-divider, .pme-pill').forEach(el => el.remove());
+  document.querySelectorAll('.pme-toolbar, .pme-stats, .pme-section, .pme-pill, .pme-comm-footer').forEach(el => el.remove());
   document.querySelectorAll('.pme-hidden').forEach(el => el.classList.remove('pme-hidden'));
   document.querySelectorAll('.pme-grid, .pme-list').forEach(el => el.classList.remove('pme-grid', 'pme-list'));
   document.querySelectorAll('[data-pme-hooked]').forEach(el => delete el.dataset.pmeHooked);
+  document.querySelectorAll('[data-pme-comm]').forEach(el => delete el.dataset.pmeComm);
   currentApi = null;
 }
