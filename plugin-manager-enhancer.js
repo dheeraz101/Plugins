@@ -5,7 +5,7 @@ let pmeObserver = null;
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '2.8.0',
+  version: '2.9.0',
   compat: '>=3.3.0'
 };
 
@@ -116,10 +116,17 @@ export function setup(api) {
       flex: 1 !important;
       min-height: 0 !important;
       overflow-y: auto !important;
+      overflow-x: hidden !important;
     }
     .pm-panel::-webkit-scrollbar { width: 6px !important; }
     .pm-panel::-webkit-scrollbar-track { background: transparent !important; }
     .pm-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1) !important; border-radius: 8px !important; }
+
+    /* Prevent flexbox phantom scrollbar */
+    .pm-panel.pme-grid,
+    .pm-panel.pme-list {
+      align-content: flex-start !important;
+    }
 
     /* ============================================================
        GRID VIEW — applies to visible panels (installed + community)
@@ -133,24 +140,17 @@ export function setup(api) {
       width: calc(33.333% - 8px) !important;
       margin: 0 !important;
       flex-shrink: 0 !important;
-    }
-
-    /* Grid: flex column so buttons sit at bottom */
-    .pm-panel.pme-grid .pm-card {
       display: flex !important;
       flex-direction: column !important;
     }
     .pm-panel.pme-grid .pm-card > div:first-child {
       flex: 1 !important;
     }
-    .pm-panel.pme-grid .pm-card .pme-card-actions,
+    /* Grid: push buttons to bottom-right */
+    .pm-panel.pme-grid .pm-card > div:last-child,
     .pm-panel.pme-grid .pme-comm-footer {
       margin-top: auto !important;
-      padding-top: 10px !important;
-      justify-content: flex-end !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 6px !important;
+      align-self: flex-end !important;
     }
 
     /* ============================================================
@@ -179,15 +179,8 @@ export function setup(api) {
       min-width: 0 !important;
     }
 
-    /* List: push action buttons to FAR RIGHT */
-    .pm-panel.pme-list .pm-card .pme-card-actions,
-    .pm-panel.pme-list .pm-card .pme-comm-footer {
-      margin-left: auto !important;
-      flex-shrink: 0 !important;
-    }
-
     /* ============================================================
-       CARDS — base styling
+       UNIVERSAL CARD LAYOUT — 3-column: icon | content | actions
        ============================================================ */
     .pm-card {
       background: rgba(255,255,255,0.03) !important;
@@ -202,6 +195,16 @@ export function setup(api) {
       background: rgba(255,255,255,0.06) !important;
       border-color: rgba(255,255,255,0.12) !important;
       box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
+    }
+
+    /* Right-side actions — ALWAYS locked right */
+    .pm-card > div:last-child,
+    .pm-card .pme-comm-footer {
+      margin-left: auto !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      flex-shrink: 0 !important;
     }
 
     /* ========== CARD TYPOGRAPHY ========== */
@@ -415,8 +418,6 @@ export function setup(api) {
       .forEach(el => el.classList.remove('pme-hidden'));
     panel.querySelectorAll('[data-pme-comm]')
       .forEach(el => delete el.dataset.pmeComm);
-    panel.querySelectorAll('.pme-card-actions')
-      .forEach(el => el.classList.remove('pme-card-actions'));
     panel.classList.remove('pme-grid', 'pme-list');
     delete panel.dataset.pmeState;
   }
@@ -474,18 +475,12 @@ export function setup(api) {
     panel.querySelectorAll('.pme-section').forEach(el => el.remove());
     panel.dataset.pmeState = stateKey;
 
-    // Inject/update pills + tag button row
+    // Inject/update pills
     cards.forEach(card => {
       const toggleBtn = card.querySelector('[data-act="toggle"]');
       if (!toggleBtn) return;
       const plugin = plugins.find(p => p.id === toggleBtn.dataset.id);
       if (!plugin) return;
-
-      // Tag the button container div for reliable CSS targeting
-      const actionsDiv = toggleBtn.parentElement;
-      if (actionsDiv && actionsDiv.tagName === 'DIV' && !actionsDiv.classList.contains('pme-card-actions')) {
-        actionsDiv.classList.add('pme-card-actions');
-      }
 
       let pill = card.querySelector('.pme-pill');
       if (!pill) {
@@ -720,7 +715,7 @@ export function setup(api) {
     }
   });
 
-  console.log('⚡ PM Enhancer v2.8.0');
+  console.log('⚡ PM Enhancer v2.9.0');
 }
 
 export function teardown() {
