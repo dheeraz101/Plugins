@@ -5,7 +5,7 @@ let enhanceInterval = null;
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '2.4.1',
+  version: '2.6.0',
   compat: '>=3.3.0'
 };
 
@@ -377,7 +377,7 @@ export function setup(api) {
         api.storage.setForPlugin(meta.id, 'viewMode', viewMode);
         toolbar.querySelectorAll('.pme-view-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        applyViewMode(pmRoot);
+        enhance();
       };
     });
 
@@ -386,36 +386,43 @@ export function setup(api) {
       applySearch(pmRoot, searchInput.value.toLowerCase());
     }, 200));
 
-    let tabSwitchTimeout = null;
     pmRoot.querySelectorAll('.pm-tab').forEach(tab => {
       if (tab.dataset.pmeHooked) return;
       tab.dataset.pmeHooked = '1';
       tab.addEventListener('click', () => {
         searchInput.value = '';
         applySearch(pmRoot, '');
-        // Clear state guards so re-org happens
-        const ip = pmRoot.querySelector('#installed');
-        if (ip) delete ip.dataset.pmeState;
-        // Debounce tab-switch enhance to prevent racing with the interval
-        if (tabSwitchTimeout) clearTimeout(tabSwitchTimeout);
-        tabSwitchTimeout = setTimeout(() => {
-          applyViewMode(pmRoot);
-          organizeInstalled(pmRoot);
-          enhanceCommunity(pmRoot);
-          updateStats(pmRoot);
-        }, 150);
+        setTimeout(enhance, 120);
       });
     });
   }
 
-  // ───────── VIEW MODE — applies to ALL panels ─────────
+  // ───────── ACTIVE PANEL DETECTION ─────────
+  function getActivePanel(pmRoot) {
+    const activeTab = pmRoot.querySelector('.pm-tab.active');
+    if (!activeTab) return null;
+    const target = activeTab.dataset.tab;
+    if (!target) return null;
+    return pmRoot.querySelector(`#${target}`);
+  }
+
+  // ───────── RESET INACTIVE PANEL ─────────
+  function resetPanel(panel) {
+    panel.querySelectorAll('.pme-section, .pme-pill, .pme-comm-footer')
+      .forEach(el => el.remove());
+    panel.querySelectorAll('.pme-hidden')
+      .forEach(el => el.classList.remove('pme-hidden'));
+    panel.querySelectorAll('[data-pme-comm]')
+      .forEach(el => delete el.dataset.pmeComm);
+    delete panel.dataset.pmeState;
+  }
+
+  // ───────── VIEW MODE — active panel only ─────────
   function applyViewMode(pmRoot) {
-    pmRoot.querySelectorAll('.pm-panel').forEach(p => {
-      p.classList.remove('pme-grid', 'pme-list');
-      // Always apply class regardless of display state
-      // (community might become visible later)
-      p.classList.add(viewMode === 'grid' ? 'pme-grid' : 'pme-list');
-    });
+    const activePanel = getActivePanel(pmRoot);
+    if (!activePanel) return;
+    activePanel.classList.remove('pme-grid', 'pme-list');
+    activePanel.classList.add(viewMode === 'grid' ? 'pme-grid' : 'pme-list');
   }
 
   // ───────── SEARCH ─────────
@@ -630,11 +637,36 @@ export function setup(api) {
     const pmRoot = document.querySelector('.pm-root');
     if (!pmRoot || pmRoot.style.display === 'none' || pmRoot.style.display === '') return;
 
-    injectToolbar(pmRoot);
-    applyViewMode(pmRoot);
-    organizeInstalled(pmRoot);
-    enhanceCommunity(pmRoot);
-    updateStats(pmRoot);
+    // Mutex: prevent re-entrant calls from interval + tab click racing
+    if (pmRoot.dataset.pmeEnhancing) return;
+    pmRoot.dataset.pmeEnhancing = '1';
+
+    try {
+      injectToolbar(pmRoot);
+
+      const activePanel = getActivePanel(pmRoot);
+      if (!activePanel) return;
+
+      // Reset the INACTIVE panel (remove leftover injections)
+      const installed = pmRoot.querySelector('#installed');
+      const community = pmRoot.querySelector('#community');
+
+      // Apply view mode to active panel only
+      activePanel.classList.remove('pme-grid', 'pme-list');
+      activePanel.classList.add(viewMode === 'grid' ? 'pme-grid' : 'pme-list');
+
+      if (activePanel.id === 'installed') {
+        if (community) resetPanel(community);
+        organizeInstalled(pmRoot);
+      } else if (activePanel.id === 'community') {
+        if (installed) resetPanel(installed);
+        enhanceCommunity(pmRoot);
+      }
+
+      updateStats(pmRoot);
+    } finally {
+      delete pmRoot.dataset.pmeEnhancing;
+    }
   }
 
   enhanceInterval = setInterval(enhance, 600);
