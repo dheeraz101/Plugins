@@ -686,7 +686,14 @@ export function setup(api) {
   }
 
   // ───────── MUTATION OBSERVER (replaces interval) ─────────
-  pmeObserver = new MutationObserver(() => enhance());
+  let enhanceTimer = null;
+  pmeObserver = new MutationObserver(() => {
+    if (enhanceTimer) return;
+    enhanceTimer = setTimeout(() => {
+      enhanceTimer = null;
+      enhance();
+    }, 250);
+  });
   pmeObserver.observe(document.body, { childList: true, subtree: true });
 
   api.boardEl.addEventListener('contextmenu', (e) => {
@@ -709,6 +716,7 @@ export function setup(api) {
 
 export function teardown() {
   if (pmeObserver) { pmeObserver.disconnect(); pmeObserver = null; }
+  if (enhanceTimer) { clearTimeout(enhanceTimer); enhanceTimer = null; }
   if (enhancerStyle) enhancerStyle.remove();
   document.querySelectorAll('.pme-toolbar, .pme-stats, .pme-section, .pme-pill, .pme-comm-footer').forEach(el => el.remove());
   document.querySelectorAll('.pme-hidden').forEach(el => el.classList.remove('pme-hidden'));
