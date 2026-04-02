@@ -5,7 +5,7 @@ let enhanceInterval = null;
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '2.5.0',
+  version: '2.4.1',
   compat: '>=3.3.0'
 };
 
@@ -16,17 +16,6 @@ export function setup(api) {
   enhancerStyle = document.createElement('style');
   enhancerStyle.id = 'pme-styles';
   enhancerStyle.textContent = `
-
-    /* Force correct tab visibility (in case the base plugin is flaky) */
-    #installed { display: none !important; }
-    #community { display: none !important; }
-
-    .pm-tab.active[data-tab="installed"] ~ .pm-body #installed,
-    .pm-tab.active[data-tab="community"] ~ .pm-body #community,
-    .pm-tab.active ~ .pm-body #installed,
-    .pm-tab.active ~ .pm-body #community {
-      display: flex !important;
-    }
 
     /* ========== WINDOW ========== */
     .pm-root {
@@ -429,29 +418,11 @@ export function setup(api) {
     });
   }
 
-  function getActiveTab(pmRoot) {
-    const activeTab = pmRoot.querySelector('.pm-tab.active');
-    if (!activeTab) return null;
-    const tabName = activeTab.dataset.tab?.trim().toLowerCase();
-    if (tabName === 'installed' || tabName === 'community') return tabName;
-    return activeTab.textContent.trim().toLowerCase();
-  }
-
-  function isInstalledTabActive(pmRoot) {
-    return getActiveTab(pmRoot) === 'installed';
-  }
-
-  function isCommunityTabActive(pmRoot) {
-    return getActiveTab(pmRoot) === 'community';
-  }
-
   // ───────── SEARCH ─────────
   function applySearch(pmRoot, query) {
     ['#installed', '#community'].forEach(sel => {
       const panel = pmRoot.querySelector(sel);
-      if (!panel) return;
-      if (sel === '#installed' && !isInstalledTabActive(pmRoot)) return;
-      if (sel === '#community' && !isCommunityTabActive(pmRoot)) return;
+      if (!panel || panel.style.display === 'none') return;
       panel.querySelectorAll('.pm-card').forEach(card => {
         if (!query) { card.classList.remove('pme-hidden'); return; }
         card.classList.toggle('pme-hidden', !card.textContent.toLowerCase().includes(query));
@@ -462,9 +433,8 @@ export function setup(api) {
 
   // ───────── ORGANIZE INSTALLED ─────────
   function organizeInstalled(pmRoot) {
-    if (!isInstalledTabActive(pmRoot)) return;
     const panel = pmRoot.querySelector('#installed');
-    if (!panel) return;
+    if (!panel || panel.style.display === 'none') return;
 
     const cards = Array.from(panel.querySelectorAll('.pm-card'));
     if (cards.length === 0) return;
@@ -551,9 +521,8 @@ export function setup(api) {
 
   // ───────── ENHANCE COMMUNITY ─────────
   function enhanceCommunity(pmRoot) {
-    if (!isCommunityTabActive(pmRoot)) return;
     const panel = pmRoot.querySelector('#community');
-    if (!panel) return;
+    if (!panel || panel.style.display === 'none') return;
 
     const cards = panel.querySelectorAll('.pm-card');
     if (cards.length === 0) return;
@@ -638,14 +607,14 @@ export function setup(api) {
     const installedPanel = pmRoot.querySelector('#installed');
     const communityPanel = pmRoot.querySelector('#community');
 
-    if (isInstalledTabActive(pmRoot) && installedPanel) {
+    if (installedPanel && installedPanel.style.display !== 'none') {
       statsEl.innerHTML = `
         <span><b>${plugins.length}</b> total</span>
         <span><b class="sg">${active}</b> active</span>
         <span><b class="so">${paused}</b> paused</span>
         <span class="sr">${viewMode === 'grid' ? '⊞ Grid' : '☰ List'}</span>
       `;
-    } else if (isCommunityTabActive(pmRoot) && communityPanel) {
+    } else if (communityPanel && communityPanel.style.display !== 'none') {
       const total = communityPanel.querySelectorAll('.pm-card').length;
       const instCount = new Set(currentApi.registry.getAll().map(p => p.id)).size;
       statsEl.innerHTML = `
@@ -659,7 +628,7 @@ export function setup(api) {
   // ───────── ENHANCE LOOP ─────────
   function enhance() {
     const pmRoot = document.querySelector('.pm-root');
-    if (!pmRoot || getComputedStyle(pmRoot).display === 'none') return;
+    if (!pmRoot || pmRoot.style.display === 'none' || pmRoot.style.display === '') return;
 
     injectToolbar(pmRoot);
     applyViewMode(pmRoot);
