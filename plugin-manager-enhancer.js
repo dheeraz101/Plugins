@@ -1,11 +1,12 @@
 let currentApi = null;
 let enhancerStyle = null;
 let pmeObserver = null;
+let enhanceTimer = null;
 
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '3.0.0',
+  version: '4.1.0',
   compat: '>=3.3.0'
 };
 
@@ -16,138 +17,155 @@ export function setup(api) {
   enhancerStyle = document.createElement('style');
   enhancerStyle.id = 'pme-styles';
   enhancerStyle.textContent = `
-
-    /* ========== WINDOW ========== */
+    /* ========== CORE WINDOW & BLUR ========== */
     .pm-root {
-      width: 960px !important;
-      height: 82vh !important;
-      max-width: 97vw !important;
-      max-height: 95vh !important;
-      border-radius: 20px !important;
-      background: #0e0e14 !important;
-      border: 1px solid rgba(255,255,255,0.08) !important;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.7) !important;
+      width: 900px !important;
+      height: 75vh !important;
+      background: rgba(255, 255, 255, 0.85) !important;
+      backdrop-filter: blur(25px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+      border: 1px solid rgba(0, 0, 0, 0.1) !important;
+      border-radius: 22px !important;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.15) !important;
       overflow: hidden !important;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
     }
 
-    /* ========== HEADER ========== */
-    .pm-header {
-      padding: 20px 24px !important;
-      background: rgba(255,255,255,0.015) !important;
-      border-bottom: 1px solid rgba(255,255,255,0.06) !important;
-    }
-    .pm-header b {
-      font-size: 16px !important;
-      letter-spacing: -0.025em !important;
-      line-height: 1.3 !important;
+    @media (prefers-color-scheme: dark) {
+      .pm-root {
+        background: rgba(28, 28, 30, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.4) !important;
+      }
     }
 
-    /* ========== TABS ========== */
+    /* ========== TABS & NAVIGATION ========== */
     .pm-tabs {
-      background: rgba(0,0,0,0.3) !important;
-      padding: 0 16px !important;
-      border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+      padding: 12px 20px 0 !important;
+      background: transparent !important;
+      border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+      display: flex !important;
+      gap: 24px !important;
     }
     .pm-tab {
-      font-weight: 600 !important;
+      padding: 8px 0 12px 0 !important;
       font-size: 13px !important;
-      padding: 14px 22px !important;
-      letter-spacing: -0.01em !important;
+      font-weight: 500 !important;
+      color: #86868b !important;
+      border-bottom: 2px solid transparent !important;
+      transition: all 0.2s ease !important;
+      cursor: pointer !important;
     }
     .pm-tab.active {
-      color: #a78bfa !important;
-      border-bottom-color: #a78bfa !important;
-    }
-    .pm-tab:hover { color: #bbb !important; }
-
-    /* ========== BODY ========== */
-    .pm-body {
-      background: #111118 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      flex: 1 !important;
-      overflow: hidden !important;
-      min-height: 0 !important;
+      color: #0071e3 !important;
+      border-bottom-color: #0071e3 !important;
     }
 
-    /* ========== TOOLBAR ========== */
+    /* ========== APPLE STYLE TOOLBAR ========== */
     .pme-toolbar {
       display: flex !important;
       align-items: center !important;
-      gap: 10px !important;
-      padding: 10px 20px !important;
-      border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-      background: rgba(0,0,0,0.15) !important;
-      flex-shrink: 0 !important;
+      padding: 16px 24px !important;
+      gap: 16px !important;
+      border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+      background: rgba(255,255,255,0.6) !important;
+      backdrop-filter: blur(20px) !important;
     }
-    .pme-search-wrap { position: relative !important; flex: 1 !important; }
-    .pme-search-icon {
-      position: absolute !important; left: 12px !important; top: 50% !important;
-      transform: translateY(-50%) !important; color: #555 !important;
-      font-size: 13px !important; pointer-events: none !important;
+    .pme-search-wrap { 
+      position: relative !important;
+      flex: 1 !important;
     }
     .pme-search {
-      width: 100% !important; padding: 8px 14px 8px 36px !important;
-      background: rgba(255,255,255,0.05) !important;
-      border: 1px solid rgba(255,255,255,0.08) !important;
-      border-radius: 10px !important; color: #fff !important;
-      font-size: 13px !important; outline: none !important;
-      transition: border-color 0.2s, background 0.2s !important;
-      box-sizing: border-box !important; font-family: inherit !important;
+      width: 100% !important;
+      background: rgba(0,0,0,0.05) !important;
+      border: none !important;
+      padding: 8px 12px 8px 32px !important;
+      border-radius: 10px !important;
+      font-size: 13px !important;
+      outline: none !important;
+      box-sizing: border-box !important;
     }
-    .pme-search:focus { border-color: #a78bfa !important; background: rgba(255,255,255,0.08) !important; }
-    .pme-search::placeholder { color: #555 !important; }
-    .pme-view-btns {
-      display: flex !important; gap: 2px !important;
-      background: rgba(255,255,255,0.05) !important;
-      border-radius: 8px !important; padding: 3px !important;
+    .pme-search-icon {
+      position: absolute !important;
+      left: 10px !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      opacity: 0.4 !important;
+      pointer-events: none !important;
+    }
+
+    /* View Switcher Pill */
+    .pme-view-switcher {
+      display: flex !important;
+      background: rgba(0,0,0,0.05) !important;
+      padding: 2px !important;
+      border-radius: 8px !important;
     }
     .pme-view-btn {
-      padding: 6px 10px !important; background: none !important; border: none !important;
-      color: #555 !important; cursor: pointer !important; border-radius: 6px !important;
-      font-size: 14px !important; transition: all 0.15s !important;
+      border: none !important;
+      background: transparent !important;
+      padding: 8px 12px !important;
+      border-radius: 6px !important;
+      cursor: pointer !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      color: #555 !important;
+      font-size: 14px !important;
     }
-    .pme-view-btn.active { background: rgba(167,139,250,0.2) !important; color: #a78bfa !important; }
-    .pme-view-btn:hover { color: #aaa !important; }
+    .pme-view-btn.active {
+      background: #fff !important;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+      color: #0071e3 !important;
+    }
 
-    /* ========== PANEL ========== */
-    .pm-panel {
-      padding: 16px 20px 20px !important;
-      flex: 1 !important;
-      min-height: 0 !important;
+    /* ========== GRID SYSTEM (FIXES FLASHING) ========== */
+    .pm-panel { 
+      padding: 24px !important; 
+      display: grid !important; 
+      gap: 16px !important; 
+      transition: opacity 0.2s ease !important;
       overflow-y: auto !important;
-      overflow-x: hidden !important;
+      max-height: calc(75vh - 150px) !important;
     }
-    .pm-panel::-webkit-scrollbar { width: 6px !important; }
+    .pm-panel::-webkit-scrollbar { width: 8px !important; }
     .pm-panel::-webkit-scrollbar-track { background: transparent !important; }
-    .pm-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1) !important; border-radius: 8px !important; }
-
-    /* Prevent flexbox phantom scrollbar */
-    .pm-panel.pme-grid,
-    .pm-panel.pme-list {
-      align-content: flex-start !important;
+    .pm-panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12) !important; border-radius: 8px !important; }
+    .pm-panel.pme-grid {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+      align-items: stretch !important;
     }
-
-    /* ============================================================
-       LIST VIEW — host app card has 2 divs: content-row + button-row
-       We make .pm-card a horizontal flex: content flexes, buttons right
-       ============================================================ */
     .pm-panel.pme-list {
       display: flex !important;
       flex-direction: column !important;
-      gap: 6px !important;
+      gap: 16px !important;
+    }
+
+    /* ========== THE CARD ========== */
+    .pm-card {
+      background: #fff !important;
+      border-radius: 16px !important;
+      padding: 16px !important;
+      border: 1px solid rgba(0,0,0,0.05) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 12px !important;
+      transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+      min-height: 150px !important;
+    }
+    .pm-card:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important;
     }
     .pm-panel.pme-list .pm-card {
-      display: flex !important;
       flex-direction: row !important;
       align-items: center !important;
-      gap: 14px !important;
     }
     .pm-panel.pme-list .pm-card > div:first-child {
       flex: 1 !important;
       min-width: 0 !important;
     }
-    /* Buttons locked to the right */
     .pm-panel.pme-list .pm-card > div:last-child,
     .pm-panel.pme-list .pm-card .pme-comm-footer {
       margin-left: auto !important;
@@ -155,175 +173,100 @@ export function setup(api) {
       flex-shrink: 0 !important;
       align-self: center !important;
     }
-
-    /* ============================================================
-       GRID VIEW — card as column: content on top, buttons at bottom
-       ============================================================ */
-    .pm-panel.pme-grid {
-      display: flex !important;
-      flex-wrap: wrap !important;
-      gap: 12px !important;
-    }
     .pm-panel.pme-grid .pm-card {
-      width: calc(33.333% - 8px) !important;
+      width: auto !important;
       margin: 0 !important;
-      flex-shrink: 0 !important;
-      display: flex !important;
-      flex-direction: column !important;
     }
-    .pm-panel.pme-grid .pm-card > div:first-child {
-      flex: 1 !important;
-    }
-    /* Buttons at bottom-right */
     .pm-panel.pme-grid .pm-card > div:last-child {
       margin-top: auto !important;
       align-self: flex-end !important;
     }
 
-    /* ============================================================
-       CARDS — base styling (host app structure: 2 divs)
-       ============================================================ */
-    .pm-card {
-      background: rgba(255,255,255,0.03) !important;
-      border: 1px solid rgba(255,255,255,0.06) !important;
-      border-radius: 14px !important;
-      padding: 18px !important;
-      margin-bottom: 12px !important;
-      transition: all 0.2s ease !important;
-      box-sizing: border-box !important;
-    }
-    .pm-card:hover {
-      background: rgba(255,255,255,0.06) !important;
-      border-color: rgba(255,255,255,0.12) !important;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
-    }
-
-    /* ========== CARD TYPOGRAPHY ========== */
-    .pm-card b {
-      font-size: 15px !important;
-      letter-spacing: -0.02em !important;
-      line-height: 1.35 !important;
-    }
-
-    /* ========== BUTTONS — UNIFORM ========== */
-    .pm-btn {
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 8px 18px !important;
-      border-radius: 8px !important;
-      font-weight: 600 !important;
-      font-size: 12px !important;
-      letter-spacing: -0.01em !important;
-      transition: all 0.15s ease !important;
-      white-space: nowrap !important;
-      min-height: 34px !important;
-      gap: 6px !important;
-      line-height: 1 !important;
-    }
-    .pm-btn.primary { background: #a78bfa !important; color: #fff !important; }
-    .pm-btn.primary:hover { background: #8b5cf6 !important; transform: translateY(-1px) !important; }
-    .pm-btn.secondary { background: rgba(255,255,255,0.06) !important; color: #ddd !important; }
-    .pm-btn.danger { background: rgba(232,72,77,0.1) !important; color: #ff6b6b !important; }
-    .pm-btn.danger:hover { background: rgba(232,72,77,0.2) !important; }
-
-    /* ========== COMMUNITY ICON BUTTONS ========== */
-    .pme-icon-btn {
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      width: 38px !important;
-      height: 38px !important;
-      border-radius: 10px !important;
-      border: none !important;
-      cursor: pointer !important;
-      font-size: 18px !important;
-      transition: all 0.2s ease !important;
-      line-height: 1 !important;
-      padding: 0 !important;
-      flex-shrink: 0 !important;
-    }
-    .pme-icon-btn.install {
-      background: rgba(167,139,250,0.15) !important;
-      color: #a78bfa !important;
-    }
-    .pme-icon-btn.install:hover {
-      background: rgba(167,139,250,0.3) !important;
-      transform: scale(1.1) !important;
-    }
-    .pme-icon-btn.installed {
-      background: rgba(255,255,255,0.04) !important;
-      color: #444 !important;
-      cursor: default !important;
-      filter: grayscale(1) !important;
-      opacity: 0.5 !important;
-    }
-
-    /* Community footer */
-    .pme-comm-footer {
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-    }
-    .pme-comm-status {
+    /* ========== STATUS PILLS ========== */
+    .pme-status-pill {
       font-size: 10px !important;
-      color: #555 !important;
+      font-weight: 600 !important;
+      padding: 2px 8px !important;
+      border-radius: 20px !important;
+      text-transform: uppercase !important;
       letter-spacing: 0.02em !important;
     }
+    .status-active { background: #e3f9eb !important; color: #1fb141 !important; }
+    .status-paused { background: #fff1e6 !important; color: #ff9500 !important; }
 
-    /* Grid community footer: space between */
-    .pm-panel.pme-grid .pme-comm-footer {
-      justify-content: space-between !important;
-      margin-top: auto !important;
-      padding-top: 10px !important;
+    /* ========== BUTTONS ========== */
+    .pm-btn {
+      border-radius: 999px !important;
+      padding: 6px 16px !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      border: none !important;
+      cursor: pointer !important;
     }
+    .pm-btn.primary { background: #0071e3 !important; color: white !important; }
+    .pm-btn.secondary { background: rgba(0,0,0,0.05) !important; color: #1d1d1f !important; }
 
-    /* List community footer: push to far right */
-    .pm-panel.pme-list .pme-comm-footer {
-      margin-left: auto !important;
-      flex-shrink: 0 !important;
+    @media (prefers-color-scheme: dark) {
+      .pm-card { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.05) !important; }
+      .pme-view-btn.active { background: rgba(255,255,255,0.2) !important; }
+      .pme-search { background: rgba(255,255,255,0.1) !important; color: white !important; }
+      .pm-btn.secondary { background: rgba(255,255,255,0.1) !important; color: white !important; }
     }
 
     /* ========== STATS BAR ========== */
     .pme-stats {
-      display: flex !important; align-items: center !important;
+      display: flex !important;
+      align-items: center !important;
       gap: 20px !important;
       padding: 12px 24px !important;
-      border-top: 1px solid rgba(255,255,255,0.04) !important;
-      background: rgba(0,0,0,0.2) !important;
-      flex-shrink: 0 !important;
-      font-size: 12px !important; color: #555 !important;
+      border-top: 1px solid rgba(0,0,0,0.05) !important;
+      background: rgba(255,255,255,0.85) !important;
+      font-size: 12px !important;
+      color: #555 !important;
     }
-    .pme-stats b { color: #a78bfa !important; font-weight: 700 !important; }
+    .pme-stats b { color: #0071e3 !important; font-weight: 700 !important; }
     .pme-stats .sg { color: #2ecc71 !important; }
     .pme-stats .so { color: #f39c12 !important; }
     .pme-stats .sr { margin-left: auto !important; color: #444 !important; }
 
     /* ========== SECTION DIVIDER ========== */
     .pme-section {
-      display: flex !important; align-items: center !important; gap: 10px !important;
-      padding: 16px 4px 12px !important; clear: both !important;
-      flex-basis: 100% !important; width: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      padding: 16px 4px 12px !important;
+      flex-basis: 100% !important;
+      width: 100% !important;
     }
     .pme-section-dot { width: 8px !important; height: 8px !important; border-radius: 50% !important; flex-shrink: 0 !important; }
     .pme-section-label {
-      font-size: 11px !important; font-weight: 700 !important;
-      text-transform: uppercase !important; letter-spacing: 0.08em !important;
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.08em !important;
       color: #888 !important;
     }
     .pme-section-count {
-      font-size: 10px !important; color: #555 !important;
-      background: rgba(255,255,255,0.04) !important;
-      padding: 2px 8px !important; border-radius: 10px !important;
+      font-size: 10px !important;
+      color: #555 !important;
+      background: rgba(0,0,0,0.05) !important;
+      padding: 2px 8px !important;
+      border-radius: 10px !important;
     }
 
     /* ========== STATUS PILL ========== */
     .pme-pill {
-      display: inline-flex !important; align-items: center !important; gap: 4px !important;
-      font-size: 9px !important; font-weight: 700 !important;
-      padding: 3px 8px !important; border-radius: 6px !important;
-      text-transform: uppercase !important; letter-spacing: 0.06em !important;
-      margin-left: 8px !important; vertical-align: middle !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+      font-size: 9px !important;
+      font-weight: 700 !important;
+      padding: 3px 8px !important;
+      border-radius: 6px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.06em !important;
+      margin-left: 8px !important;
+      vertical-align: middle !important;
     }
     .pme-pill-on { background: rgba(46,204,113,0.12) !important; color: #2ecc71 !important; }
     .pme-pill-off { background: rgba(243,156,18,0.12) !important; color: #f39c12 !important; }
@@ -339,7 +282,6 @@ export function setup(api) {
   `;
   document.head.appendChild(enhancerStyle);
 
-  // ───────── INJECT TOOLBAR + STATS ─────────
   function injectToolbar(pmRoot) {
     if (pmRoot.querySelector('.pme-toolbar')) return;
     const pmTabs = pmRoot.querySelector('.pm-tabs');
@@ -352,9 +294,9 @@ export function setup(api) {
         <span class="pme-search-icon">🔍</span>
         <input class="pme-search" placeholder="Search plugins..." id="pme-search">
       </div>
-      <div class="pme-view-btns">
-        <button class="pme-view-btn ${viewMode==='grid'?'active':''}" data-view="grid" title="Grid">⊞</button>
-        <button class="pme-view-btn ${viewMode==='list'?'active':''}" data-view="list" title="List">☰</button>
+      <div class="pme-view-switcher">
+        <button class="pme-view-btn ${viewMode === 'grid' ? 'active' : ''}" data-view="grid" title="Grid">⊞</button>
+        <button class="pme-view-btn ${viewMode === 'list' ? 'active' : ''}" data-view="list" title="List">☰</button>
       </div>
     `;
     pmTabs.after(toolbar);
@@ -392,7 +334,6 @@ export function setup(api) {
     });
   }
 
-  // ───────── ACTIVE PANEL DETECTION ─────────
   function getActivePanel(pmRoot) {
     const activeTab = pmRoot.querySelector('.pm-tab.active');
     if (!activeTab) return null;
@@ -401,19 +342,14 @@ export function setup(api) {
     return pmRoot.querySelector(`#${target}`);
   }
 
-  // ───────── RESET INACTIVE PANEL ─────────
   function resetPanel(panel) {
-    panel.querySelectorAll('.pme-section, .pme-pill, .pme-comm-footer')
-      .forEach(el => el.remove());
-    panel.querySelectorAll('.pme-hidden')
-      .forEach(el => el.classList.remove('pme-hidden'));
-    panel.querySelectorAll('[data-pme-comm]')
-      .forEach(el => delete el.dataset.pmeComm);
+    panel.querySelectorAll('.pme-section, .pme-pill, .pme-comm-footer').forEach(el => el.remove());
+    panel.querySelectorAll('.pme-hidden').forEach(el => el.classList.remove('pme-hidden'));
+    panel.querySelectorAll('[data-pme-comm]').forEach(el => delete el.dataset.pmeComm);
     panel.classList.remove('pme-grid', 'pme-list');
     delete panel.dataset.pmeState;
   }
 
-  // ───────── FORCE SINGLE PANEL VISIBLE ─────────
   function enforceSinglePanel(pmRoot, activePanel) {
     pmRoot.querySelectorAll('.pm-panel').forEach(panel => {
       if (panel === activePanel) {
@@ -426,7 +362,6 @@ export function setup(api) {
     });
   }
 
-  // ───────── VIEW MODE — active panel only ─────────
   function applyViewMode(pmRoot) {
     const activePanel = getActivePanel(pmRoot);
     if (!activePanel) return;
@@ -434,18 +369,19 @@ export function setup(api) {
     activePanel.classList.add(viewMode === 'grid' ? 'pme-grid' : 'pme-list');
   }
 
-  // ───────── SEARCH ─────────
   function applySearch(pmRoot, query) {
     const activePanel = getActivePanel(pmRoot);
     if (!activePanel) return;
     activePanel.querySelectorAll('.pm-card').forEach(card => {
-      if (!query) { card.classList.remove('pme-hidden'); return; }
+      if (!query) {
+        card.classList.remove('pme-hidden');
+        return;
+      }
       card.classList.toggle('pme-hidden', !card.textContent.toLowerCase().includes(query));
     });
     updateStats(pmRoot);
   }
 
-  // ───────── ORGANIZE INSTALLED ─────────
   function organizeInstalled(pmRoot) {
     const panel = pmRoot.querySelector('#installed');
     if (!panel) return;
@@ -456,23 +392,17 @@ export function setup(api) {
     const plugins = currentApi.registry.getAll();
     const active = plugins.filter(p => p.enabled);
     const paused = plugins.filter(p => !p.enabled);
-
-    // Guard: skip if already organized with same state
     const stateKey = `${active.length}:${paused.length}:${cards.length}`;
     if (panel.dataset.pmeState === stateKey) return;
 
-    // Force-clear old sections FIRST (before setting state guard)
-    // This prevents duplicates from racing interval + tab click
     panel.querySelectorAll('.pme-section').forEach(el => el.remove());
     panel.dataset.pmeState = stateKey;
 
-    // Inject/update pills
     cards.forEach(card => {
       const toggleBtn = card.querySelector('[data-act="toggle"]');
       if (!toggleBtn) return;
       const plugin = plugins.find(p => p.id === toggleBtn.dataset.id);
       if (!plugin) return;
-
       let pill = card.querySelector('.pme-pill');
       if (!pill) {
         pill = document.createElement('span');
@@ -533,7 +463,6 @@ export function setup(api) {
     }
   }
 
-  // ───────── ENHANCE COMMUNITY ─────────
   function enhanceCommunity(pmRoot) {
     const panel = pmRoot.querySelector('#community');
     if (!panel) return;
@@ -579,7 +508,6 @@ export function setup(api) {
       card.dataset.pmeComm = '1';
     });
 
-    // Bind install clicks
     panel.querySelectorAll('.pme-icon-btn.install').forEach(btn => {
       if (btn.dataset.pmeBound) return;
       btn.dataset.pmeBound = '1';
@@ -609,7 +537,6 @@ export function setup(api) {
     });
   }
 
-  // ───────── STATS ─────────
   function updateStats(pmRoot) {
     const statsEl = pmRoot.querySelector('#pme-stats');
     if (!statsEl) return;
@@ -640,12 +567,9 @@ export function setup(api) {
     }
   }
 
-  // ───────── ENHANCE LOOP ─────────
   function enhance() {
     const pmRoot = document.querySelector('.pm-root');
-    if (!pmRoot || pmRoot.style.display === 'none' || pmRoot.style.display === '') return;
-
-    // Mutex: prevent re-entrant calls
+    if (!pmRoot || pmRoot.style.display === 'none') return;
     if (pmRoot.dataset.pmeEnhancing) return;
     pmRoot.dataset.pmeEnhancing = '1';
 
@@ -655,22 +579,17 @@ export function setup(api) {
       const activePanel = getActivePanel(pmRoot);
       if (!activePanel) return;
 
-      // Force only the active panel visible
       enforceSinglePanel(pmRoot, activePanel);
+      applyViewMode(pmRoot);
 
-      // Reset the inactive panel
-      const installed = pmRoot.querySelector('#installed');
-      const community = pmRoot.querySelector('#community');
-
-      // Apply view mode to active panel only
-      activePanel.classList.remove('pme-grid', 'pme-list');
-      activePanel.classList.add(viewMode === 'grid' ? 'pme-grid' : 'pme-list');
+      const installedPanel = pmRoot.querySelector('#installed');
+      const communityPanel = pmRoot.querySelector('#community');
 
       if (activePanel.id === 'installed') {
-        if (community) resetPanel(community);
+        if (communityPanel) resetPanel(communityPanel);
         organizeInstalled(pmRoot);
       } else if (activePanel.id === 'community') {
-        if (installed) resetPanel(installed);
+        if (installedPanel) resetPanel(installedPanel);
         enhanceCommunity(pmRoot);
       }
 
@@ -680,8 +599,6 @@ export function setup(api) {
     }
   }
 
-  // ───────── MUTATION OBSERVER (replaces interval) ─────────
-  let enhanceTimer = null;
   pmeObserver = new MutationObserver(() => {
     if (enhanceTimer) return;
     enhanceTimer = setTimeout(() => {
@@ -697,22 +614,25 @@ export function setup(api) {
     setTimeout(enhance, 700);
   });
 
-  api.registerShortcut('ctrl+shift+p', () => {
+  api.registerShortcut('ctrl+p', () => {
     const pmRoot = document.querySelector('.pm-root');
     if (pmRoot) {
       const isOpen = pmRoot.style.display !== 'none' && pmRoot.style.display !== '';
       pmRoot.style.display = isOpen ? 'none' : 'flex';
-      if (!isOpen) { setTimeout(enhance, 200); setTimeout(enhance, 600); }
+      if (!isOpen) {
+        setTimeout(enhance, 200);
+        setTimeout(enhance, 600);
+      }
     }
   });
 
-  console.log('⚡ PM Enhancer v3.0.0');
+  console.log('⚡ PM Enhancer v4.0.0');
 }
 
 export function teardown() {
   if (pmeObserver) { pmeObserver.disconnect(); pmeObserver = null; }
   if (enhanceTimer) { clearTimeout(enhanceTimer); enhanceTimer = null; }
-  if (enhancerStyle) enhancerStyle.remove();
+  if (enhancerStyle) { enhancerStyle.remove(); enhancerStyle = null; }
   document.querySelectorAll('.pme-toolbar, .pme-stats, .pme-section, .pme-pill, .pme-comm-footer').forEach(el => el.remove());
   document.querySelectorAll('.pme-hidden').forEach(el => el.classList.remove('pme-hidden'));
   document.querySelectorAll('.pme-grid, .pme-list').forEach(el => el.classList.remove('pme-grid', 'pme-list'));
