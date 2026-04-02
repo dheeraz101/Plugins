@@ -112,18 +112,17 @@ export function setup(api) {
 
     /* ========== PANEL ========== */
     .pm-panel {
-      padding: 16px 20px 40px !important;
+      padding: 16px 20px 20px !important;
       flex: 1 !important;
       min-height: 0 !important;
       overflow-y: auto !important;
     }
-    .pm-panel::after { content: "" !important; display: block !important; height: 20px !important; }
     .pm-panel::-webkit-scrollbar { width: 6px !important; }
     .pm-panel::-webkit-scrollbar-track { background: transparent !important; }
     .pm-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1) !important; border-radius: 8px !important; }
 
     /* ============================================================
-       GRID VIEW — applies to ALL visible panels (installed + community)
+       GRID VIEW — applies to visible panels (installed + community)
        ============================================================ */
     .pm-panel.pme-grid {
       display: flex !important;
@@ -144,14 +143,18 @@ export function setup(api) {
     .pm-panel.pme-grid .pm-card > div:first-child {
       flex: 1 !important;
     }
-    .pm-panel.pme-grid .pm-card > div:last-child,
+    .pm-panel.pme-grid .pm-card .pme-card-actions,
     .pm-panel.pme-grid .pme-comm-footer {
       margin-top: auto !important;
       padding-top: 10px !important;
+      justify-content: flex-end !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
     }
 
     /* ============================================================
-       LIST VIEW — applies to ALL visible panels
+       LIST VIEW — applies to visible panels
        ============================================================ */
     .pm-panel.pme-list {
       display: flex !important;
@@ -177,12 +180,10 @@ export function setup(api) {
     }
 
     /* List: push action buttons to FAR RIGHT */
-    .pm-panel.pme-list .pm-card > div:last-child:not(.pme-comm-footer),
+    .pm-panel.pme-list .pm-card .pme-card-actions,
     .pm-panel.pme-list .pm-card .pme-comm-footer {
       margin-left: auto !important;
       flex-shrink: 0 !important;
-      margin-top: 0 !important;
-      padding-top: 0 !important;
     }
 
     /* ============================================================
@@ -414,6 +415,8 @@ export function setup(api) {
       .forEach(el => el.classList.remove('pme-hidden'));
     panel.querySelectorAll('[data-pme-comm]')
       .forEach(el => delete el.dataset.pmeComm);
+    panel.querySelectorAll('.pme-card-actions')
+      .forEach(el => el.classList.remove('pme-card-actions'));
     panel.classList.remove('pme-grid', 'pme-list');
     delete panel.dataset.pmeState;
   }
@@ -471,12 +474,18 @@ export function setup(api) {
     panel.querySelectorAll('.pme-section').forEach(el => el.remove());
     panel.dataset.pmeState = stateKey;
 
-    // Inject/update pills
+    // Inject/update pills + tag button row
     cards.forEach(card => {
       const toggleBtn = card.querySelector('[data-act="toggle"]');
       if (!toggleBtn) return;
       const plugin = plugins.find(p => p.id === toggleBtn.dataset.id);
       if (!plugin) return;
+
+      // Tag the button container div for reliable CSS targeting
+      const actionsDiv = toggleBtn.parentElement;
+      if (actionsDiv && actionsDiv.tagName === 'DIV' && !actionsDiv.classList.contains('pme-card-actions')) {
+        actionsDiv.classList.add('pme-card-actions');
+      }
 
       let pill = card.querySelector('.pme-pill');
       if (!pill) {
