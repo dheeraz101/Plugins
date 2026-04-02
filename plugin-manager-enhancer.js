@@ -5,7 +5,7 @@ let pmeObserver = null;
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '2.7.0',
+  version: '2.8.0',
   compat: '>=3.3.0'
 };
 
@@ -720,7 +720,7 @@ export function setup(api) {
     }
   });
 
-  console.log('⚡ PM Enhancer v2.7.0');
+  console.log('⚡ PM Enhancer v2.8.0');
 }
 
 export function teardown() {
