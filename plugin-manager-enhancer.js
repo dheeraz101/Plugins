@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Apple Aesthetic Enhancer',
-  version: '1.2.2',
+  version: '1.2.3',
   compat: '>=3.3.0'
 };
 
@@ -190,24 +190,32 @@ export function setup(api) {
     const items = document.querySelectorAll('.plugin-item');
     
     items.forEach(item => {
-      // Logic for Version Pill
+      // 1. FIX: Target the correct elements for the Version Pill
       const info = item.querySelector('.plugin-info');
       if (info && !info.dataset.versionEnhanced) {
-        const title = info.querySelector('h4');
-        const desc = info.querySelector('p');
-        const versionMatch = desc?.textContent.match(/v?\d+\.\d+\.\d+/);
+        const nameEl = info.querySelector('.plugin-name'); // Core uses .plugin-name
+        const metaEl = info.querySelector('.plugin-meta'); // Core uses .plugin-meta
         
-        if (versionMatch && title) {
+        // Extract version (e.g., v3.6.7) from the meta text
+        const versionMatch = metaEl?.textContent.match(/v?\d+\.\d+\.\d+/);
+        
+        if (versionMatch && nameEl) {
           const pill = document.createElement('span');
           pill.className = 'apple-version-pill';
           pill.textContent = versionMatch[0];
-          title.appendChild(pill);
-          desc.textContent = desc.textContent.replace(versionMatch[0], '').replace(/^[\s\-\|]+/, '');
+          
+          // Append the pill next to the name
+          nameEl.style.display = 'inline-flex';
+          nameEl.style.alignItems = 'center';
+          nameEl.appendChild(pill);
+          
+          // Clean up the original meta text so version isn't shown twice
+          metaEl.textContent = metaEl.textContent.replace(versionMatch[0], '').replace(/^[\s•]+|[\s•]+$/g, '');
         }
         info.dataset.versionEnhanced = 'true';
       }
 
-      // Logic for Action Buttons
+      // 2. Action Buttons Logic (Remains mostly the same, but verified)
       const actionGroup = item.querySelector('.pm-action-group');
       if (!actionGroup || actionGroup.dataset.enhanced === 'true') return;
 
@@ -216,21 +224,24 @@ export function setup(api) {
       const deleteBtn = actionGroup.querySelector('.delete-btn');
 
       if (reloadBtn) {
-        reloadBtn.className = 'apple-icon-btn';
+        reloadBtn.className = 'apple-icon-btn reload-btn'; // Keep original class for functionality
         reloadBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>`;
       }
 
       if (toggleBtn) {
+        // Core Manager uses text "Disable" to indicate an active plugin
         const isEnabled = toggleBtn.textContent.trim() === 'Disable';
         const switchWrapper = document.createElement('label');
         switchWrapper.className = 'apple-switch';
         switchWrapper.innerHTML = `<input type="checkbox" ${isEnabled ? 'checked' : ''}><span class="apple-slider"></span>`;
+        
+        // Link the switch to the hidden core button
         switchWrapper.querySelector('input').onchange = () => toggleBtn.click();
         actionGroup.insertBefore(switchWrapper, toggleBtn);
       }
 
       if (deleteBtn) {
-        deleteBtn.className = 'apple-icon-btn delete-icon';
+        deleteBtn.className = 'apple-icon-btn delete-icon delete-btn';
         deleteBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
       }
 
