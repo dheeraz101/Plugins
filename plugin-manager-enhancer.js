@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Apple Aesthetic Enhancer',
-  version: '1.1.2',
+  version: '1.2.1',
   compat: '>=3.3.0'
 };
 
@@ -12,41 +12,68 @@ let scrollListener = null;
 export function setup(api) {
   style = document.createElement('style');
   style.textContent = `
-    /* 1. Custom Aesthetic Scrollbar (Light Mode focus) */
-    .pm-content::-webkit-scrollbar {
-      width: 6px;
+    /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
+    .pm-content::-webkit-scrollbar { 
+      width: 6px; 
     }
-
-    .pm-content::-webkit-scrollbar-track {
-      background: transparent;
+    .pm-content::-webkit-scrollbar-track { 
+      background: transparent; 
     }
-
     .pm-content::-webkit-scrollbar-thumb {
       background: rgba(0, 0, 0, 0.1);
       border-radius: 10px;
       transition: background 0.2s;
     }
-
     .pm-content::-webkit-scrollbar-thumb:hover {
       background: rgba(0, 0, 0, 0.2);
     }
 
-    /* 2. Original Button Hiding */
+    /* 2. Version Pill Styling */
+    .apple-version-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      background: rgba(120, 120, 128, 0.12);
+      color: #86868b;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin-left: 10px;
+      white-space: nowrap;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* 3. Layout Adjustments for Info & Alignment */
+    .plugin-item {
+      display: flex !important;
+      align-items: center !important;
+      padding: 14px 16px !important;
+      border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+    }
+    
+    .plugin-info h4 {
+      display: flex;
+      align-items: center;
+      margin: 0 0 4px 0 !important;
+    }
+
+    /* Force hide original text buttons */
     .toggle-btn { display: none !important; }
 
-    /* 3. Modern Apple Toggle Switch */
+    /* 4. Modern Apple Toggle Switch */
     .apple-switch {
       position: relative;
       display: inline-flex;
       width: 42px;
       height: 24px;
       cursor: pointer;
-      align-items: center;
+      margin: 0 10px;
+      flex-shrink: 0;
     }
     .apple-switch input { opacity: 0; width: 0; height: 0; }
     .apple-slider {
       position: absolute;
-      cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
       background-color: rgba(120, 120, 128, 0.32);
       transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -65,7 +92,7 @@ export function setup(api) {
     input:checked + .apple-slider { background-color: #34C759; }
     input:checked + .apple-slider:before { transform: translateX(18px); }
 
-    /* 4. Action Icon Buttons */
+    /* 5. Action Icons (Reload & Delete) */
     .apple-icon-btn {
       background: none;
       border: none;
@@ -77,56 +104,61 @@ export function setup(api) {
       justify-content: center;
       transition: all 0.2s;
       color: #86868b;
+      flex-shrink: 0;
     }
     .apple-icon-btn:hover { background: rgba(0,0,0,0.05); color: #1d1d1f; }
     .apple-icon-btn:active { transform: scale(0.9); }
     .apple-icon-btn.delete-icon:hover { color: #FF3B30; background: rgba(255, 59, 48, 0.1); }
 
-    /* 5. Floating Scroll-to-Top Button */
+ /* 6. Floating Scroll Button - FIXED POSITIONING & UI */
+    .pm-content { position: relative; } /* Ensure parent is relative */
+
     .pm-scroll-top {
       position: absolute;
-      bottom: 24px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%) translateY(100px);
-      background: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.7);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      width: 40px;
-      height: 40px;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
       cursor: pointer;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      opacity: 0;
-      z-index: 100;
-      color: #1d1d1f;
+      opacity: 0; z-index: 1000;
+      color: #1d1d1f; /* Force dark icon color */
     }
+
     .pm-scroll-top.visible {
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
+
+    /* Fixed hover state: Darker icon on light background */
     .pm-scroll-top:hover {
-      background: rgba(255, 255, 255, 0.95);
-      transform: translateX(-50%) translateY(-3px);
+      background: rgba(255, 255, 255, 1);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      color: #000; 
+      transform: translateX(-50%) translateY(-2px);
     }
     
-    /* 6. Dark Mode Adjustments */
+    /* 7. Dark Mode Overrides */
     @media (prefers-color-scheme: dark) {
-      .pm-content::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.15);
-      }
-      .pm-content::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.25);
-      }
+      .pm-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
+      .pm-content::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+      .apple-version-pill { background: rgba(255, 255, 255, 0.1); color: #a1a1a6; }
       .apple-icon-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
       .apple-slider { background-color: rgba(255, 255, 255, 0.2); }
       .pm-scroll-top { 
-        background: rgba(45, 45, 45, 0.6); 
-        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(50, 50, 50, 0.8); 
+        color: #fff; 
+        border-color: rgba(255, 255, 255, 0.1); 
+      }
+      .pm-scroll-top:hover {
+        background: rgba(70, 70, 70, 1);
         color: #fff;
       }
     }
@@ -139,30 +171,45 @@ export function setup(api) {
 
     const topBtn = document.createElement('div');
     topBtn.className = 'pm-scroll-top';
-    topBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>`;
+    topBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>`;
     
-    topBtn.onclick = () => {
+    topBtn.onclick = (e) => {
+      e.stopPropagation();
       content.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Appending to parent to maintain absolute positioning relative to the container
-    content.parentElement.appendChild(topBtn);
+    // Append INSIDE pm-content so it centers based on the tab's width
+    content.appendChild(topBtn);
 
     scrollListener = () => {
-      if (content.scrollTop > 100) {
-        topBtn.classList.add('visible');
-      } else {
-        topBtn.classList.remove('visible');
-      }
+      topBtn.classList.toggle('visible', content.scrollTop > 100);
     };
-
     content.addEventListener('scroll', scrollListener);
   };
 
   const transformUI = () => {
     injectScrollButton();
     const items = document.querySelectorAll('.plugin-item');
+    
     items.forEach(item => {
+      // Logic for Version Pill
+      const info = item.querySelector('.plugin-info');
+      if (info && !info.dataset.versionEnhanced) {
+        const title = info.querySelector('h4');
+        const desc = info.querySelector('p');
+        const versionMatch = desc?.textContent.match(/v?\d+\.\d+\.\d+/);
+        
+        if (versionMatch && title) {
+          const pill = document.createElement('span');
+          pill.className = 'apple-version-pill';
+          pill.textContent = versionMatch[0];
+          title.appendChild(pill);
+          desc.textContent = desc.textContent.replace(versionMatch[0], '').replace(/^[\s\-\|]+/, '');
+        }
+        info.dataset.versionEnhanced = 'true';
+      }
+
+      // Logic for Action Buttons
       const actionGroup = item.querySelector('.pm-action-group');
       if (!actionGroup || actionGroup.dataset.enhanced === 'true') return;
 
@@ -179,10 +226,7 @@ export function setup(api) {
         const isEnabled = toggleBtn.textContent.trim() === 'Disable';
         const switchWrapper = document.createElement('label');
         switchWrapper.className = 'apple-switch';
-        switchWrapper.innerHTML = `
-          <input type="checkbox" ${isEnabled ? 'checked' : ''}>
-          <span class="apple-slider"></span>
-        `;
+        switchWrapper.innerHTML = `<input type="checkbox" ${isEnabled ? 'checked' : ''}><span class="apple-slider"></span>`;
         switchWrapper.querySelector('input').onchange = () => toggleBtn.click();
         actionGroup.insertBefore(switchWrapper, toggleBtn);
       }
@@ -214,11 +258,7 @@ export function setup(api) {
 export function teardown() {
   if (style) style.remove();
   if (observer) observer.disconnect();
-  
   const content = document.querySelector('.pm-content');
-  if (content && scrollListener) {
-    content.removeEventListener('scroll', scrollListener);
-  }
-  
-  document.querySelectorAll('.apple-switch, .pm-scroll-top').forEach(el => el.remove());
+  if (content && scrollListener) content.removeEventListener('scroll', scrollListener);
+  document.querySelectorAll('.apple-switch, .pm-scroll-top, .apple-version-pill').forEach(el => el.remove());
 }
