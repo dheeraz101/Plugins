@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Apple Aesthetic Enhancer',
-  version: '1.2.1',
+  version: '1.2.2',
   compat: '>=3.3.0'
 };
 
@@ -111,11 +111,9 @@ export function setup(api) {
     .apple-icon-btn.delete-icon:hover { color: #FF3B30; background: rgba(255, 59, 48, 0.1); }
 
  /* 6. Floating Scroll Button - FIXED POSITIONING & UI */
-    .pm-content { position: relative; } /* Ensure parent is relative */
-
-    .pm-scroll-top {
-      position: absolute;
-      bottom: 20px;
+     .pm-scroll-top {
+      position: fixed; /* Changed to fixed so it stays in place */
+      bottom: 40px; 
       left: 50%;
       transform: translateX(-50%) translateY(100px);
       background: rgba(255, 255, 255, 0.7);
@@ -128,20 +126,22 @@ export function setup(api) {
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      opacity: 0; z-index: 1000;
-      color: #1d1d1f; /* Force dark icon color */
+      opacity: 0; 
+      z-index: 9999;
+      color: #1d1d1f;
+      pointer-events: none; /* Disable when hidden */
     }
 
     .pm-scroll-top.visible {
       transform: translateX(-50%) translateY(0);
       opacity: 1;
+      pointer-events: auto; /* Enable when shown */
     }
 
-    /* Fixed hover state: Darker icon on light background */
     .pm-scroll-top:hover {
       background: rgba(255, 255, 255, 1);
       box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-      color: #000; 
+      color: #007AFF; /* Apple Blue on hover for better UI */
       transform: translateX(-50%) translateY(-2px);
     }
     
@@ -157,17 +157,15 @@ export function setup(api) {
         color: #fff; 
         border-color: rgba(255, 255, 255, 0.1); 
       }
-      .pm-scroll-top:hover {
-        background: rgba(70, 70, 70, 1);
-        color: #fff;
-      }
+      .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
     }
   `;
   document.head.appendChild(style);
 
-  const injectScrollButton = () => {
+   const injectScrollButton = () => {
+    const pmRoot = document.querySelector('.pm-root');
     const content = document.querySelector('.pm-content');
-    if (!content || document.querySelector('.pm-scroll-top')) return;
+    if (!pmRoot || !content || document.querySelector('.pm-scroll-top')) return;
 
     const topBtn = document.createElement('div');
     topBtn.className = 'pm-scroll-top';
@@ -178,11 +176,11 @@ export function setup(api) {
       content.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Append INSIDE pm-content so it centers based on the tab's width
-    content.appendChild(topBtn);
+    // Append to pmRoot instead of content to keep it fixed relative to the window
+    pmRoot.appendChild(topBtn);
 
     scrollListener = () => {
-      topBtn.classList.toggle('visible', content.scrollTop > 100);
+      topBtn.classList.toggle('visible', content.scrollTop > 150);
     };
     content.addEventListener('scroll', scrollListener);
   };
