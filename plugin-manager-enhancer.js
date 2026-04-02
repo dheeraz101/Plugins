@@ -5,7 +5,7 @@ let enhanceInterval = null;
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '2.3.0',
+  version: '2.4.0',
   compat: '>=3.3.0'
 };
 
@@ -67,6 +67,7 @@ export function setup(api) {
       flex-direction: column !important;
       flex: 1 !important;
       overflow: hidden !important;
+      min-height: 0 !important;
     }
 
     /* ========== TOOLBAR ========== */
@@ -113,6 +114,7 @@ export function setup(api) {
     .pm-panel {
       padding: 16px 20px 40px !important;
       flex: 1 !important;
+      min-height: 0 !important;
       overflow-y: auto !important;
     }
     .pm-panel::after { content: "" !important; display: block !important; height: 20px !important; }
@@ -384,6 +386,7 @@ export function setup(api) {
       applySearch(pmRoot, searchInput.value.toLowerCase());
     }, 200));
 
+    let tabSwitchTimeout = null;
     pmRoot.querySelectorAll('.pm-tab').forEach(tab => {
       if (tab.dataset.pmeHooked) return;
       tab.dataset.pmeHooked = '1';
@@ -393,12 +396,14 @@ export function setup(api) {
         // Clear state guards so re-org happens
         const ip = pmRoot.querySelector('#installed');
         if (ip) delete ip.dataset.pmeState;
-        setTimeout(() => {
+        // Debounce tab-switch enhance to prevent racing with the interval
+        if (tabSwitchTimeout) clearTimeout(tabSwitchTimeout);
+        tabSwitchTimeout = setTimeout(() => {
           applyViewMode(pmRoot);
           organizeInstalled(pmRoot);
           enhanceCommunity(pmRoot);
           updateStats(pmRoot);
-        }, 100);
+        }, 150);
       });
     });
   }
@@ -441,10 +446,11 @@ export function setup(api) {
     // Guard: skip if already organized with same state
     const stateKey = `${active.length}:${paused.length}:${cards.length}`;
     if (panel.dataset.pmeState === stateKey) return;
-    panel.dataset.pmeState = stateKey;
 
-    // Remove old sections
+    // Force-clear old sections FIRST (before setting state guard)
+    // This prevents duplicates from racing interval + tab click
     panel.querySelectorAll('.pme-section').forEach(el => el.remove());
+    panel.dataset.pmeState = stateKey;
 
     // Inject/update pills
     cards.forEach(card => {
