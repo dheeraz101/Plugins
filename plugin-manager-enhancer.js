@@ -5,7 +5,7 @@ let pmeObserver = null;
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '2.9.0',
+  version: '3.0.0',
   compat: '>=3.3.0'
 };
 
@@ -129,7 +129,35 @@ export function setup(api) {
     }
 
     /* ============================================================
-       GRID VIEW — applies to visible panels (installed + community)
+       LIST VIEW — host app card has 2 divs: content-row + button-row
+       We make .pm-card a horizontal flex: content flexes, buttons right
+       ============================================================ */
+    .pm-panel.pme-list {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
+    }
+    .pm-panel.pme-list .pm-card {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 14px !important;
+    }
+    .pm-panel.pme-list .pm-card > div:first-child {
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
+    /* Buttons locked to the right */
+    .pm-panel.pme-list .pm-card > div:last-child,
+    .pm-panel.pme-list .pm-card .pme-comm-footer {
+      margin-left: auto !important;
+      margin-top: 0 !important;
+      flex-shrink: 0 !important;
+      align-self: center !important;
+    }
+
+    /* ============================================================
+       GRID VIEW — card as column: content on top, buttons at bottom
        ============================================================ */
     .pm-panel.pme-grid {
       display: flex !important;
@@ -146,41 +174,14 @@ export function setup(api) {
     .pm-panel.pme-grid .pm-card > div:first-child {
       flex: 1 !important;
     }
-    /* Grid: push buttons to bottom-right */
-    .pm-panel.pme-grid .pm-card > div:last-child,
-    .pm-panel.pme-grid .pme-comm-footer {
+    /* Buttons at bottom-right */
+    .pm-panel.pme-grid .pm-card > div:last-child {
       margin-top: auto !important;
       align-self: flex-end !important;
     }
 
     /* ============================================================
-       LIST VIEW — applies to visible panels
-       ============================================================ */
-    .pm-panel.pme-list {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 6px !important;
-    }
-    .pm-panel.pme-list .pm-card {
-      display: flex !important;
-      align-items: center !important;
-      gap: 14px !important;
-      padding: 14px 18px !important;
-      border-radius: 10px !important;
-      margin: 0 !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-    }
-    .pm-panel.pme-list .pm-card > div:first-child {
-      flex-shrink: 0 !important;
-    }
-    .pm-panel.pme-list .pm-card > div:nth-child(2) {
-      flex: 1 !important;
-      min-width: 0 !important;
-    }
-
-    /* ============================================================
-       UNIVERSAL CARD LAYOUT — 3-column: icon | content | actions
+       CARDS — base styling (host app structure: 2 divs)
        ============================================================ */
     .pm-card {
       background: rgba(255,255,255,0.03) !important;
@@ -195,16 +196,6 @@ export function setup(api) {
       background: rgba(255,255,255,0.06) !important;
       border-color: rgba(255,255,255,0.12) !important;
       box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
-    }
-
-    /* Right-side actions — ALWAYS locked right */
-    .pm-card > div:last-child,
-    .pm-card .pme-comm-footer {
-      margin-left: auto !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-      flex-shrink: 0 !important;
     }
 
     /* ========== CARD TYPOGRAPHY ========== */
@@ -715,7 +706,7 @@ export function setup(api) {
     }
   });
 
-  console.log('⚡ PM Enhancer v2.9.0');
+  console.log('⚡ PM Enhancer v3.0.0');
 }
 
 export function teardown() {
