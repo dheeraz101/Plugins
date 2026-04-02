@@ -1,11 +1,11 @@
 let currentApi = null;
 let enhancerStyle = null;
-let enhanceInterval = null;
+let pmeObserver = null;
 
 export const meta = {
   id: 'plugin-manager-enhancer',
   name: 'Plugin Manager Enhancer',
-  version: '2.6.0',
+  version: '2.7.0',
   compat: '>=3.3.0'
 };
 
@@ -414,7 +414,21 @@ export function setup(api) {
       .forEach(el => el.classList.remove('pme-hidden'));
     panel.querySelectorAll('[data-pme-comm]')
       .forEach(el => delete el.dataset.pmeComm);
+    panel.classList.remove('pme-grid', 'pme-list');
     delete panel.dataset.pmeState;
+  }
+
+  // ───────── FORCE SINGLE PANEL VISIBLE ─────────
+  function enforceSinglePanel(pmRoot, activePanel) {
+    pmRoot.querySelectorAll('.pm-panel').forEach(panel => {
+      if (panel === activePanel) {
+        panel.style.display = 'block';
+        panel.style.visibility = 'visible';
+        panel.style.pointerEvents = 'auto';
+      } else {
+        panel.style.display = 'none';
+      }
+    });
   }
 
   // ───────── VIEW MODE — active panel only ─────────
@@ -427,13 +441,11 @@ export function setup(api) {
 
   // ───────── SEARCH ─────────
   function applySearch(pmRoot, query) {
-    ['#installed', '#community'].forEach(sel => {
-      const panel = pmRoot.querySelector(sel);
-      if (!panel || panel.style.display === 'none') return;
-      panel.querySelectorAll('.pm-card').forEach(card => {
-        if (!query) { card.classList.remove('pme-hidden'); return; }
-        card.classList.toggle('pme-hidden', !card.textContent.toLowerCase().includes(query));
-      });
+    const activePanel = getActivePanel(pmRoot);
+    if (!activePanel) return;
+    activePanel.querySelectorAll('.pm-card').forEach(card => {
+      if (!query) { card.classList.remove('pme-hidden'); return; }
+      card.classList.toggle('pme-hidden', !card.textContent.toLowerCase().includes(query));
     });
     updateStats(pmRoot);
   }
@@ -441,7 +453,7 @@ export function setup(api) {
   // ───────── ORGANIZE INSTALLED ─────────
   function organizeInstalled(pmRoot) {
     const panel = pmRoot.querySelector('#installed');
-    if (!panel || panel.style.display === 'none') return;
+    if (!panel) return;
 
     const cards = Array.from(panel.querySelectorAll('.pm-card'));
     if (cards.length === 0) return;
@@ -529,7 +541,7 @@ export function setup(api) {
   // ───────── ENHANCE COMMUNITY ─────────
   function enhanceCommunity(pmRoot) {
     const panel = pmRoot.querySelector('#community');
-    if (!panel || panel.style.display === 'none') return;
+    if (!panel) return;
 
     const cards = panel.querySelectorAll('.pm-card');
     if (cards.length === 0) return;
@@ -613,15 +625,16 @@ export function setup(api) {
 
     const installedPanel = pmRoot.querySelector('#installed');
     const communityPanel = pmRoot.querySelector('#community');
+    const activePanel = getActivePanel(pmRoot);
 
-    if (installedPanel && installedPanel.style.display !== 'none') {
+    if (activePanel === installedPanel) {
       statsEl.innerHTML = `
         <span><b>${plugins.length}</b> total</span>
         <span><b class="sg">${active}</b> active</span>
         <span><b class="so">${paused}</b> paused</span>
         <span class="sr">${viewMode === 'grid' ? '⊞ Grid' : '☰ List'}</span>
       `;
-    } else if (communityPanel && communityPanel.style.display !== 'none') {
+    } else if (activePanel === communityPanel) {
       const total = communityPanel.querySelectorAll('.pm-card').length;
       const instCount = new Set(currentApi.registry.getAll().map(p => p.id)).size;
       statsEl.innerHTML = `
@@ -637,7 +650,7 @@ export function setup(api) {
     const pmRoot = document.querySelector('.pm-root');
     if (!pmRoot || pmRoot.style.display === 'none' || pmRoot.style.display === '') return;
 
-    // Mutex: prevent re-entrant calls from interval + tab click racing
+    // Mutex: prevent re-entrant calls
     if (pmRoot.dataset.pmeEnhancing) return;
     pmRoot.dataset.pmeEnhancing = '1';
 
@@ -647,7 +660,10 @@ export function setup(api) {
       const activePanel = getActivePanel(pmRoot);
       if (!activePanel) return;
 
-      // Reset the INACTIVE panel (remove leftover injections)
+      // Force only the active panel visible
+      enforceSinglePanel(pmRoot, activePanel);
+
+      // Reset the inactive panel
       const installed = pmRoot.querySelector('#installed');
       const community = pmRoot.querySelector('#community');
 
@@ -669,7 +685,9 @@ export function setup(api) {
     }
   }
 
-  enhanceInterval = setInterval(enhance, 600);
+  // ───────── MUTATION OBSERVER (replaces interval) ─────────
+  pmeObserver = new MutationObserver(() => enhance());
+  pmeObserver.observe(document.body, { childList: true, subtree: true });
 
   api.boardEl.addEventListener('contextmenu', (e) => {
     if (e.target.closest('.pm-root')) return;
@@ -686,11 +704,11 @@ export function setup(api) {
     }
   });
 
-  console.log('⚡ PM Enhancer v2.5.0');
+  console.log('⚡ PM Enhancer v2.7.0');
 }
 
 export function teardown() {
-  if (enhanceInterval) clearInterval(enhanceInterval);
+  if (pmeObserver) { pmeObserver.disconnect(); pmeObserver = null; }
   if (enhancerStyle) enhancerStyle.remove();
   document.querySelectorAll('.pme-toolbar, .pme-stats, .pme-section, .pme-pill, .pme-comm-footer').forEach(el => el.remove());
   document.querySelectorAll('.pme-hidden').forEach(el => el.classList.remove('pme-hidden'));
