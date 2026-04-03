@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.6.3',
+  version: '1.6.4',
   compat: '>=3.3.0'
 };
 
@@ -20,6 +20,18 @@ export function setup(api) {
     style.id = 'pm-enhancer-style';
 
     style.textContent = `
+    .pm-root:not(.pm-ready) .plugin-item {
+      visibility: hidden;
+    }
+
+    .plugin-item {
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .plugin-item.enhanced {
+      opacity: 1;
+    }
 
     .pm-root {
       opacity: 0;
@@ -312,68 +324,66 @@ export function setup(api) {
     content.addEventListener('scroll', scrollListener);
   };
 
-  // ───────────────── UI TRANSFORM ─────────────────
-  const transformUI = () => {
-    injectScrollButton();
+  function enhanceItem(item) {
+    const isFullyEnhanced = item.dataset.enhanced === 'true';
+    const actionGroup = item.querySelector('.pm-action-group');
+    const info = item.querySelector('.plugin-info');
 
-    document.querySelectorAll('.plugin-item').forEach(item => {
-
-        // ── LIGHT SKIP (only for static parts)
+       // ── LIGHT SKIP (only for static parts)
         if (!item.dataset.staticEnhanced) {
           // version pill + badges
           item.dataset.staticEnhanced = 'true';
         }
 
-        const actionGroup = item.querySelector('.pm-action-group');
-        const info = item.querySelector('.plugin-info');
-
         // ── FORCE TOGGLE FIX (runs every time)
-        if (actionGroup) {
-          const toggleBtn = actionGroup.querySelector('.toggle-btn');
+      if (actionGroup && !actionGroup.dataset.switchEnhanced) {
+        const toggleBtn = actionGroup.querySelector('.toggle-btn');
 
-          if (toggleBtn && !actionGroup.querySelector('.apple-switch')) {
-            const isEnabled = toggleBtn.textContent.trim() === 'Disable';
+        if (!toggleBtn) return; // 🔥 WAIT until real button exists
 
-            const wrapper = document.createElement('label');
-            wrapper.className = 'apple-switch';
+        const isEnabled = toggleBtn.textContent.trim() === 'Disable';
 
-            wrapper.innerHTML = `
-              <input type="checkbox" ${isEnabled ? 'checked' : ''}>
-              <span class="apple-slider"></span>
-            `;
+        const wrapper = document.createElement('label');
+        wrapper.className = 'apple-switch';
 
-            wrapper.querySelector('input').onchange = () => {
-              toggleBtn.click();
-            };
+        wrapper.innerHTML = `
+          <input type="checkbox" ${isEnabled ? 'checked' : ''}>
+          <span class="apple-slider"></span>
+        `;
 
-            actionGroup.insertBefore(wrapper, toggleBtn);
-          }
-        }
+        wrapper.querySelector('input').onchange = () => {
+          toggleBtn.click();
+        };
+
+        actionGroup.insertBefore(wrapper, toggleBtn);
+
+        actionGroup.dataset.switchEnhanced = 'true'; // ✅ ONLY after success
+      }
 
       // ── VERSION PILL ──
-      if (info && !info.dataset.versionEnhanced) {
+      if (info) {
         const nameEl = info.querySelector('.plugin-name');
         const metaEl = info.querySelector('.plugin-meta');
 
         if (nameEl && metaEl) {
-          const match = metaEl.textContent.match(/v?\d+\.\d+\.\d+/);
 
-          if (match) {
+          if (!metaEl.dataset.originalText) {
+            metaEl.dataset.originalText = metaEl.textContent;
+          }
+
+          const original = metaEl.dataset.originalText;
+          const match = original.match(/v?\d+\.\d+\.\d+/);
+
+          const existing = nameEl.querySelector('.apple-version-pill');
+
+          if (match && !existing) {
             const pill = document.createElement('span');
             pill.className = 'apple-version-pill';
             pill.textContent = match[0];
 
-            nameEl.style.display = 'inline-flex';
-            nameEl.style.alignItems = 'center';
             nameEl.appendChild(pill);
-
-            metaEl.textContent = metaEl.textContent
-              .replace(match[0], '')
-              .replace(/^[\s•]+|[\s•]+$/g, '');
           }
         }
-
-        info.dataset.versionEnhanced = 'true';
       }
 
       if (actionGroup) {
@@ -390,24 +400,6 @@ export function setup(api) {
             <polyline points="21 3 21 8 16 8"/>
           </svg>`;
           reloadBtn.dataset.iconified = 'true';
-        }
-
-        if (toggleBtn && !actionGroup.querySelector('.apple-switch')) {
-          const isEnabled = toggleBtn.textContent.trim() === 'Disable';
-
-          const wrapper = document.createElement('label');
-          wrapper.className = 'apple-switch';
-
-          wrapper.innerHTML = `
-            <input type="checkbox" ${isEnabled ? 'checked' : ''}>
-            <span class="apple-slider"></span>
-          `;
-
-          wrapper.querySelector('input').onchange = () => {
-            toggleBtn.click();
-          };
-
-          actionGroup.insertBefore(wrapper, toggleBtn);
         }
 
         if (deleteBtn && !deleteBtn.dataset.iconified) {
@@ -547,16 +539,41 @@ export function setup(api) {
       });
 
       item.dataset.enhanced = 'true';
-    });
+      item.classList.add('enhanced');
+  }
+
+  // ───────────────── UI TRANSFORM ─────────────────
+  const transformUI = () => {
+    injectScrollButton();
+    document.querySelectorAll('.plugin-item').forEach(enhanceItem);
   };
 
   // ───────────────── OBSERVER ─────────────────
   let rafId = null;
 
-  observer = new MutationObserver(() => {
+  observer = new MutationObserver((mutations) => {
     if (rafId) cancelAnimationFrame(rafId);
+
     rafId = requestAnimationFrame(() => {
-      transformUI();
+      mutations.forEach(m => {
+        m.addedNodes.forEach(node => {
+          if (node.nodeType !== 1) return;
+
+          if (node.classList?.contains('plugin-item')) {
+            enhanceItem(node);
+          }
+
+          if (node.matches?.('.plugin-item')) {
+            enhanceItem(node);
+          }
+
+          node.children && Array.from(node.children).forEach(child => {
+            if (child.matches?.('.plugin-item')) {
+              enhanceItem(child);
+            }
+          });
+        });
+      });
     });
   });
 
