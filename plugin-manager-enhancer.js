@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.4.5',
+  version: '1.4.6',
   compat: '>=3.3.0'
 };
 
@@ -202,6 +202,8 @@ export function setup(api) {
       .pm-content::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
       .apple-version-pill { background: rgba(255, 255, 255, 0.1); color: #a1a1a6; }
       .apple-icon-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+      .apple-icon-btn.update-btn-enhanced { color: #0A84FF; }
+      .apple-icon-btn.update-btn-enhanced:hover { background: rgba(10, 132, 255, 0.15); }
       .apple-slider { background-color: rgba(255, 255, 255, 0.2); }
       .pm-scroll-top { 
         background: rgba(50, 50, 50, 0.8); 
@@ -313,7 +315,7 @@ export function setup(api) {
       // Update Button → Icon
       const updateBtn = actionGroup.querySelector('[data-update]');
       if (updateBtn && !updateBtn.dataset.iconified) {
-        updateBtn.className = 'apple-icon-btn';
+        updateBtn.className = 'apple-icon-btn update-btn-enhanced';
            updateBtn.innerHTML = `            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M7 19L5.78311 18.9954C3.12231 18.8818 1 16.6888 1 14C1 11.3501 3.06139 9.18169 5.66806 9.01084C6.78942 6.64027 9.20316 5 12 5C15.5268 5 18.4445 7.60822 18.9293 11.001L19 11C21.2091 11 23 12.7909 23 15C23 17.1422 21.316 18.8911 19.1996 18.9951L17 19M12 10V18M12 18L15 15M12 18L9 15" 
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
