@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.3.3',
+  version: '1.3.4',
   compat: '>=3.3.0'
 };
 
@@ -258,9 +258,12 @@ export function setup(api) {
       if (installBtn && !installBtn.dataset.iconified) {
         installBtn.className = 'apple-icon-btn';
         installBtn.innerHTML = `
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 5v14M5 12h14"/>
-          </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12"/>
+          <path d="M7 10l5 5 5-5"/>
+          <path d="M5 21h14"/>
+        </svg>
         `;
         installBtn.dataset.iconified = 'true';
       }
@@ -269,10 +272,11 @@ export function setup(api) {
       if (updateBtn && !updateBtn.dataset.iconified) {
         updateBtn.className = 'apple-icon-btn';
         updateBtn.innerHTML = `
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 2v6h-6"/>
-            <path d="M21 13a9 9 0 1 1-3-7.7L21 8"/>
-          </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+          <path d="M21 3v6h-6"/>
+        </svg>
         `;
         updateBtn.dataset.iconified = 'true';
       }
@@ -288,22 +292,33 @@ export function setup(api) {
 
         let icon = '';
 
-        if (text.includes('system')) {
+        if (text === 'system') {
           // Apple-style "Command/Chip" symbol for System plugins
-          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5" ry="5"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>`;
+          icon = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.33 1.82V22a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-.33-1.82 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.82-.33H2a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.82-.33 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6c.26 0 .52-.06.76-.17A1.7 1.7 0 0 0 10.6 3V2a2 2 0 1 1 4 0v.09c0 .64.38 1.22.96 1.49.24.11.5.17.76.17a1.7 1.7 0 0 0 1-.6l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.15-.33 1.82.11.24.17.5.17.76 0 .26-.06.52-.17.76a1.7 1.7 0 0 0 .33 1.82l.06.06A2 2 0 1 1 19.4 15z"/>
+          </svg>
+          `;
           badge.title = "System Plugin";
         } 
-        else if (text.includes('active')) {
+        else if (text === 'active') {
           // Thicker, rounded checkmark for Active status
-          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
           badge.style.color = "#34C759"; // Apple Success Green
         } 
-        else if (text.includes('inactive')) {
+        else if (text === 'inactive') {
           // Hollow circle for Inactive
-          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>`;
+          icon = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" opacity="0.4"/>
+          </svg>
+          `;
           badge.style.color = "#86868b";
         } 
-        else if (text.includes('update')) {
+        else if (text === 'update') {
           // "Arrow down into circle" for Update available
           icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12l4 4 4-4"/></svg>`;
           badge.style.color = "#007AFF"; // Apple Blue
