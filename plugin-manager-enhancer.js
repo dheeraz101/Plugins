@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.5.3',
+  version: '1.5.4',
   compat: '>=3.3.0'
 };
 
