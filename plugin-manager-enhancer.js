@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.3.5',
+  version: '1.3.6',
   compat: '>=3.3.0'
 };
 
@@ -171,10 +171,17 @@ export function setup(api) {
   `;
   document.head.appendChild(style);
 
-   const injectScrollButton = () => {
+  const injectScrollButton = () => {
     const pmRoot = document.querySelector('.pm-root');
     const content = document.querySelector('.pm-content');
-    if (!pmRoot || !content || document.querySelector('.pm-scroll-top')) return;
+    if (!pmRoot || !content) return;
+
+    // Remove old scroll button if exists
+    const existing = pmRoot.querySelector('.pm-scroll-top');
+    if (existing) existing.remove();
+
+    // Remove old listener
+    if (scrollListener && content) content.removeEventListener('scroll', scrollListener);
 
     const topBtn = document.createElement('div');
     topBtn.className = 'pm-scroll-top';
@@ -185,7 +192,6 @@ export function setup(api) {
       content.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Append to pmRoot instead of content to keep it fixed relative to the window
     pmRoot.appendChild(topBtn);
 
     scrollListener = () => {
@@ -342,17 +348,26 @@ export function setup(api) {
     });
   };
 
-  observer = new MutationObserver(() => transformUI());
-  
-  const startObserving = () => {
-    const pmRoot = document.querySelector('.pm-root');
-    if (pmRoot) {
-      observer.observe(pmRoot, { childList: true, subtree: true });
+let currentRoot = null;
+
+const startObserving = () => {
+  observer = new MutationObserver(() => {
+    const newRoot = document.querySelector('.pm-root');
+    if (!newRoot) return;
+
+    // PM root reloaded
+    if (newRoot !== currentRoot) {
+      currentRoot = newRoot;
       transformUI();
-    } else {
-      setTimeout(startObserving, 300);
+      return; // skip rest to avoid double run
     }
-  };
+
+    // Same root, children updated
+    transformUI();
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+};
 
   startObserving();
 }
