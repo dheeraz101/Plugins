@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.3.2',
+  version: '1.3.3',
   compat: '>=3.3.0'
 };
 
@@ -226,8 +226,7 @@ export function setup(api) {
 
       // 2. Action Buttons Logic (Remains mostly the same, but verified)
       const actionGroup = item.querySelector('.pm-action-group');
-      if (!actionGroup) return;
-      actionGroup.dataset.enhanced = 'true'; // Skip if already enhanced
+      if (!actionGroup || actionGroup.dataset.enhanced === 'true') return;
 
       const reloadBtn = actionGroup.querySelector('.reload-btn');
       const toggleBtn = actionGroup.querySelector('.toggle-btn');
