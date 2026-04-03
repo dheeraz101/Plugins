@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.4.6',
+  version: '1.4.7',
   compat: '>=3.3.0'
 };
 
@@ -15,8 +15,9 @@ export function setup(api) {
 
     /* 0. Animations */
     @keyframes pulse-ring {
-      0% { transform: scale(0.4); opacity: 0.8; }
-      80%, 100% { opacity: 0; transform: scale(1.3); }
+      0% { transform: scale(0.5); opacity: 0; }
+      30% { opacity: 0.5; }
+      100% { transform: scale(1.4); opacity: 0; }
     }
 
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
@@ -45,19 +46,19 @@ export function setup(api) {
       height: 100%;
     }
     .status-pulse-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       background-color: #34C759;
       border-radius: 50%;
       z-index: 2;
     }
     .status-pulse-ring {
       position: absolute;
-      width: 18px;
-      height: 18px;
-      border: 3px solid #34C759;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #34C759;
       border-radius: 50%;
-      animation: pulse-ring 1.8s cubic-bezier(0.45, 0, 0.4, 1) infinite;
+      animation: pulse-ring 3s cubic-bezier(0.25, 0, 0.4, 1) infinite;
       z-index: 1;
     }
 
