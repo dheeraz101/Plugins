@@ -1,18 +1,26 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.5.5',
+  version: '1.6.0',
   compat: '>=3.3.0'
 };
 
 let style = null;
 let observer = null;
 let scrollListener = null;
+let isInitialized = false;
 
 export function setup(api) {
-  style = document.createElement('style');
-  style.textContent = `
+  if (isInitialized) return;
+  isInitialized = true;
 
+  // ───────────────── STYLE INJECTION ─────────────────
+  if (!document.querySelector('#pm-enhancer-style')) {
+    style = document.createElement('style');
+    style.id = 'pm-enhancer-style';
+
+    style.textContent = `
+    
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
     .pm-content::-webkit-scrollbar { 
       width: 6px; 
@@ -59,7 +67,8 @@ export function setup(api) {
       margin: 0 0 4px 0 !important;
     }
 
-   .toggle-btn.enhanced { display: none !important; }
+    /* Force hide original text buttons */
+    .toggle-btn { display: none !important; }
 
     /* 4. Modern Apple Toggle Switch */
     .apple-switch {
@@ -256,184 +265,250 @@ export function setup(api) {
       }
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
     }
-  `;
-  document.head.appendChild(style);
+    `;
+    document.head.appendChild(style);
+  }
 
-   const injectScrollButton = () => {
+  // ───────────────── SCROLL BUTTON ─────────────────
+  const injectScrollButton = () => {
     const pmRoot = document.querySelector('.pm-root');
     const content = document.querySelector('.pm-content');
-    if (!pmRoot || !content || document.querySelector('.pm-scroll-top')) return;
 
-    const topBtn = document.createElement('div');
-    topBtn.className = 'pm-scroll-top';
-    topBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>`;
-    
-    topBtn.onclick = (e) => {
-      e.stopPropagation();
-      content.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    if (!pmRoot || !content) return;
 
-    // Append to pmRoot instead of content to keep it fixed relative to the window
-    pmRoot.appendChild(topBtn);
+    let topBtn = document.querySelector('.pm-scroll-top');
+
+    if (!topBtn) {
+      topBtn = document.createElement('div');
+      topBtn.className = 'pm-scroll-top';
+      topBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+        stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>`;
+
+      topBtn.onclick = (e) => {
+        e.stopPropagation();
+        content.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      pmRoot.appendChild(topBtn);
+    }
+
+    if (scrollListener) {
+      content.removeEventListener('scroll', scrollListener);
+    }
 
     scrollListener = () => {
       topBtn.classList.toggle('visible', content.scrollTop > 150);
     };
+
     content.addEventListener('scroll', scrollListener);
   };
 
+  // ───────────────── UI TRANSFORM ─────────────────
   const transformUI = () => {
     injectScrollButton();
-    const items = document.querySelectorAll('.plugin-item');
-    
-    items.forEach(item => {
-      // 1. FIX: Target the correct elements for the Version Pill
+
+    document.querySelectorAll('.plugin-item').forEach(item => {
+
+      // allow reprocessing if needed (but still safe)
+      if (item.dataset.enhanced === 'true' && !item.querySelector('[data-install], [data-update]')) {
+        return;
+      }
+
       const info = item.querySelector('.plugin-info');
+
+      // ── VERSION PILL ──
       if (info && !info.dataset.versionEnhanced) {
-        const nameEl = info.querySelector('.plugin-name'); // Core uses .plugin-name
-        const metaEl = info.querySelector('.plugin-meta'); // Core uses .plugin-meta
-        
-        // Extract version (e.g., v3.6.7) from the meta text
-        const versionMatch = metaEl?.textContent.match(/v?\d+\.\d+\.\d+/);
-        
-        if (versionMatch && nameEl) {
-          const pill = document.createElement('span');
-          pill.className = 'apple-version-pill';
-          pill.textContent = versionMatch[0];
-          
-          // Append the pill next to the name
-          nameEl.style.display = 'inline-flex';
-          nameEl.style.alignItems = 'center';
-          nameEl.appendChild(pill);
-          
-          // Clean up the original meta text so version isn't shown twice
-          metaEl.textContent = metaEl.textContent.replace(versionMatch[0], '').replace(/^[\s•]+|[\s•]+$/g, '');
+        const nameEl = info.querySelector('.plugin-name');
+        const metaEl = info.querySelector('.plugin-meta');
+
+        if (nameEl && metaEl) {
+          const match = metaEl.textContent.match(/v?\d+\.\d+\.\d+/);
+
+          if (match) {
+            const pill = document.createElement('span');
+            pill.className = 'apple-version-pill';
+            pill.textContent = match[0];
+
+            nameEl.style.display = 'inline-flex';
+            nameEl.style.alignItems = 'center';
+            nameEl.appendChild(pill);
+
+            metaEl.textContent = metaEl.textContent
+              .replace(match[0], '')
+              .replace(/^[\s•]+|[\s•]+$/g, '');
+          }
         }
+
         info.dataset.versionEnhanced = 'true';
       }
 
-      // 2. Action Buttons Logic (Remains mostly the same, but verified)
+      // ── ACTION BUTTONS ──
       const actionGroup = item.querySelector('.pm-action-group');
-      if (!actionGroup) return;
 
-      const reloadBtn = actionGroup.querySelector('.reload-btn');
-      const toggleBtn = actionGroup.querySelector('.toggle-btn');
-      const deleteBtn = actionGroup.querySelector('.delete-btn');
+      if (actionGroup && actionGroup.dataset.enhanced !== 'true') {
+        const reloadBtn = actionGroup.querySelector('.reload-btn');
+        const toggleBtn = actionGroup.querySelector('.toggle-btn');
+        const deleteBtn = actionGroup.querySelector('.delete-btn');
 
-      if (reloadBtn) {
-        reloadBtn.className = 'apple-icon-btn reload-btn'; // Keep original class for functionality
-        reloadBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>`;
+        if (reloadBtn && !reloadBtn.dataset.iconified) {
+          reloadBtn.className = 'apple-icon-btn reload-btn';
+          reloadBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+            <polyline points="21 3 21 8 16 8"/>
+          </svg>`;
+          reloadBtn.dataset.iconified = 'true';
+        }
+
+        if (toggleBtn && !actionGroup.querySelector('.apple-switch')) {
+          const isEnabled = toggleBtn.textContent.trim() === 'Disable';
+
+          const wrapper = document.createElement('label');
+          wrapper.className = 'apple-switch';
+
+          wrapper.innerHTML = `
+            <input type="checkbox" ${isEnabled ? 'checked' : ''}>
+            <span class="apple-slider"></span>
+          `;
+
+          wrapper.querySelector('input').onchange = () => {
+            toggleBtn.click();
+          };
+
+          actionGroup.insertBefore(wrapper, toggleBtn);
+        }
+
+        if (deleteBtn && !deleteBtn.dataset.iconified) {
+          deleteBtn.className = 'apple-icon-btn delete-icon delete-btn';
+          deleteBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"/>
+            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+            <line x1="10" y1="11" x2="10" y2="17"/>
+            <line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>`;
+          deleteBtn.dataset.iconified = 'true';
+        }
+
+        // Install Button → Icon
+        const installBtn = actionGroup.querySelector('[data-install]');
+        if (installBtn && !installBtn.dataset.iconified) {
+          installBtn.className = 'apple-icon-btn';
+          installBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12"/>
+              <path d="M7 10l5 5 5-5"/>
+              <path d="M5 21h14"/>
+            </svg>
+          `;
+          installBtn.dataset.iconified = 'true';
+        }
+
+        // Update Button → Icon
+        const updateBtn = actionGroup.querySelector('[data-update]');
+        if (updateBtn && !updateBtn.dataset.iconified) {
+          updateBtn.className = 'apple-icon-btn update-btn-enhanced';
+          updateBtn.innerHTML = `
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M7 19L5.78311 18.9954C3.12231 18.8818 1 16.6888 1 14
+              C1 11.3501 3.06139 9.18169 5.66806 9.01084
+              C6.78942 6.64027 9.20316 5 12 5
+              C15.5268 5 18.4445 7.60822 18.9293 11.001
+              L19 11C21.2091 11 23 12.7909 23 15
+              C23 17.1422 21.316 18.8911 19.1996 18.9951
+              L17 19M12 10V18M12 18L15 15M12 18L9 15"
+              stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          `;
+          updateBtn.dataset.iconified = 'true';
+        }
+
+        actionGroup.dataset.enhanced = 'true';
       }
 
-      if (toggleBtn && !toggleBtn.classList.contains('enhanced')) {
-
-        toggleBtn.classList.add('enhanced');
-        const isEnabled =
-        toggleBtn.classList.contains('active') ||
-        toggleBtn.getAttribute('aria-pressed') === 'true' ||
-        toggleBtn.textContent.trim().toLowerCase().includes('disable');
-        const switchWrapper = document.createElement('label');
-        switchWrapper.className = 'apple-switch';
-        switchWrapper.innerHTML = `
-          <input type="checkbox" ${isEnabled ? 'checked' : ''}>
-          <span class="apple-slider"></span>
-        `;
-
-        switchWrapper.querySelector('input').onchange = () => toggleBtn.click();
-        actionGroup.insertBefore(switchWrapper, toggleBtn);
-      }
-
-      if (deleteBtn) {
-        deleteBtn.className = 'apple-icon-btn delete-icon delete-btn';
-        deleteBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
-      }
-      // Install Button → Icon
-      const installBtn = actionGroup.querySelector('[data-install]');
-      if (installBtn && !installBtn.dataset.iconified) {
-        installBtn.className = 'apple-icon-btn';
-        installBtn.innerHTML = `
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 3v12"/>
-          <path d="M7 10l5 5 5-5"/>
-          <path d="M5 21h14"/>
-        </svg>
-        `;
-        installBtn.dataset.iconified = 'true';
-      }
-      // Update Button → Icon
-      const updateBtn = actionGroup.querySelector('[data-update]');
-      if (updateBtn && !updateBtn.dataset.iconified) {
-        updateBtn.className = 'apple-icon-btn update-btn-enhanced';
-           updateBtn.innerHTML = `            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 19L5.78311 18.9954C3.12231 18.8818 1 16.6888 1 14C1 11.3501 3.06139 9.18169 5.66806 9.01084C6.78942 6.64027 9.20316 5 12 5C15.5268 5 18.4445 7.60822 18.9293 11.001L19 11C21.2091 11 23 12.7909 23 15C23 17.1422 21.316 18.8911 19.1996 18.9951L17 19M12 10V18M12 18L15 15M12 18L9 15" 
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>`;
-        updateBtn.dataset.iconified = 'true';
-      }
-
-      actionGroup.dataset.enhanced = 'true';
-
- // 3. Replace Badge Text with Icons (Apple Style)
-      const badges = item.querySelectorAll('.plugin-badge');
-
-      badges.forEach(badge => {
+      // ── BADGES ──
+      item.querySelectorAll('.plugin-badge').forEach(badge => {
         if (badge.dataset.iconified) return;
+
         const text = badge.textContent.trim().toLowerCase();
 
         let icon = '';
 
-          if (text === 'system') {
-          // Apple-style "Command/Chip" symbol for System plugins
+        if (text === 'system') {
           icon = `
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.33 1.82V22a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-.33-1.82 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.82-.33H2a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.82-.33 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6c.26 0 .52-.06.76-.17A1.7 1.7 0 0 0 10.6 3V2a2 2 0 1 1 4 0v.09c0 .64.38 1.22.96 1.49.24.11.5.17.76.17a1.7 1.7 0 0 0 1-.6l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.15-.33 1.82.11.24.17.5.17.76 0 .26-.06.52-.17.76a1.7 1.7 0 0 0 .33 1.82l.06.06A2 2 0 1 1 19.4 15z"/>
-          </svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06
+              a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4
+              a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.33 1.82V22
+              a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-.33-1.82
+              a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.82.33l-.06.06
+              a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15
+              a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.82-.33H2
+              a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.82-.33
+              a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.33-1.82l-.06-.06
+              a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6
+              c.26 0 .52-.06.76-.17A1.7 1.7 0 0 0 10.6 3V2
+              a2 2 0 1 1 4 0v.09c0 .64.38 1.22.96 1.49
+              .24.11.5.17.76.17a1.7 1.7 0 0 0 1-.6l.06-.06
+              a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.15-.33 1.82
+              .11.24.17.5.17.76 0 .26-.06.52-.17.76
+              a1.7 1.7 0 0 0 .33 1.82l.06.06A2 2 0 1 1 19.4 15z"/>
+            </svg>
           `;
           badge.title = "System Plugin";
-        } 
+        }
+
         if (text === 'active') {
           badge.innerHTML = `
             <div class="status-active-wrapper">
               <div class="status-dot"></div>
-            </div>
-          `;
-          badge.style.background = "none";
-          badge.dataset.iconified = 'true';
+            </div>`;
+          badge.style.background = 'none';
           item.classList.add('active');
         }
+
         else if (text === 'inactive') {
           badge.innerHTML = `
             <div class="status-inactive-wrapper">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="3.5" stroke-linecap="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
+              <svg width="10" height="10" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="3.5">
+                <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-            </div>
-          `;
-          badge.style.color = "#FF3B30"; // Apple System Red
-          badge.style.background = "rgba(255, 59, 48, 0.12)"; // Very light red tint
+            </div>`;
+          badge.style.color = "#FF3B30";
+          badge.style.background = "rgba(255, 59, 48, 0.12)";
         }
+
         else if (text.includes('update')) {
-            badge.innerHTML = `
+          badge.innerHTML = `
             <div class="status-update-wrapper">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="10" height="10" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="3">
                 <path d="M12 19V5M5 12l7 7 7-7"/>
               </svg>
-            </div>
-          `;
+            </div>`;
           badge.style.background = "rgba(52, 199, 89, 0.15)";
           badge.style.color = "#34C759";
         }
+
+        // Apply system icon if exists
         if (icon) {
           badge.innerHTML = icon;
           badge.style.display = 'inline-flex';
           badge.style.alignItems = 'center';
           badge.style.justifyContent = 'center';
           badge.style.borderRadius = '50%';
+
           if (!badge.style.background) {
             badge.style.background = 'rgba(120, 120, 128, 0.08)';
           }
@@ -441,38 +516,43 @@ export function setup(api) {
 
         badge.dataset.iconified = 'true';
       });
-    
+
+      item.dataset.enhanced = 'true';
     });
   };
 
-  let rafId = null;
-
+  // ───────────────── OBSERVER ─────────────────
   observer = new MutationObserver(() => {
-    if (rafId) return;
-
-    rafId = requestAnimationFrame(() => {
-      transformUI();
-      rafId = null;
-    });
+    requestAnimationFrame(transformUI);
   });
-  
-  const startObserving = () => {
-    const pmRoot = document.querySelector('.pm-root');
-    if (pmRoot) {
-      observer.observe(pmRoot, { childList: true, subtree: true });
-      transformUI();
-    } else {
-      setTimeout(startObserving, 300);
+
+  const start = () => {
+    const root = document.querySelector('.pm-root');
+
+    if (!root) {
+      setTimeout(start, 300);
+      return;
     }
+
+    observer.observe(root, { childList: true, subtree: true });
+    transformUI();
   };
 
-  startObserving();
+  start();
 }
 
 export function teardown() {
   if (style) style.remove();
   if (observer) observer.disconnect();
+
   const content = document.querySelector('.pm-content');
-  if (content && scrollListener) content.removeEventListener('scroll', scrollListener);
-  document.querySelectorAll('.apple-switch, .pm-scroll-top, .apple-version-pill').forEach(el => el.remove());
+  if (content && scrollListener) {
+    content.removeEventListener('scroll', scrollListener);
+  }
+
+  document
+    .querySelectorAll('.apple-switch, .pm-scroll-top, .apple-version-pill')
+    .forEach(el => el.remove());
+
+  isInitialized = false;
 }
