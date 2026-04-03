@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.6.2',
+  version: '1.6.3',
   compat: '>=3.3.0'
 };
 
@@ -324,10 +324,13 @@ export function setup(api) {
           item.dataset.staticEnhanced = 'true';
         }
 
+        const actionGroup = item.querySelector('.pm-action-group');
+        const info = item.querySelector('.plugin-info');
+
+        // ── FORCE TOGGLE FIX (runs every time)
         if (actionGroup) {
           const toggleBtn = actionGroup.querySelector('.toggle-btn');
 
-          // 🔥 FORCE FIX: re-inject if missing
           if (toggleBtn && !actionGroup.querySelector('.apple-switch')) {
             const isEnabled = toggleBtn.textContent.trim() === 'Disable';
 
@@ -346,8 +349,6 @@ export function setup(api) {
             actionGroup.insertBefore(wrapper, toggleBtn);
           }
         }
-
-      const info = item.querySelector('.plugin-info');
 
       // ── VERSION PILL ──
       if (info && !info.dataset.versionEnhanced) {
@@ -374,9 +375,6 @@ export function setup(api) {
 
         info.dataset.versionEnhanced = 'true';
       }
-
-      // ── ACTION BUTTONS ──
-      const actionGroup = item.querySelector('.pm-action-group');
 
       if (actionGroup) {
         const reloadBtn = actionGroup.querySelector('.reload-btn');
