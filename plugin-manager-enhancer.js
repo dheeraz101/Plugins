@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.4.8',
+  version: '1.4.9',
   compat: '>=3.3.0'
 };
 
@@ -15,8 +15,9 @@ export function setup(api) {
 
     /* 0. Animations */
     @keyframes line-breathe {
-      0%, 100% { height: 10px; opacity: 0.5; box-shadow: 0 0 0px #34C759; }
-      50% { height: 16px; opacity: 1; box-shadow: 0 0 8px rgba(52, 199, 89, 0.6); }
+      0%, 100% { height: 8px; opacity: 0.4; transform: scaleY(1); }
+      50% { height: 14px; opacity: 1; transform: scaleY(1.1); }
+    }
 
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
     .pm-content::-webkit-scrollbar { 
@@ -45,10 +46,11 @@ export function setup(api) {
 
     .status-line-indicator {
       width: 3px;
-      height: 12px;
+      height: 10px;
       background-color: #34C759;
       border-radius: 4px;
-      animation: line-breathe 3s ease-in-out infinite;
+      animation: line-breathe 2.5s ease-in-out infinite;
+      box-shadow: 0 0 6px rgba(52, 199, 89, 0.2);
     }
 
 
