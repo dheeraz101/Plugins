@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.3.7',
+  version: '1.3.8',
   compat: '>=3.3.0'
 };
 
@@ -12,6 +12,13 @@ let scrollListener = null;
 export function setup(api) {
   style = document.createElement('style');
   style.textContent = `
+
+    /* 0. Animations */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.33); opacity: 0.8; }
+      80%, 100% { opacity: 0; transform: scale(1.2); }
+    }
+
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
     .pm-content::-webkit-scrollbar { 
       width: 6px; 
@@ -27,6 +34,33 @@ export function setup(api) {
     .pm-content::-webkit-scrollbar-thumb:hover {
       background: rgba(0, 0, 0, 0.2);
     }
+
+    /* 1.5. Living Status Badge */
+    .status-pulse-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      height: 12px;
+    }
+    .status-pulse-dot {
+      width: 6px;
+      height: 6px;
+      background-color: #34C759;
+      border-radius: 50%;
+      z-index: 2;
+    }
+    .status-pulse-ring {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border: 3px solid #34C759;
+      border-radius: 50%;
+      animation: pulse-ring 1.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+      z-index: 1;
+    }
+
 
     /* 2. Version Pill Styling */
     .apple-version-pill {
@@ -167,6 +201,7 @@ export function setup(api) {
         border-color: rgba(255, 255, 255, 0.1); 
       }
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
+      .status-pulse-dot, .status-pulse-ring { border-color: #30D158; background-color: #30D158; }
     }
   `;
   document.head.appendChild(style);
@@ -301,10 +336,14 @@ export function setup(api) {
           `;
           badge.title = "System Plugin";
         } 
-        else if (text === 'active') {
-          icon = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-          badge.style.color = "#34C759"; // Apple Success Green
-          badge.style.background = "rgba(52, 199, 89, 0.12)"; // Very light green tint
+        if (text === 'active') {
+          badge.innerHTML = `
+            <div class="status-pulse-wrapper">
+              <div class="status-pulse-dot"></div>
+              <div class="status-pulse-ring"></div>
+            </div>`;
+          badge.style.background = "rgba(52, 199, 89, 0.08)";
+          badge.style.padding = '6px';
         } 
         else if (text === 'inactive') {
           icon = `
