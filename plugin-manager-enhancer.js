@@ -1,15 +1,13 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.3.8',
+  version: '1.3.3',
   compat: '>=3.3.0'
 };
 
 let style = null;
 let observer = null;
 let scrollListener = null;
-let currentRoot = null;
-let rafId = null;
 
 export function setup(api) {
   style = document.createElement('style');
@@ -173,185 +171,179 @@ export function setup(api) {
   `;
   document.head.appendChild(style);
 
-   const injectScrollButton = (pmRoot, content) => {
-    if (!pmRoot || !content) return;
+   const injectScrollButton = () => {
+    const pmRoot = document.querySelector('.pm-root');
+    const content = document.querySelector('.pm-content');
+    if (!pmRoot || !content || document.querySelector('.pm-scroll-top')) return;
 
-    let topBtn = pmRoot.querySelector('.pm-scroll-top');
+    const topBtn = document.createElement('div');
+    topBtn.className = 'pm-scroll-top';
+    topBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>`;
+    
+    topBtn.onclick = (e) => {
+      e.stopPropagation();
+      content.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
-    if (!topBtn) {
-      topBtn = document.createElement('div');
-      topBtn.className = 'pm-scroll-top';
-      topBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>`;
-      topBtn.onclick = (e) => {
-        e.stopPropagation();
-        content.scrollTo({ top: 0, behavior: 'smooth' });
-      };
-      pmRoot.appendChild(topBtn);
-    }
-
-    if (scrollListener) content.removeEventListener('scroll', scrollListener);
+    // Append to pmRoot instead of content to keep it fixed relative to the window
+    pmRoot.appendChild(topBtn);
 
     scrollListener = () => {
       topBtn.classList.toggle('visible', content.scrollTop > 150);
     };
-
-    content.addEventListener('scroll', scrollListener, { passive: true });
-    scrollListener();
+    content.addEventListener('scroll', scrollListener);
   };
 
-  const enhanceItem = (item) => {
-    if (!item || item.dataset.pmEnhanced === 'true') return;
-
-    const info = item.querySelector('.plugin-info');
-    if (info && !info.dataset.versionEnhanced) {
-      const nameEl = info.querySelector('.plugin-name');
-      const metaEl = info.querySelector('.plugin-meta');
-      const versionMatch = metaEl?.textContent.match(/v?\d+\.\d+\.\d+/);
-
-      if (versionMatch && nameEl && !nameEl.querySelector('.apple-version-pill')) {
-        const pill = document.createElement('span');
-        pill.className = 'apple-version-pill';
-        pill.textContent = versionMatch[0];
-        nameEl.style.display = 'inline-flex';
-        nameEl.style.alignItems = 'center';
-        nameEl.appendChild(pill);
-        metaEl.textContent = metaEl.textContent
-          .replace(versionMatch[0], '')
-          .replace(/^[\s•]+|[\s•]+$/g, '');
+  const transformUI = () => {
+    injectScrollButton();
+    const items = document.querySelectorAll('.plugin-item');
+    
+    items.forEach(item => {
+      // 1. FIX: Target the correct elements for the Version Pill
+      const info = item.querySelector('.plugin-info');
+      if (info && !info.dataset.versionEnhanced) {
+        const nameEl = info.querySelector('.plugin-name'); // Core uses .plugin-name
+        const metaEl = info.querySelector('.plugin-meta'); // Core uses .plugin-meta
+        
+        // Extract version (e.g., v3.6.7) from the meta text
+        const versionMatch = metaEl?.textContent.match(/v?\d+\.\d+\.\d+/);
+        
+        if (versionMatch && nameEl) {
+          const pill = document.createElement('span');
+          pill.className = 'apple-version-pill';
+          pill.textContent = versionMatch[0];
+          
+          // Append the pill next to the name
+          nameEl.style.display = 'inline-flex';
+          nameEl.style.alignItems = 'center';
+          nameEl.appendChild(pill);
+          
+          // Clean up the original meta text so version isn't shown twice
+          metaEl.textContent = metaEl.textContent.replace(versionMatch[0], '').replace(/^[\s•]+|[\s•]+$/g, '');
+        }
+        info.dataset.versionEnhanced = 'true';
       }
-      info.dataset.versionEnhanced = 'true';
-    }
 
-    const actionGroup = item.querySelector('.pm-action-group');
-    if (actionGroup && actionGroup.dataset.enhanced !== 'true') {
+      // 2. Action Buttons Logic (Remains mostly the same, but verified)
+      const actionGroup = item.querySelector('.pm-action-group');
+      if (!actionGroup || actionGroup.dataset.enhanced === 'true') return;
+
       const reloadBtn = actionGroup.querySelector('.reload-btn');
       const toggleBtn = actionGroup.querySelector('.toggle-btn');
       const deleteBtn = actionGroup.querySelector('.delete-btn');
-      const installBtn = actionGroup.querySelector('[data-install]');
-      const updateBtn = actionGroup.querySelector('[data-update]');
 
-      if (reloadBtn && !reloadBtn.dataset.iconified) {
-        reloadBtn.classList.add('apple-icon-btn');
+      if (reloadBtn) {
+        reloadBtn.className = 'apple-icon-btn reload-btn'; // Keep original class for functionality
         reloadBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>`;
-        reloadBtn.dataset.iconified = 'true';
       }
 
-      if (toggleBtn && !actionGroup.querySelector('.apple-switch')) {
+      if (toggleBtn) {
+        // Core Manager uses text "Disable" to indicate an active plugin
         const isEnabled = toggleBtn.textContent.trim() === 'Disable';
         const switchWrapper = document.createElement('label');
         switchWrapper.className = 'apple-switch';
         switchWrapper.innerHTML = `<input type="checkbox" ${isEnabled ? 'checked' : ''}><span class="apple-slider"></span>`;
+        
+        // Link the switch to the hidden core button
         switchWrapper.querySelector('input').onchange = () => toggleBtn.click();
         actionGroup.insertBefore(switchWrapper, toggleBtn);
       }
 
-      if (deleteBtn && !deleteBtn.dataset.iconified) {
-        deleteBtn.classList.add('apple-icon-btn', 'delete-icon');
+      if (deleteBtn) {
+        deleteBtn.className = 'apple-icon-btn delete-icon delete-btn';
         deleteBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
-        deleteBtn.dataset.iconified = 'true';
       }
-
+      // Install Button → Icon
+      const installBtn = actionGroup.querySelector('[data-install]');
       if (installBtn && !installBtn.dataset.iconified) {
-        installBtn.classList.add('apple-icon-btn');
-        installBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>`;
+        installBtn.className = 'apple-icon-btn';
+        installBtn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        `;
         installBtn.dataset.iconified = 'true';
       }
-
+      // Update Button → Icon
+      const updateBtn = actionGroup.querySelector('[data-update]');
       if (updateBtn && !updateBtn.dataset.iconified) {
-        updateBtn.classList.add('apple-icon-btn');
-        updateBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>`;
+        updateBtn.className = 'apple-icon-btn';
+        updateBtn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 2v6h-6"/>
+            <path d="M21 13a9 9 0 1 1-3-7.7L21 8"/>
+          </svg>
+        `;
         updateBtn.dataset.iconified = 'true';
       }
 
       actionGroup.dataset.enhanced = 'true';
-    }
 
-    item.querySelectorAll('.plugin-badge').forEach(badge => {
-      if (badge.dataset.iconified) return;
-      const text = badge.textContent.trim().toLowerCase();
-      let icon = '';
+ // 3. Replace Badge Text with Icons (Apple Style)
+      const badges = item.querySelectorAll('.plugin-badge');
 
-      if (text === 'system') {
-        icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/></svg>`;
-      } else if (text === 'active') {
-        icon = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-        badge.style.color = "#34C759";
-        badge.style.background = "rgba(52, 199, 89, 0.12)";
-      } else if (text === 'inactive') {
-        icon = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
-        badge.style.color = "#FF3B30";
-        badge.style.background = "rgba(255, 59, 48, 0.12)";
-      } else if (text.includes('update')) {
-        icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12l4 4 4-4"/></svg>`;
-        badge.style.color = "#007AFF";
-      }
+      badges.forEach(badge => {
+        if (badge.dataset.iconified) return;
+        const text = badge.textContent.trim().toLowerCase();
 
-      if (icon) {
-        badge.innerHTML = icon;
-        badge.style.display = 'inline-flex';
-        badge.style.alignItems = 'center';
-        badge.style.justifyContent = 'center';
-        badge.style.padding = '5px';
-        badge.style.borderRadius = '50%';
-        if (!badge.style.background) {
+        let icon = '';
+
+        if (text.includes('system')) {
+          // Apple-style "Command/Chip" symbol for System plugins
+          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5" ry="5"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>`;
+          badge.title = "System Plugin";
+        } 
+        else if (text.includes('active')) {
+          // Thicker, rounded checkmark for Active status
+          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+          badge.style.color = "#34C759"; // Apple Success Green
+        } 
+        else if (text.includes('inactive')) {
+          // Hollow circle for Inactive
+          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>`;
+          badge.style.color = "#86868b";
+        } 
+        else if (text.includes('update')) {
+          // "Arrow down into circle" for Update available
+          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12l4 4 4-4"/></svg>`;
+          badge.style.color = "#007AFF"; // Apple Blue
+        }
+
+        if (icon) {
+          badge.innerHTML = icon;
+          badge.style.display = 'inline-flex';
+          badge.style.alignItems = 'center';
+          badge.style.justifyContent = 'center';
+          badge.style.padding = '5px';
+          badge.style.borderRadius = '50%';
           badge.style.background = 'rgba(120, 120, 128, 0.08)';
         }
-      }
 
-      badge.dataset.iconified = 'true';
+        badge.dataset.iconified = 'true';
+      });
+    
     });
-
-    item.dataset.pmEnhanced = 'true';
   };
 
-  const transformUI = () => {
+  observer = new MutationObserver(() => transformUI());
+  
+  const startObserving = () => {
     const pmRoot = document.querySelector('.pm-root');
-    const content = pmRoot?.querySelector('.pm-content');
-    if (!pmRoot || !content) return;
-
-    injectScrollButton(pmRoot, content);
-    pmRoot.querySelectorAll('.plugin-item').forEach(enhanceItem);
-  };
-
-  const scheduleTransform = () => {
-    if (rafId) return;
-    rafId = requestAnimationFrame(() => {
-      rafId = null;
-      if (observer) observer.disconnect();
+    if (pmRoot) {
+      observer.observe(pmRoot, { childList: true, subtree: true });
       transformUI();
-      if (currentRoot) {
-        observer.observe(currentRoot, { childList: true, subtree: true });
-      }
-    });
+    } else {
+      setTimeout(startObserving, 300);
+    }
   };
 
-  const bindObserver = () => {
-    const pmRoot = document.querySelector('.pm-root');
-    if (!pmRoot || pmRoot === currentRoot) return;
+  startObserving();
+}
 
-    currentRoot = pmRoot;
-    if (observer) observer.disconnect();
-
-    observer = new MutationObserver((mutations) => {
-      const relevant = mutations.some(m =>
-        [...m.addedNodes].some(n =>
-          n.nodeType === 1 && (
-            n.matches?.('.plugin-item, .pm-content, .pm-action-group, .plugin-badge') ||
-            n.querySelector?.('.plugin-item, .pm-content, .pm-action-group, .plugin-badge')
-          )
-        )
-      );
-
-      if (relevant) scheduleTransform();
-    });
-
-    observer.observe(pmRoot, { childList: true, subtree: true });
-    scheduleTransform();
-  };
-
-  bindObserver();
-
-  const rootWatcher = new MutationObserver(() => bindObserver());
-  rootWatcher.observe(document.body, { childList: true, subtree: true });
-  observer = rootWatcher;
+export function teardown() {
+  if (style) style.remove();
+  if (observer) observer.disconnect();
+  const content = document.querySelector('.pm-content');
+  if (content && scrollListener) content.removeEventListener('scroll', scrollListener);
+  document.querySelectorAll('.apple-switch, .pm-scroll-top, .apple-version-pill').forEach(el => el.remove());
 }
