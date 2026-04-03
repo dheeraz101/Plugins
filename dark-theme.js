@@ -4,7 +4,7 @@ let styleEl = null;
 export const meta = {
   id: 'dark-theme',
   name: 'Dark Theme',
-  version: '2.0.0',
+  version: '2.0.1',
   compat: '>=3.3.0'
 };
 
@@ -117,7 +117,7 @@ export function setup(api) {
     document.head.appendChild(styleEl);
   }
 
-  if (api.notify) api.notify('🌙 Dark theme applied', 'success', 2000);
+  if (api.notify) api.notify('🌙 Dark themed', 'success', 2000);
 }
 
 export function teardown() {
