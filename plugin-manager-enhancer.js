@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.6.0',
+  version: '1.6.1',
   compat: '>=3.3.0'
 };
 
@@ -346,7 +346,7 @@ export function setup(api) {
       // ── ACTION BUTTONS ──
       const actionGroup = item.querySelector('.pm-action-group');
 
-      if (actionGroup && actionGroup.dataset.enhanced !== 'true') {
+      if (actionGroup) {
         const reloadBtn = actionGroup.querySelector('.reload-btn');
         const toggleBtn = actionGroup.querySelector('.toggle-btn');
         const deleteBtn = actionGroup.querySelector('.delete-btn');
@@ -430,7 +430,6 @@ export function setup(api) {
           updateBtn.dataset.iconified = 'true';
         }
 
-        actionGroup.dataset.enhanced = 'true';
       }
 
       // ── BADGES ──
