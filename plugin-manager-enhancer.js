@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.4.7',
+  version: '1.4.8',
   compat: '>=3.3.0'
 };
 
@@ -14,11 +14,9 @@ export function setup(api) {
   style.textContent = `
 
     /* 0. Animations */
-    @keyframes pulse-ring {
-      0% { transform: scale(0.5); opacity: 0; }
-      30% { opacity: 0.5; }
-      100% { transform: scale(1.4); opacity: 0; }
-    }
+    @keyframes line-breathe {
+      0%, 100% { height: 10px; opacity: 0.5; box-shadow: 0 0 0px #34C759; }
+      50% { height: 16px; opacity: 1; box-shadow: 0 0 8px rgba(52, 199, 89, 0.6); }
 
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
     .pm-content::-webkit-scrollbar { 
@@ -36,30 +34,21 @@ export function setup(api) {
       background: rgba(0, 0, 0, 0.2);
     }
 
-    /* 1.5. Living Status Badge */
-    .status-pulse-wrapper {
-      position: relative;
+    /* 1. Status Bar Container */
+    .status-line-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
       width: 100%;
       height: 100%;
     }
-    .status-pulse-dot {
-      width: 7px;
-      height: 7px;
+
+    .status-line-indicator {
+      width: 3px;
+      height: 12px;
       background-color: #34C759;
-      border-radius: 50%;
-      z-index: 2;
-    }
-    .status-pulse-ring {
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      border: 2px solid #34C759;
-      border-radius: 50%;
-      animation: pulse-ring 3s cubic-bezier(0.25, 0, 0.4, 1) infinite;
-      z-index: 1;
+      border-radius: 4px;
+      animation: line-breathe 3s ease-in-out infinite;
     }
 
 
@@ -184,17 +173,13 @@ export function setup(api) {
       display: block;
     }
 
+
     .plugin-badge {
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      width: 24px !important;  /* Fixed size for centering */
-      height: 24px !important; /* Fixed size for centering */
-      min-width: 24px !important;
-      border-radius: 50% !important;
-      padding: 0 !important;   /* Remove padding to prevent offset */
-      margin: 0 4px;
-      overflow: visible !important;
+      width: 24px !important; height: 24px !important;
+      border-radius: 50% !important; margin: 0 4px;
     }
         
     /* 7. Dark Mode Overrides */
@@ -212,7 +197,7 @@ export function setup(api) {
         border-color: rgba(255, 255, 255, 0.1); 
       }
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
-      .status-pulse-dot, .status-pulse-ring { border-color: #30D158; background-color: #30D158; }
+      .status-line-indicator { background-color: #30D158; box-shadow: 0 0 5px rgba(48, 209, 88, 0.3); }
     }
   `;
   document.head.appendChild(style);
@@ -347,13 +332,8 @@ export function setup(api) {
           badge.title = "System Plugin";
         } 
         if (text === 'active') {
-          badge.innerHTML = `
-            <div class="status-pulse-wrapper">
-              <div class="status-pulse-dot"></div>
-              <div class="status-pulse-ring"></div>
-            </div>`;
-          badge.style.background = "rgba(52, 199, 89, 0.08)";
-          badge.style.padding = '6px';
+          badge.innerHTML = `<div class="status-line-wrapper"><div class="status-line-indicator"></div></div>`;
+          badge.style.background = "none"; 
         } 
         else if (text === 'inactive') {
           icon = `
