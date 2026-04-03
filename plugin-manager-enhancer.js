@@ -351,19 +351,26 @@ export function setup(api) {
 let currentRoot = null;
 
 const startObserving = () => {
+  let busy = false;
+
   observer = new MutationObserver(() => {
+    if (busy) return; // prevent re-entrance
+
     const newRoot = document.querySelector('.pm-root');
     if (!newRoot) return;
 
-    // PM root reloaded
     if (newRoot !== currentRoot) {
       currentRoot = newRoot;
+      busy = true;
       transformUI();
-      return; // skip rest to avoid double run
+      busy = false;
+      return;
     }
 
-    // Same root, children updated
+    // Only transform items if root is already enhanced
+    busy = true;
     transformUI();
+    busy = false;
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
