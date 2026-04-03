@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.6.1',
+  version: '1.6.2',
   compat: '>=3.3.0'
 };
 
@@ -20,6 +20,14 @@ export function setup(api) {
     style.id = 'pm-enhancer-style';
 
     style.textContent = `
+
+    .pm-root {
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .pm-root.pm-ready {
+      opacity: 1;
+    }
     
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
     .pm-content::-webkit-scrollbar { 
@@ -310,10 +318,34 @@ export function setup(api) {
 
     document.querySelectorAll('.plugin-item').forEach(item => {
 
-      // allow reprocessing if needed (but still safe)
-      if (item.dataset.enhanced === 'true' && !item.querySelector('[data-install], [data-update]')) {
-        return;
-      }
+        // ── LIGHT SKIP (only for static parts)
+        if (!item.dataset.staticEnhanced) {
+          // version pill + badges
+          item.dataset.staticEnhanced = 'true';
+        }
+
+        if (actionGroup) {
+          const toggleBtn = actionGroup.querySelector('.toggle-btn');
+
+          // 🔥 FORCE FIX: re-inject if missing
+          if (toggleBtn && !actionGroup.querySelector('.apple-switch')) {
+            const isEnabled = toggleBtn.textContent.trim() === 'Disable';
+
+            const wrapper = document.createElement('label');
+            wrapper.className = 'apple-switch';
+
+            wrapper.innerHTML = `
+              <input type="checkbox" ${isEnabled ? 'checked' : ''}>
+              <span class="apple-slider"></span>
+            `;
+
+            wrapper.querySelector('input').onchange = () => {
+              toggleBtn.click();
+            };
+
+            actionGroup.insertBefore(wrapper, toggleBtn);
+          }
+        }
 
       const info = item.querySelector('.plugin-info');
 
@@ -521,8 +553,13 @@ export function setup(api) {
   };
 
   // ───────────────── OBSERVER ─────────────────
+  let rafId = null;
+
   observer = new MutationObserver(() => {
-    requestAnimationFrame(transformUI);
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      transformUI();
+    });
   });
 
   const start = () => {
@@ -534,7 +571,13 @@ export function setup(api) {
     }
 
     observer.observe(root, { childList: true, subtree: true });
+
+    // 🔥 First full transform BEFORE showing
     transformUI();
+
+    requestAnimationFrame(() => {
+      root.classList.add('pm-ready');
+    });
   };
 
   start();
