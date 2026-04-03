@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.5.0',
+  version: '1.5.1',
   compat: '>=3.3.0'
 };
 
@@ -12,12 +12,6 @@ let scrollListener = null;
 export function setup(api) {
   style = document.createElement('style');
   style.textContent = `
-
-    /* 0. Animations */
-    @keyframes line-scan {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-  }
 
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
     .pm-content::-webkit-scrollbar { 
@@ -33,41 +27,6 @@ export function setup(api) {
     }
     .pm-content::-webkit-scrollbar-thumb:hover {
       background: rgba(0, 0, 0, 0.2);
-    }
-
-    /* 1. Status Bar Container - Horizontal Scanner */
-    .status-line-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-    }
-
-    .status-line-indicator {
-      width: 24px;
-      height: 4px;
-      background: rgba(52, 199, 89, 0.1); /* The fixed background line */
-      border-radius: 2px;
-      position: relative;
-      overflow: hidden;
-      border: 1px solid rgba(52, 199, 89, 0.05);
-    }
-
-    .status-line-indicator::after {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      /* The Pulse Gradient */
-      background: linear-gradient(
-        90deg, 
-        transparent 0%, 
-        #34C759 50%, 
-        transparent 100%
-      );
-      background-size: 50% 100%;
-      background-repeat: no-repeat;
-      animation: line-scan 2s linear infinite;
     }
 
     /* 2. Version Pill Styling */
@@ -199,6 +158,28 @@ export function setup(api) {
       width: 24px !important; height: 24px !important;
       border-radius: 50% !important; margin: 0 4px;
     }
+
+    @keyframes apple-breathe {
+      0%, 100% { 
+        transform: scale(0.9);
+        opacity: 0.6;
+        box-shadow: 0 0 4px rgba(52, 199, 89, 0.4);
+      }
+      50% { 
+        transform: scale(1.1);
+        opacity: 1;
+        box-shadow: 0 0 10px rgba(52, 199, 89, 0.9);
+      }
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34C759;
+      animation: apple-breathe 2.4s ease-in-out infinite;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
         
     /* 7. Dark Mode Overrides */
     @media (prefers-color-scheme: dark) {
@@ -215,8 +196,6 @@ export function setup(api) {
         border-color: rgba(255, 255, 255, 0.1); 
       }
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
-      .status-line-indicator { background: rgba(48, 209, 88, 0.1); border-color: rgba(48, 209, 88, 0.2); }
-      .status-line-indicator::after { background: linear-gradient(90deg, transparent, #30D158 50%, transparent); }
     }
   `;
   document.head.appendChild(style);
@@ -351,10 +330,13 @@ export function setup(api) {
           badge.title = "System Plugin";
         } 
         if (text === 'active') {
-          badge.innerHTML = `<div class="status-line-wrapper"><div class="status-line-indicator"></div></div>`;
+          badge.innerHTML = `<div class="status-dot"></div>`;
           badge.style.background = "none";
           badge.dataset.iconified = 'true';
-        } 
+
+          // Optional: mark parent as active for future styling
+          item.classList.add('active');
+        }
         else if (text === 'inactive') {
           icon = `
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
