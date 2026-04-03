@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
-  name: 'PM Apple Aesthetic Enhancer',
-  version: '1.2.3',
+  name: 'PM Enhancer',
+  version: '1.3.0',
   compat: '>=3.3.0'
 };
 
@@ -144,7 +144,16 @@ export function setup(api) {
       color: #007AFF; /* Apple Blue on hover for better UI */
       transform: translateX(-50%) translateY(-2px);
     }
-    
+
+    .plugin-badge svg {
+      display: block;
+    }
+
+    .plugin-badge {
+      min-width: 20px;
+      height: 20px;
+    }
+        
     /* 7. Dark Mode Overrides */
     @media (prefers-color-scheme: dark) {
       .pm-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
@@ -244,8 +253,68 @@ export function setup(api) {
         deleteBtn.className = 'apple-icon-btn delete-icon delete-btn';
         deleteBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
       }
+      // Install Button → Icon
+      const installBtn = actionGroup.querySelector('[data-install]');
+      if (installBtn && !installBtn.dataset.iconified) {
+        installBtn.className = 'apple-icon-btn';
+        installBtn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        `;
+        installBtn.dataset.iconified = 'true';
+      }
+      // Update Button → Icon
+      const updateBtn = actionGroup.querySelector('[data-update]');
+      if (updateBtn && !updateBtn.dataset.iconified) {
+        updateBtn.className = 'apple-icon-btn';
+        updateBtn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-3-6.7"/>
+            <polyline points="21 3 21 9 15 9"/>
+          </svg>
+        `;
+        updateBtn.dataset.iconified = 'true';
+      }
 
       actionGroup.dataset.enhanced = 'true';
+
+      // 3. Replace Badge Text with Icons (Apple Style)
+      const badges = item.querySelectorAll('.plugin-badge');
+
+      badges.forEach(badge => {
+        const text = badge.textContent.trim().toLowerCase();
+
+        if (badge.dataset.iconified) return;
+
+        let icon = '';
+
+        if (text.includes('system')) {
+          icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.2L18 22l-6-4-6 4 1.5-8.8L2 9h7z"/></svg>`;
+        } 
+        else if (text.includes('active')) {
+          icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>`;
+        } 
+        else if (text.includes('inactive')) {
+          icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>`;
+        } 
+        else if (text.includes('update')) {
+          icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 6v6l4 2"/></svg>`;
+        }
+
+        if (icon) {
+          badge.innerHTML = icon;
+          badge.style.display = 'inline-flex';
+          badge.style.alignItems = 'center';
+          badge.style.justifyContent = 'center';
+          badge.style.padding = '4px';
+        }
+
+        badge.dataset.iconified = 'true';
+      });
+    
     });
   };
 
