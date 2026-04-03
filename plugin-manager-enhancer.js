@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.4.9',
+  version: '1.5.0',
   compat: '>=3.3.0'
 };
 
@@ -14,10 +14,10 @@ export function setup(api) {
   style.textContent = `
 
     /* 0. Animations */
-    @keyframes line-breathe {
-      0%, 100% { height: 8px; opacity: 0.4; transform: scaleY(1); }
-      50% { height: 14px; opacity: 1; transform: scaleY(1.1); }
-    }
+    @keyframes line-scan {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+  }
 
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
     .pm-content::-webkit-scrollbar { 
@@ -35,7 +35,7 @@ export function setup(api) {
       background: rgba(0, 0, 0, 0.2);
     }
 
-    /* 1. Status Bar Container */
+    /* 1. Status Bar Container - Horizontal Scanner */
     .status-line-wrapper {
       display: flex;
       align-items: center;
@@ -45,14 +45,30 @@ export function setup(api) {
     }
 
     .status-line-indicator {
-      width: 3px;
-      height: 10px;
-      background-color: #34C759;
-      border-radius: 4px;
-      animation: line-breathe 2.5s ease-in-out infinite;
-      box-shadow: 0 0 6px rgba(52, 199, 89, 0.2);
+      width: 24px;
+      height: 4px;
+      background: rgba(52, 199, 89, 0.1); /* The fixed background line */
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(52, 199, 89, 0.05);
     }
 
+    .status-line-indicator::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      /* The Pulse Gradient */
+      background: linear-gradient(
+        90deg, 
+        transparent 0%, 
+        #34C759 50%, 
+        transparent 100%
+      );
+      background-size: 50% 100%;
+      background-repeat: no-repeat;
+      animation: line-scan 2s linear infinite;
+    }
 
     /* 2. Version Pill Styling */
     .apple-version-pill {
@@ -199,7 +215,8 @@ export function setup(api) {
         border-color: rgba(255, 255, 255, 0.1); 
       }
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
-      .status-line-indicator { background-color: #30D158; box-shadow: 0 0 5px rgba(48, 209, 88, 0.3); }
+      .status-line-indicator { background: rgba(48, 209, 88, 0.1); border-color: rgba(48, 209, 88, 0.2); }
+      .status-line-indicator::after { background: linear-gradient(90deg, transparent, #30D158 50%, transparent); }
     }
   `;
   document.head.appendChild(style);
@@ -335,7 +352,8 @@ export function setup(api) {
         } 
         if (text === 'active') {
           badge.innerHTML = `<div class="status-line-wrapper"><div class="status-line-indicator"></div></div>`;
-          badge.style.background = "none"; 
+          badge.style.background = "none";
+          badge.dataset.iconified = 'true';
         } 
         else if (text === 'inactive') {
           icon = `
