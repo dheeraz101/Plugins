@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.3.0',
+  version: '1.3.1',
   compat: '>=3.3.0'
 };
 
@@ -226,7 +226,7 @@ export function setup(api) {
 
       // 2. Action Buttons Logic (Remains mostly the same, but verified)
       const actionGroup = item.querySelector('.pm-action-group');
-      if (!actionGroup || actionGroup.dataset.enhanced === 'true') return;
+      if (!actionGroup) return;
 
       const reloadBtn = actionGroup.querySelector('.reload-btn');
       const toggleBtn = actionGroup.querySelector('.toggle-btn');
@@ -270,8 +270,8 @@ export function setup(api) {
         updateBtn.className = 'apple-icon-btn';
         updateBtn.innerHTML = `
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12a9 9 0 1 1-3-6.7"/>
-            <polyline points="21 3 21 9 15 9"/>
+            <path d="M21 2v6h-6"/>
+            <path d="M21 13a9 9 0 1 1-3-7.7L21 8"/>
           </svg>
         `;
         updateBtn.dataset.iconified = 'true';
@@ -279,29 +279,34 @@ export function setup(api) {
 
       actionGroup.dataset.enhanced = 'true';
 
-      // 3. Replace Badge Text with Icons (Apple Style)
+ // 3. Replace Badge Text with Icons (Apple Style)
       const badges = item.querySelectorAll('.plugin-badge');
 
       badges.forEach(badge => {
-        const text = badge.textContent.trim().toLowerCase();
-
         if (badge.dataset.iconified) return;
+        const text = badge.textContent.trim().toLowerCase();
 
         let icon = '';
 
         if (text.includes('system')) {
-          icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.2L18 22l-6-4-6 4 1.5-8.8L2 9h7z"/></svg>`;
+          // Apple-style "Command/Chip" symbol for System plugins
+          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5" ry="5"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>`;
+          badge.title = "System Plugin";
         } 
         else if (text.includes('active')) {
-          icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>`;
+          // Thicker, rounded checkmark for Active status
+          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+          badge.style.color = "#34C759"; // Apple Success Green
         } 
         else if (text.includes('inactive')) {
-          icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>`;
+          // Hollow circle for Inactive
+          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>`;
+          badge.style.color = "#86868b";
         } 
         else if (text.includes('update')) {
-          icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 6v6l4 2"/></svg>`;
+          // "Arrow down into circle" for Update available
+          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12l4 4 4-4"/></svg>`;
+          badge.style.color = "#007AFF"; // Apple Blue
         }
 
         if (icon) {
@@ -309,7 +314,9 @@ export function setup(api) {
           badge.style.display = 'inline-flex';
           badge.style.alignItems = 'center';
           badge.style.justifyContent = 'center';
-          badge.style.padding = '4px';
+          badge.style.padding = '5px';
+          badge.style.borderRadius = '50%';
+          badge.style.background = 'rgba(120, 120, 128, 0.08)';
         }
 
         badge.dataset.iconified = 'true';
