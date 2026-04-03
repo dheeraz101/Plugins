@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.4.1',
+  version: '1.4.2',
   compat: '>=3.3.0'
 };
 
@@ -15,8 +15,8 @@ export function setup(api) {
 
     /* 0. Animations */
     @keyframes pulse-ring {
-      0% { transform: scale(0.33); opacity: 0.8; }
-      80%, 100% { opacity: 0; transform: scale(1.2); }
+      0% { transform: scale(0.4); opacity: 0.8; }
+      80%, 100% { opacity: 0; transform: scale(1.3); }
     }
 
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
@@ -314,7 +314,7 @@ export function setup(api) {
       const updateBtn = actionGroup.querySelector('[data-update]');
       if (updateBtn && !updateBtn.dataset.iconified) {
         updateBtn.className = 'apple-icon-btn';
-          updateBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 12-4 4-4-4"/><path d="M12 8v8"/></svg>`;
+                   updateBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19c2.5 0 4.5-2 4.5-4.5 0-2.3-1.7-4.2-3.9-4.5-1.1-3.2-4.4-5-7.6-3.8C7.6 7.3 5.4 10.3 5.3 13.5c-2.1.4-3.7 2.2-3.7 4.5C1.6 20.4 3.6 22 6 22h11.5c.3 0 .5-.1.5-.1"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>`;
         updateBtn.dataset.iconified = 'true';
       }
 
