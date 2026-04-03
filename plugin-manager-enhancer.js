@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.5.1',
+  version: '1.5.2',
   compat: '>=3.3.0'
 };
 
@@ -180,6 +180,25 @@ export function setup(api) {
       animation: apple-breathe 2.4s ease-in-out infinite;
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
+
+    .status-active-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+
+      background: rgba(52, 199, 89, 0.12); /* Apple green tint */
+      border-radius: 50%;
+    }
+
+    .status-active-wrapper {
+      transition: background 0.3s ease;
+    }
+
+    .plugin-item:hover .status-active-wrapper {
+      background: rgba(52, 199, 89, 0.18);
+    }
         
     /* 7. Dark Mode Overrides */
     @media (prefers-color-scheme: dark) {
@@ -194,6 +213,9 @@ export function setup(api) {
         background: rgba(50, 50, 50, 0.8); 
         color: #fff; 
         border-color: rgba(255, 255, 255, 0.1); 
+      }
+      .status-active-wrapper {
+        background: rgba(48, 209, 88, 0.18);
       }
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
     }
@@ -330,11 +352,13 @@ export function setup(api) {
           badge.title = "System Plugin";
         } 
         if (text === 'active') {
-          badge.innerHTML = `<div class="status-dot"></div>`;
+          badge.innerHTML = `
+            <div class="status-active-wrapper">
+              <div class="status-dot"></div>
+            </div>
+          `;
           badge.style.background = "none";
           badge.dataset.iconified = 'true';
-
-          // Optional: mark parent as active for future styling
           item.classList.add('active');
         }
         else if (text === 'inactive') {
