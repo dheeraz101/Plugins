@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.3.4',
+  version: '1.3.5',
   compat: '>=3.3.0'
 };
 
@@ -304,20 +304,20 @@ export function setup(api) {
           badge.title = "System Plugin";
         } 
         else if (text === 'active') {
-          // Thicker, rounded checkmark for Active status
-          icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+          icon = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
           badge.style.color = "#34C759"; // Apple Success Green
+          badge.style.background = "rgba(52, 199, 89, 0.12)"; // Very light green tint
         } 
         else if (text === 'inactive') {
-          // Hollow circle for Inactive
           icon = `
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9" opacity="0.4"/>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           `;
-          badge.style.color = "#86868b";
-        } 
+          badge.style.color = "#FF3B30"; // Apple System Red
+          badge.style.background = "rgba(255, 59, 48, 0.12)"; // Very light red tint
+        }
         else if (text === 'update') {
           // "Arrow down into circle" for Update available
           icon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12l4 4 4-4"/></svg>`;
@@ -331,7 +331,9 @@ export function setup(api) {
           badge.style.justifyContent = 'center';
           badge.style.padding = '5px';
           badge.style.borderRadius = '50%';
-          badge.style.background = 'rgba(120, 120, 128, 0.08)';
+          if (!badge.style.background) {
+            badge.style.background = 'rgba(120, 120, 128, 0.08)';
+          }
         }
 
         badge.dataset.iconified = 'true';
