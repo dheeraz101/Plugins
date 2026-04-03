@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.5.4',
+  version: '1.5.5',
   compat: '>=3.3.0'
 };
 
@@ -59,8 +59,7 @@ export function setup(api) {
       margin: 0 0 4px 0 !important;
     }
 
-    /* Force hide original text buttons */
-    .toggle-btn { display: none !important; }
+   .toggle-btn.enhanced { display: none !important; }
 
     /* 4. Modern Apple Toggle Switch */
     .apple-switch {
@@ -315,7 +314,7 @@ export function setup(api) {
 
       // 2. Action Buttons Logic (Remains mostly the same, but verified)
       const actionGroup = item.querySelector('.pm-action-group');
-      if (!actionGroup || actionGroup.dataset.enhanced === 'true') return;
+      if (!actionGroup) return;
 
       const reloadBtn = actionGroup.querySelector('.reload-btn');
       const toggleBtn = actionGroup.querySelector('.toggle-btn');
@@ -326,14 +325,20 @@ export function setup(api) {
         reloadBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>`;
       }
 
-      if (toggleBtn) {
-        // Core Manager uses text "Disable" to indicate an active plugin
-        const isEnabled = toggleBtn.textContent.trim() === 'Disable';
+      if (toggleBtn && !toggleBtn.classList.contains('enhanced')) {
+
+        toggleBtn.classList.add('enhanced');
+        const isEnabled =
+        toggleBtn.classList.contains('active') ||
+        toggleBtn.getAttribute('aria-pressed') === 'true' ||
+        toggleBtn.textContent.trim().toLowerCase().includes('disable');
         const switchWrapper = document.createElement('label');
         switchWrapper.className = 'apple-switch';
-        switchWrapper.innerHTML = `<input type="checkbox" ${isEnabled ? 'checked' : ''}><span class="apple-slider"></span>`;
-        
-        // Link the switch to the hidden core button
+        switchWrapper.innerHTML = `
+          <input type="checkbox" ${isEnabled ? 'checked' : ''}>
+          <span class="apple-slider"></span>
+        `;
+
         switchWrapper.querySelector('input').onchange = () => toggleBtn.click();
         actionGroup.insertBefore(switchWrapper, toggleBtn);
       }
@@ -440,7 +445,16 @@ export function setup(api) {
     });
   };
 
-  observer = new MutationObserver(() => transformUI());
+  let rafId = null;
+
+  observer = new MutationObserver(() => {
+    if (rafId) return;
+
+    rafId = requestAnimationFrame(() => {
+      transformUI();
+      rafId = null;
+    });
+  });
   
   const startObserving = () => {
     const pmRoot = document.querySelector('.pm-root');
