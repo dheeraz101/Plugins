@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.5.2',
+  version: '1.5.3',
   compat: '>=3.3.0'
 };
 
@@ -155,8 +155,14 @@ export function setup(api) {
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      width: 24px !important; height: 24px !important;
-      border-radius: 50% !important; margin: 0 4px;
+
+      width: 24px !important;
+      height: 24px !important;
+
+      border-radius: 50% !important;
+      margin: 0 4px;
+
+      padding: 0 !important; /* 🔥 REMOVE internal spacing inconsistencies */
     }
 
     @keyframes apple-breathe {
@@ -182,14 +188,39 @@ export function setup(api) {
     }
 
     .status-active-wrapper {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      height: 100%;
 
-      background: rgba(52, 199, 89, 0.12); /* Apple green tint */
+      background: rgba(52, 199, 89, 0.12);
+    }
+
+    .status-inactive-wrapper {
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: rgba(255, 59, 48, 0.12);
+    }
+
+    .status-update-wrapper {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: rgba(52, 199, 89, 0.15);
     }
 
     .status-active-wrapper {
@@ -215,6 +246,13 @@ export function setup(api) {
         border-color: rgba(255, 255, 255, 0.1); 
       }
       .status-active-wrapper {
+        background: rgba(48, 209, 88, 0.18);
+      }
+      .status-inactive-wrapper {
+        background: rgba(255, 69, 58, 0.18);
+      }
+
+      .status-update-wrapper {
         background: rgba(48, 209, 88, 0.18);
       }
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
@@ -362,17 +400,26 @@ export function setup(api) {
           item.classList.add('active');
         }
         else if (text === 'inactive') {
-          icon = `
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
+          badge.innerHTML = `
+            <div class="status-inactive-wrapper">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="3.5" stroke-linecap="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </div>
           `;
           badge.style.color = "#FF3B30"; // Apple System Red
           badge.style.background = "rgba(255, 59, 48, 0.12)"; // Very light red tint
         }
         else if (text.includes('update')) {
-          badge.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7 7 7-7"/></svg>`;
+            badge.innerHTML = `
+            <div class="status-update-wrapper">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19V5M5 12l7 7 7-7"/>
+              </svg>
+            </div>
+          `;
           badge.style.background = "rgba(52, 199, 89, 0.15)";
           badge.style.color = "#34C759";
         }
@@ -381,7 +428,6 @@ export function setup(api) {
           badge.style.display = 'inline-flex';
           badge.style.alignItems = 'center';
           badge.style.justifyContent = 'center';
-          badge.style.padding = '5px';
           badge.style.borderRadius = '50%';
           if (!badge.style.background) {
             badge.style.background = 'rgba(120, 120, 128, 0.08)';
