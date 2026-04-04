@@ -3,7 +3,7 @@ let currentApi = null;
 export const meta = {
   id: 'color-picker',
   name: 'Color Picker',
-  version: '1.3.0',
+  version: '1.4.0',
   compat: '>=3.3.0'
 };
 
@@ -18,164 +18,328 @@ export function setup(api) {
       overflow: visible !important;
     }
 
-    .cp-widget { 
+    .cp-widget {
       position: relative;
-      width: 100%; 
-      height: 100%; 
-      background: rgba(255, 255, 255, 0.85); 
-      backdrop-filter: blur(30px) saturate(200%);
-      -webkit-backdrop-filter: blur(30px) saturate(200%);
-      border: 0.5px solid rgba(0, 0, 0, 0.1);
-      border-radius: 30px; 
-      padding: 24px; 
-      box-sizing: border-box; 
+      width: 100%;
+      height: 100%;
+      background: #1e1e1e;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 20px;
+      box-sizing: border-box;
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-      color: #1d1d1f;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      color: #fff;
+      user-select: none;
     }
 
-    .cp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .cp-title { font-size: 13px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .cp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
 
-    /* Fix: Ensure 'X' is visible with higher contrast */
+    .cp-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
     .cp-close-btn {
-      background: rgba(0,0,0,0.08);
+      background: rgba(255,255,255,0.12);
       border: none;
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      color: #000;
-      transition: all 0.2s;
-    }
-    .cp-close-btn:hover { background: rgba(0,0,0,0.15); }
-
-    .cp-preview { 
-      width: 100%; 
-      height: 90px; 
-      border-radius: 18px; 
-      margin-bottom: 24px; 
-      border: 1px solid rgba(0,0,0,0.05);
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+      color: #fff;
+      font-size: 13px;
+      line-height: 1;
+      transition: background 0.2s;
     }
 
-    .cp-row { margin-bottom: 12px; }
+    .cp-close-btn:hover {
+      background: rgba(255,255,255,0.22);
+    }
 
-    .cp-row input[type=range] { 
+    .cp-preview {
       width: 100%;
-      -webkit-appearance: none;
-      height: 8px;
-      border-radius: 4px;
-      outline: none;
-      /* Background is handled dynamically in JS for the color hint */
+      height: 80px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.06);
     }
 
-    .cp-row input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 22px; height: 22px;
-      background: #fff;
-      border: 0.5px solid rgba(0,0,0,0.2);
-      border-radius: 50%;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    /* Slider row wrapper */
+    .cp-row {
+      margin-bottom: 14px;
+    }
+
+    /* The custom slider track container */
+    .cp-slider-track {
+      position: relative;
+      width: 100%;
+      height: 14px;
+      border-radius: 7px;
       cursor: pointer;
+      /* background set inline per channel */
     }
 
-    .cp-hex-row { display: flex; gap: 10px; margin-top: 18px; }
-    .cp-hex { 
-      flex: 1; padding: 12px; background: rgba(0,0,0,0.04); 
-      border: 1px solid rgba(0,0,0,0.05); border-radius: 14px; 
-      font-family: "SF Mono", monospace; font-size: 14px; text-align: center;
-      color: #1d1d1f;
+    /* Native range sits on top, fully transparent so our track shows through */
+    .cp-slider-track input[type=range] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      opacity: 0;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      /* IMPORTANT: pointer-events must be enabled */
+      pointer-events: all;
     }
 
-    .cp-copy { 
-      padding: 0 20px; background: #007AFF; color: #fff; 
-      border: none; border-radius: 14px; font-weight: 600; cursor: pointer;
-      transition: opacity 0.2s;
+    /* Visible thumb overlay */
+    .cp-thumb {
+      position: absolute;
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      background: #fff;
+      border: 2px solid rgba(0,0,0,0.15);
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      transition: box-shadow 0.15s;
     }
-    .cp-copy:active { opacity: 0.8; }
 
-    @media (prefers-color-scheme: dark) {
-      .cp-widget { background: rgba(28, 28, 30, 0.9); border-color: rgba(255,255,255,0.1); color: #fff; }
-      .cp-close-btn { background: rgba(255,255,255,0.15); color: #fff; }
-      .cp-hex { background: rgba(255,255,255,0.08); color: #fff; }
-      .cp-copy { background: #0A84FF; }
+    .cp-slider-track:active .cp-thumb {
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.18), 0 2px 6px rgba(0,0,0,0.35);
     }
+
+    /* Label above each slider */
+    .cp-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .cp-hex-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .cp-hex {
+      flex: 1;
+      padding: 11px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 14px;
+      text-align: center;
+      color: #fff;
+      outline: none;
+    }
+
+    .cp-copy {
+      padding: 0 18px;
+      background: #007AFF;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .cp-copy:hover { background: #0066dd; }
+    .cp-copy:active { transform: scale(0.96); }
   `, { global: true });
 
   const container = api.container;
-  let color = { r: 0, g: 122, b: 255 };
+  let color = { r: 44, g: 199, b: 255 };
 
-  function render() {
-    const hex = '#' + [color.r, color.g, color.b].map(c => c.toString(16).padStart(2,'0')).join('').toUpperCase();
-    
-    // Sliders show their respective color gradients
-    const rGrad = `linear-gradient(to right, rgb(0,${color.g},${color.b}), rgb(255,${color.g},${color.b}))`;
-    const gGrad = `linear-gradient(to right, rgb(${color.r},0,${color.b}), rgb(${color.r},255,${color.b}))`;
-    const bGrad = `linear-gradient(to right, rgb(${color.r},${color.g},0), rgb(${color.r},${color.g},255))`;
+  // Build DOM once — never use innerHTML again
+  function buildWidget() {
+    container.innerHTML = '';
 
-    container.innerHTML = `
-      <div class="cp-widget">
-        <div class="cp-header">
-          <span class="cp-title">Color Picker</span>
-          <button class="cp-close-btn" id="cp-close-trigger">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
-        
-        <div class="cp-preview" style="background:${hex}"></div>
-        
-        <div class="cp-row">
-          <input type="range" min="0" max="255" value="${color.r}" id="r-sl" style="background:${rGrad}">
-        </div>
-        <div class="cp-row">
-          <input type="range" min="0" max="255" value="${color.g}" id="g-sl" style="background:${gGrad}">
-        </div>
-        <div class="cp-row">
-          <input type="range" min="0" max="255" value="${color.b}" id="b-sl" style="background:${bGrad}">
-        </div>
-        
-        <div class="cp-hex-row">
-          <input class="cp-hex" value="${hex}" readonly>
-          <button class="cp-copy" id="cp-copy-trigger">Copy</button>
-        </div>
-      </div>
-    `;
+    const widget = document.createElement('div');
+    widget.className = 'cp-widget';
 
-    // FIXED: Stop propagation on mousedown so Blank Board doesn't drag the plugin
-    const stopDrag = (e) => e.stopPropagation();
+    // Header
+    const header = document.createElement('div');
+    header.className = 'cp-header';
+    const title = document.createElement('span');
+    title.className = 'cp-title';
+    title.textContent = 'Color Picker';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'cp-close-btn';
+    closeBtn.innerHTML = '✕';
+    closeBtn.addEventListener('click', () => container.remove());
+    header.appendChild(title);
+    header.appendChild(closeBtn);
 
-    ['r', 'g', 'b'].forEach(ch => {
-      const el = container.querySelector(`#${ch}-sl`);
-      el.addEventListener('mousedown', stopDrag); // Prevents core dragging
-      el.oninput = (e) => {
-        color[ch] = parseInt(e.target.value);
-        render();
-      };
+    // Preview swatch
+    const preview = document.createElement('div');
+    preview.className = 'cp-preview';
+
+    // Sliders
+    const channels = [
+      { key: 'r', label: 'Red',   from: (c) => `rgb(0,${c.g},${c.b})`,   to: (c) => `rgb(255,${c.g},${c.b})` },
+      { key: 'g', label: 'Green', from: (c) => `rgb(${c.r},0,${c.b})`,   to: (c) => `rgb(${c.r},255,${c.b})` },
+      { key: 'b', label: 'Blue',  from: (c) => `rgb(${c.r},${c.g},0)`,   to: (c) => `rgb(${c.r},${c.g},255)` },
+    ];
+
+    const sliderTracks = {};
+    const sliderThumbs = {};
+    const sliderInputs = {};
+
+    channels.forEach(({ key, label, from, to }) => {
+      const row = document.createElement('div');
+      row.className = 'cp-row';
+
+      const lbl = document.createElement('div');
+      lbl.className = 'cp-label';
+      lbl.textContent = label;
+
+      const track = document.createElement('div');
+      track.className = 'cp-slider-track';
+
+      const input = document.createElement('input');
+      input.type = 'range';
+      input.min = 0;
+      input.max = 255;
+      input.value = color[key];
+
+      const thumb = document.createElement('div');
+      thumb.className = 'cp-thumb';
+
+      track.appendChild(input);
+      track.appendChild(thumb);
+      row.appendChild(lbl);
+      row.appendChild(track);
+
+      sliderTracks[key] = track;
+      sliderThumbs[key] = thumb;
+      sliderInputs[key] = input;
+
+      // Use both 'input' and 'change' for maximum compatibility
+      input.addEventListener('input', () => {
+        color[key] = parseInt(input.value, 10);
+        updateVisuals();
+      });
+
+      // Also handle pointer events directly on track for smoother dragging
+      track.addEventListener('pointerdown', (e) => {
+        e.stopPropagation(); // prevent outer makeDraggable from hijacking
+        track.setPointerCapture(e.pointerId);
+        updateColorFromTrackEvent(e, key, track, input);
+      });
+
+      track.addEventListener('pointermove', (e) => {
+        if (e.buttons === 0) return;
+        e.stopPropagation();
+        updateColorFromTrackEvent(e, key, track, input);
+      });
+
+      track.addEventListener('pointerup', (e) => {
+        e.stopPropagation();
+      });
+
+      widget.appendChild(row);
     });
 
-    container.querySelector('#cp-close-trigger').onclick = (e) => {
-      e.stopPropagation();
-      api.removeContainer(meta.id);
-      api.removeCSS(meta.id);
-    };
+    // Hex row
+    const hexRow = document.createElement('div');
+    hexRow.className = 'cp-hex-row';
 
-    container.querySelector('#cp-copy-trigger').onclick = (e) => {
-      e.stopPropagation();
-      navigator.clipboard.writeText(hex);
-      api.notify('Hex code copied', 'success');
-    };
+    const hexInput = document.createElement('input');
+    hexInput.className = 'cp-hex';
+    hexInput.type = 'text';
+    hexInput.readOnly = true;
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'cp-copy';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard?.writeText(hexInput.value).catch(() => {});
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy', 1500);
+    });
+
+    hexRow.appendChild(hexInput);
+    hexRow.appendChild(copyBtn);
+
+    widget.insertBefore(header, widget.firstChild);
+    widget.appendChild(preview);
+    channels.forEach(({ key }) => {
+      // rows were already appended above, re-order: header -> preview -> rows -> hexrow
+    });
+    widget.appendChild(hexRow);
+
+    container.appendChild(widget);
+
+    function updateColorFromTrackEvent(e, key, track, input) {
+      const rect = track.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const val = Math.round(ratio * 255);
+      color[key] = val;
+      input.value = val;
+      updateVisuals();
+    }
+
+    function updateVisuals() {
+      const { r, g, b } = color;
+      const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+      preview.style.background = `rgb(${r},${g},${b})`;
+      hexInput.value = hex;
+
+      // Update each slider track gradient and thumb position
+      channels.forEach(({ key, from, to }) => {
+        sliderTracks[key].style.background = `linear-gradient(to right, ${from(color)}, ${to(color)})`;
+        const ratio = color[key] / 255;
+        sliderThumbs[key].style.left = `calc(${ratio * 100}% + ${(0.5 - ratio) * 22}px)`;
+        sliderInputs[key].value = color[key];
+      });
+    }
+
+    // Initial render
+    updateVisuals();
   }
 
-  render();
-}
+  // Prevent the outer makeDraggable from stealing slider interactions
+  // by stopping propagation on the widget area during pointer interactions
+  container.addEventListener('pointerdown', (e) => {
+    const isSliderArea = e.target.closest('.cp-slider-track');
+    if (isSliderArea) {
+      e.stopImmediatePropagation();
+    }
+  }, true); // capture phase — fires before makeDraggable
 
-export function teardown() {
-  if (currentApi) {
-    currentApi.removeCSS(meta.id);
-    currentApi.removeContainer(meta.id);
+  buildWidget();
+
+  // Dragging should only work via the header title area
+  const widget = container.querySelector('.cp-widget');
+  if (widget) {
+    const header = widget.querySelector('.cp-header');
+    if (header) {
+      api.makeDraggable(container, header);
+    }
   }
 }
