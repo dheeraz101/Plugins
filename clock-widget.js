@@ -4,8 +4,8 @@ let resizeHandler = null;
 
 export const meta = {
   id: 'clock-widget',
-  name: 'Clock Widget',
-  version: '3.0.0',
+  name: 'Clock Widget Pro',
+  version: '3.0.1',
   compat: '>=3.3.0'
 };
 
@@ -13,32 +13,40 @@ export function setup(api) {
   currentApi = api;
 
   api.injectCSS(meta.id, `
-    .clock-card {
+    .clock-container {
       position: relative;
       width: 100%;
       height: 100%;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(25px) saturate(190%);
-      -webkit-backdrop-filter: blur(25px) saturate(190%);
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 22px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-      color: #1d1d1f;
-      overflow: hidden;
-      transition: all 0.3s ease;
+      /* Apple Glassmorphism */
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(30px) saturate(200%);
+      -webkit-backdrop-filter: blur(30px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 32px;
+      padding: 20px;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+
+    /* Hide the boxy look by making the container feel like a floating object */
+    .clock-container:hover {
+      background: rgba(255, 255, 255, 0.5);
+      border-color: rgba(255, 255, 255, 0.5);
     }
 
     .clock-close {
       position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 26px;
-      height: 26px;
-      background: rgba(0, 0, 0, 0.05);
+      top: 16px;
+      right: 16px;
+      width: 28px;
+      height: 28px;
+      background: rgba(0, 0, 0, 0.08);
       border: none;
       border-radius: 50%;
       display: flex;
@@ -46,122 +54,114 @@ export function setup(api) {
       justify-content: center;
       cursor: pointer;
       opacity: 0;
-      transition: all 0.2s ease;
-      color: #86868b;
-      z-index: 10;
+      transition: opacity 0.2s ease, background 0.2s ease;
+      color: #1d1d1f;
+      padding: 0;
     }
 
-    .clock-card:hover .clock-close {
+    .clock-container:hover .clock-close {
       opacity: 1;
     }
 
     .clock-close:hover {
-      background: rgba(255, 59, 48, 0.1);
+      background: rgba(255, 59, 48, 0.15);
       color: #FF3B30;
     }
 
-    .clock-greeting {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #86868b;
-      margin-bottom: 4px;
-      letter-spacing: -0.01em;
-    }
-
     .clock-time {
-      font-size: 48px;
+      font-size: 72px; /* Increased Size */
       font-weight: 700;
-      line-height: 1;
-      letter-spacing: -0.04em;
+      letter-spacing: -0.05em;
       color: #1d1d1f;
+      line-height: 1;
+      margin: 0;
     }
 
     .clock-date {
-      margin-top: 8px;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 500;
-      color: #424245;
+      color: #86868b;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
 
+    /* Dark Mode Support */
     @media (prefers-color-scheme: dark) {
-      .clock-card {
-        background: rgba(28, 28, 30, 0.7);
+      .clock-container {
+        background: rgba(28, 28, 30, 0.4);
         border-color: rgba(255, 255, 255, 0.1);
-        color: #fff;
       }
-      .clock-time { color: #fff; }
+      .clock-time { color: #ffffff; }
       .clock-date { color: #a1a1a6; }
-      .clock-greeting { color: #a1a1a6; }
-      .clock-close { background: rgba(255, 255, 255, 0.1); }
+      .clock-close { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
     }
   `);
 
   const container = api.container;
-  container.innerHTML = `
-    <div class="clock-card">
-      <button class="clock-close" id="close-clock">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-      <div class="clock-greeting" id="greeting"></div>
-      <div class="clock-time" id="time"></div>
-      <div class="clock-date" id="date"></div>
-    </div>
-  `;
 
-  const timeEl = container.querySelector('#time');
-  const dateEl = container.querySelector('#date');
-  const greetEl = container.querySelector('#greeting');
+  function render() {
+    container.innerHTML = `
+      <div class="clock-container">
+        <button class="clock-close" id="btn-close-clock">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <div class="clock-time" id="display-time">00:00</div>
+        <div class="clock-date" id="display-date">MONDAY, JAN 1</div>
+      </div>
+    `;
+
+    const closeBtn = container.querySelector('#btn-close-clock');
+    closeBtn.onclick = (e) => {
+      e.stopPropagation();
+      // Use the core unload function to completely remove the plugin
+      if (api.unloadPlugin) {
+        api.unloadPlugin(meta.id);
+      } else {
+        // Fallback teardown if unloadPlugin isn't exposed directly
+        teardown();
+        container.innerHTML = '';
+      }
+    };
+  }
 
   const update = () => {
+    const timeEl = container.querySelector('#display-time');
+    const dateEl = container.querySelector('#display-date');
+    if (!timeEl || !dateEl) return;
+
     const now = new Date();
     
-    // Time
+    // Format: 10:45
     timeEl.textContent = now.toLocaleTimeString([], { 
       hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: true 
-    }).replace(/\s?[APM]{2}/, '');
-
-    // Date
-    dateEl.textContent = now.toLocaleDateString(undefined, { 
-      weekday: 'short', 
-      month: 'long', 
-      day: 'numeric' 
+      minute: '2-digit',
+      hour12: false 
     });
 
-    // Dynamic Greeting & Icon
-    const hour = now.getHours();
-    let greet = "Good Evening";
-    let icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-    
-    if (hour < 12) {
-      greet = "Good Morning";
-      icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"></path></svg>`;
-    } else if (hour < 17) {
-      greet = "Good Afternoon";
-      icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
-    }
-    
-    greetEl.innerHTML = `${icon} ${greet}`;
+    // Format: WEDNESDAY, APRIL 5
+    dateEl.textContent = now.toLocaleDateString(undefined, { 
+      weekday: 'long', 
+      month: 'short', 
+      day: 'numeric' 
+    }).toUpperCase();
 
-    // Responsiveness
-    const scale = Math.min(container.offsetWidth / 240, container.offsetHeight / 160);
-    timeEl.style.fontSize = (48 * scale) + 'px';
-    dateEl.style.fontSize = (14 * scale) + 'px';
-    greetEl.style.fontSize = (13 * scale) + 'px';
+    // Auto-scaling logic for the high-value "Big Clock" feel
+    const scale = Math.min(container.offsetWidth / 300, container.offsetHeight / 200);
+    timeEl.style.fontSize = Math.max(32, 72 * scale) + 'px';
+    dateEl.style.fontSize = Math.max(10, 16 * scale) + 'px';
   };
 
-  container.querySelector('#close-clock').onclick = () => {
-    if (api.unloadPlugin) api.unloadPlugin(meta.id);
-  };
-
+  render();
   interval = setInterval(update, 1000);
+  
+  // Handle board resizing from core eventBus
   resizeHandler = api.debounce(update, 100);
   api.bus.on('board:resize', resizeHandler);
-  
+
   update();
 }
 
@@ -170,5 +170,9 @@ export function teardown() {
   if (currentApi) {
     currentApi.removeCSS(meta.id);
     currentApi.bus.off('board:resize', resizeHandler);
+  }
+  // Clear any remaining HTML to ensure "completely hides" requirement
+  if (currentApi && currentApi.container) {
+    currentApi.container.innerHTML = '';
   }
 }
