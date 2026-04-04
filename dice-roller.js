@@ -3,7 +3,7 @@ let currentApi = null;
 export const meta = {
   id: 'dice-roller',
   name: 'Dice Roller',
-  version: '2.1.1',
+  version: '2.1.3',
   compat: '>=3.3.0'
 };
 
@@ -11,15 +11,16 @@ export function setup(api) {
   currentApi = api;
 
   api.injectCSS(meta.id, `
-    /* The Fix: Force the absolute outer container to be invisible */
-
-    #dice-roller {
+    /* Outer wrapper: must be fully transparent — no background, no shadow */
+    #dice-roller,
+    .bb-plugin-container[data-plugin-id="dice-roller"] {
       background: transparent !important;
       box-shadow: none !important;
       backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      overflow: visible !important;
     }
 
-    #dice-roller, 
     .dr-container {
       width: 100%;
       height: 100%;
@@ -27,9 +28,10 @@ export function setup(api) {
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: visible !important; /* Allows shadow to spread */
+      overflow: visible !important;
     }
 
+    /* The actual visible card — rounded, blurred, elevated */
     .dr-card {
       position: relative;
       width: 100%;
@@ -43,10 +45,9 @@ export function setup(api) {
       backdrop-filter: blur(40px) saturate(200%);
       -webkit-backdrop-filter: blur(40px) saturate(200%);
       border: 0.5px solid rgba(255, 255, 255, 0.5);
-      /* Balanced Shadow */
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
       font-family: -apple-system, "SF Pro Display", system-ui;
-      overflow: hidden; /* Clips internal elements to the radius */
+      overflow: hidden;
       isolation: isolate;
     }
 
@@ -71,7 +72,13 @@ export function setup(api) {
     .dr-close:active { transform: scale(0.9); }
 
     .dr-header { margin-top: 4px; text-align: center; pointer-events: none; }
-    .dr-title { font-size: 12px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .dr-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #86868b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
 
     .dr-stage {
       flex: 1;
@@ -89,8 +96,10 @@ export function setup(api) {
       margin: 0;
       transition: transform 0.4s cubic-bezier(0.17, 0.89, 0.32, 1.49);
     }
-
-    .dr-result.rolling { transform: scale(0.7) rotate(-10deg); opacity: 0.3; }
+    .dr-result.rolling {
+      transform: scale(0.7) rotate(-10deg);
+      opacity: 0.3;
+    }
 
     .dr-picker-tray {
       display: flex;
@@ -114,7 +123,6 @@ export function setup(api) {
       transition: all 0.2s ease;
       white-space: nowrap;
     }
-
     .dr-die-node.active {
       color: #007AFF;
       background: rgba(0, 122, 255, 0.12);
@@ -133,11 +141,16 @@ export function setup(api) {
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 8px 20px rgba(0, 122, 255, 0.25);
     }
-
-    .dr-action-btn:active { transform: scale(0.97); filter: brightness(1.1); }
+    .dr-action-btn:active {
+      transform: scale(0.97);
+      filter: brightness(1.1);
+    }
 
     @media (prefers-color-scheme: dark) {
-      .dr-card { background: rgba(28, 28, 30, 0.85); border: 0.5px solid rgba(255, 255, 255, 0.1); }
+      .dr-card {
+        background: rgba(28, 28, 30, 0.85);
+        border: 0.5px solid rgba(255, 255, 255, 0.1);
+      }
       .dr-result { color: #fff; }
       .dr-close { background: rgba(255, 255, 255, 0.1); color: #fff; }
       .dr-die-node { background: rgba(255, 255, 255, 0.05); color: #a1a1a6; }
@@ -150,6 +163,15 @@ export function setup(api) {
   const dice = [4, 6, 8, 12, 20, 100];
   let lastResult = '--';
 
+  function close() {
+    // Properly remove the entire plugin container from the DOM
+    // This is what makes the dark square disappear — we must remove the
+    // bb-plugin-container element itself, not just clear its innerHTML.
+    api.removeContainer(meta.id);
+    api.removeCSS(meta.id);
+    currentApi = null;
+  }
+
   function render() {
     container.innerHTML = `
       <div class="dr-container">
@@ -159,7 +181,7 @@ export function setup(api) {
               <path d="M3.5 3.5L10.5 10.5M3.5 10.5L10.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </button>
-          
+
           <div class="dr-header">
             <div class="dr-title">D${selectedDie}</div>
           </div>
@@ -169,7 +191,9 @@ export function setup(api) {
           </div>
 
           <div class="dr-picker-tray">
-            ${dice.map(d => `<div class="dr-die-node ${d === selectedDie ? 'active' : ''}" data-val="${d}">d${d}</div>`).join('')}
+            ${dice.map(d => `
+              <div class="dr-die-node ${d === selectedDie ? 'active' : ''}" data-val="${d}">d${d}</div>
+            `).join('')}
           </div>
 
           <button class="dr-action-btn" id="roll-trigger">Roll</button>
@@ -177,22 +201,13 @@ export function setup(api) {
       </div>
     `;
 
-    // 1. Fixed Close Logic
-    const closeBtn = container.querySelector('#dr-close-trigger');
-    closeBtn.addEventListener('click', (e) => {
+    // Close button
+    container.querySelector('#dr-close-trigger').addEventListener('click', e => {
       e.stopPropagation();
-
-      if (api.removeWidget) {
-        api.removeWidget(meta.id);
-      } else {
-        container.innerHTML = '';
-        container.style.background = 'transparent';
-        container.style.boxShadow = 'none';
-        container.style.backdropFilter = 'none';
-      }
+      close();
     });
 
-    // 2. Selection Logic
+    // Die selection
     container.querySelectorAll('.dr-die-node').forEach(el => {
       el.onclick = () => {
         selectedDie = parseInt(el.dataset.val);
@@ -200,12 +215,11 @@ export function setup(api) {
       };
     });
 
-    // 3. Roll Logic with Haptic-style Animation
+    // Roll with animation
     const rollBtn = container.querySelector('#roll-trigger');
     rollBtn.onclick = () => {
       const display = container.querySelector('#res-val');
       display.classList.add('rolling');
-      
       setTimeout(() => {
         lastResult = Math.floor(Math.random() * selectedDie) + 1;
         display.classList.remove('rolling');
@@ -218,6 +232,10 @@ export function setup(api) {
 }
 
 export function teardown() {
-  if (currentApi) currentApi.removeCSS(meta.id);
-  currentApi = null;
+  if (currentApi) {
+    currentApi.removeCSS(meta.id);
+    // removeContainer is handled by core.js unloadSinglePlugin,
+    // but we ensure CSS is always cleaned up here.
+    currentApi = null;
+  }
 }
