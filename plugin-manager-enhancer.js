@@ -33,23 +33,6 @@ export function setup(api) {
       position: relative;
     }
 
-    /* Temporary skeleton (prevents empty flash) */
-    .pm-action-group::after {
-      content: '';
-      width: 42px;
-      height: 24px;
-      border-radius: 12px;
-      background: rgba(120,120,128,0.15);
-      position: absolute;
-      right: 0;
-    }
-
-    /* Remove skeleton when enhanced */
-    .pm-action-group[data-switch-enhanced="true"]::after {
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
     .pm-content::-webkit-scrollbar { 
       width: 6px; 
