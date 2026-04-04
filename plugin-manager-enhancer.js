@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.6.5',
+  version: '1.6.6',
   compat: '>=3.3.0'
 };
 
@@ -20,11 +20,7 @@ export function setup(api) {
     style.id = 'pm-enhancer-style';
 
     style.textContent = `
-    .pm-action-group .toggle-btn,
-    .pm-action-group .reload-btn,
-    .pm-action-group .delete-btn,
-    .pm-action-group [data-install],
-    .pm-action-group [data-update] {
+    .pm-action-group .toggle-btn {
       opacity: 0 !important;
       pointer-events: none;
     }
@@ -136,6 +132,8 @@ export function setup(api) {
 
     /* 5. Action Icons (Reload & Delete) */
     .apple-icon-btn {
+      opacity: 1 !important;
+      pointer-events: auto !important;
       background: none;
       border: none;
       padding: 8px;
