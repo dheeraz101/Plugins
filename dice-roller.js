@@ -3,7 +3,7 @@ let currentApi = null;
 export const meta = {
   id: 'dice-roller',
   name: 'Dice Roller',
-  version: '1.1.1',
+  version: '1.2.0',
   compat: '>=3.3.0'
 };
 
@@ -11,59 +11,68 @@ export function setup(api) {
   currentApi = api;
 
   api.injectCSS(meta.id, `
+    /* Fix: Ensure the parent container doesn't show through corners */
+    .dr-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      overflow: hidden; 
+    }
+
     .dr-card { 
       position: relative;
       width: 100%; 
       height: 100%; 
-      background: rgba(255, 255, 255, 0.7); 
-      border-radius: 28px; 
+      background: rgba(255, 255, 255, 0.8); 
+      border-radius: 24px; 
       display: flex; 
       flex-direction: column; 
       align-items: center; 
-      justify-content: space-between; 
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; 
       padding: 24px; 
       box-sizing: border-box; 
-      backdrop-filter: blur(30px) saturate(180%);
-      -webkit-backdrop-filter: blur(30px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      transition: all 0.3s ease;
+      backdrop-filter: blur(25px) saturate(190%);
+      -webkit-backdrop-filter: blur(25px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     }
 
-    /* Close Button - Apple Style */
     .dr-close {
       position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 26px;
-      height: 26px;
+      top: 12px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.05);
+      background: rgba(0, 0, 0, 0.06);
       border: none;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      color: #000;
-      transition: all 0.2s;
+      color: #333;
+      z-index: 10;
     }
-    .dr-close:hover { background: rgba(0, 0, 0, 0.1); transform: scale(1.1); }
+    .dr-close:hover { background: rgba(0, 0, 0, 0.12); }
 
-    .dr-header { text-align: center; margin-top: 10px; }
-    .dr-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #86868b; margin-bottom: 4px; }
-    
-    .dr-display {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      flex-grow: 1;
+    .dr-header { margin-bottom: 12px; }
+    .dr-label { font-size: 11px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: 0.8px; }
+
+    .dr-main { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 4px;
     }
-    .dr-value { font-size: 64px; font-weight: 700; color: #1d1d1f; letter-spacing: -2px; line-height: 1; }
-    .dr-emoji { font-size: 24px; margin-bottom: 8px; opacity: 0.9; }
+    .dr-value { font-size: 72px; font-weight: 800; color: #1d1d1f; letter-spacing: -3px; }
+    .dr-history-text { font-size: 13px; color: #86868b; font-weight: 500; height: 18px; }
 
-    /* Segmented Control Style for Dice */
+    /* Segmented Control Fix */
     .dr-dice-picker { 
       display: flex; 
       background: rgba(0, 0, 0, 0.05); 
@@ -71,27 +80,27 @@ export function setup(api) {
       border-radius: 12px;
       width: 100%;
       margin: 20px 0;
+      gap: 2px;
     }
     .dr-die-opt { 
       flex: 1;
       text-align: center;
-      padding: 6px 0;
-      font-size: 12px;
+      padding: 8px 0;
+      font-size: 13px;
       font-weight: 600;
       border-radius: 9px;
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      color: #424245;
+      color: #1d1d1f;
     }
     .dr-die-opt.active { 
       background: #fff; 
-      color: #000; 
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
     }
 
     .dr-roll-btn { 
       width: 100%;
-      padding: 14px; 
+      padding: 16px; 
       background: #007AFF; 
       color: #fff; 
       border: none; 
@@ -100,20 +109,16 @@ export function setup(api) {
       font-weight: 600; 
       cursor: pointer; 
       transition: all 0.2s;
-      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
     }
-    .dr-roll-btn:active { transform: scale(0.97); filter: brightness(1.1); }
-
-    .dr-history { font-size: 11px; color: #86868b; margin-top: 12px; font-weight: 500; }
+    .dr-roll-btn:active { transform: scale(0.96); opacity: 0.9; }
 
     @media (prefers-color-scheme: dark) {
-      .dr-card { background: rgba(28, 28, 30, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); }
+      .dr-card { background: rgba(28, 28, 30, 0.75); border-color: rgba(255, 255, 255, 0.1); }
       .dr-value { color: #f5f5f7; }
       .dr-close { background: rgba(255, 255, 255, 0.1); color: #fff; }
-      .dr-dice-picker { background: rgba(255, 255, 255, 0.1); }
-      .dr-die-opt { color: #a1a1a6; }
-      .dr-die-opt.active { background: rgba(255, 255, 255, 0.2); color: #fff; }
-      .dr-label { color: #86868b; }
+      .dr-dice-picker { background: rgba(255, 255, 255, 0.12); }
+      .dr-die-opt { color: #f5f5f7; }
+      .dr-die-opt.active { background: rgba(255, 255, 255, 0.15); }
     }
   `);
 
@@ -126,45 +131,43 @@ export function setup(api) {
     const lastResult = history.length ? history[history.length - 1] : '--';
     
     container.innerHTML = `
-      <div class="dr-card">
-        <button class="dr-close" id="dr-close-btn">
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M1 1L11 11M1 11L11 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </button>
+      <div class="dr-wrapper">
+        <div class="dr-card">
+          <button class="dr-close" id="dr-close">
+            <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2L10 10M2 10L10 2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          </button>
 
-        <div class="dr-header">
-          <div class="dr-label">Dice Roller</div>
-        </div>
-
-        <div class="dr-display">
-          <div class="dr-emoji">🎲</div>
-          <div class="dr-value">${lastResult}</div>
-          <div class="dr-history">
-            ${history.length ? 'History: ' + history.slice(-3).reverse().join(' • ') : 'Roll for luck'}
+          <div class="dr-header">
+            <div class="dr-label">Dice Roller</div>
           </div>
-        </div>
 
-        <div class="dr-dice-picker">
-          ${diceOptions.map(d => `<div class="dr-die-opt ${d === selectedDie ? 'active' : ''}" data-d="${d}">d${d}</div>`).join('')}
-        </div>
+          <div class="dr-main">
+            <div style="font-size: 24px; margin-bottom: 4px;">🎲</div>
+            <div class="dr-value">${lastResult}</div>
+            <div class="dr-history-text">
+              ${history.length ? history.slice(-3).reverse().join(' · ') : 'Roll for luck'}
+            </div>
+          </div>
 
-        <button class="dr-roll-btn" id="dr-roll-trigger">Roll d${selectedDie}</button>
+          <div class="dr-dice-picker">
+            ${diceOptions.map(d => `<div class="dr-die-opt ${d === selectedDie ? 'active' : ''}" data-d="${d}">d${d}</div>`).join('')}
+          </div>
+
+          <button class="dr-roll-btn" id="dr-roll">Roll d${selectedDie}</button>
+        </div>
       </div>
     `;
 
-    // Event Listeners
     container.querySelectorAll('.dr-die-opt').forEach(el => el.addEventListener('click', () => {
       selectedDie = +el.dataset.d;
       render();
     }));
 
-    container.querySelector('#dr-roll-trigger').addEventListener('click', roll);
+    container.querySelector('#dr-roll').onclick = roll;
     
-    container.querySelector('#dr-close-btn').addEventListener('click', () => {
-        // Since it's a widget, we usually call a teardown or remove the element
-        container.style.opacity = '0';
-        container.style.transform = 'scale(0.9)';
-        setTimeout(() => api.removeWidget(meta.id), 200);
-    });
+    container.querySelector('#dr-close').onclick = () => {
+        if(api.removeWidget) api.removeWidget(meta.id);
+    };
   }
 
   function roll() {
