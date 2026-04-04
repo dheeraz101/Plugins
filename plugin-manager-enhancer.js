@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.6.9',
+  version: '1.7.0',
   compat: '>=3.3.0'
 };
 
@@ -388,6 +388,11 @@ export function setup(api) {
             pill.textContent = match[0];
 
             nameEl.appendChild(pill);
+            const metaText = metaEl.textContent;
+            const cleaned = metaText.replace(match[0], '').replace(/^[\s•]+/, '').trim();
+            if (cleaned) {
+              metaEl.textContent = cleaned;
+            }
           }
         }
       }
