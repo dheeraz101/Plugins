@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.6.8',
+  version: '1.6.9',
   compat: '>=3.3.0'
 };
 
@@ -360,7 +360,7 @@ export function setup(api) {
           };
 
           actionGroup.dataset.switchEnhanced = 'true'; // set first
-          actionGroup.insertBefore(wrapper, deleteBtn);
+          actionGroup.insertBefore(wrapper, actionGroup.firstChild);
         };
 
         tryInject();
