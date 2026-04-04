@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.6.7',
+  version: '1.6.8',
   compat: '>=3.3.0'
 };
 
@@ -21,8 +21,7 @@ export function setup(api) {
 
     style.textContent = `
     .pm-action-group .toggle-btn {
-      opacity: 0 !important;
-      pointer-events: none;
+      display: none !important;
     }
 
     .pm-action-group {
@@ -361,7 +360,7 @@ export function setup(api) {
           };
 
           actionGroup.dataset.switchEnhanced = 'true'; // set first
-          actionGroup.insertBefore(wrapper, actionGroup.firstChild);
+          actionGroup.insertBefore(wrapper, deleteBtn);
         };
 
         tryInject();
