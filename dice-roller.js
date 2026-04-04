@@ -3,7 +3,7 @@ let currentApi = null;
 export const meta = {
   id: 'dice-roller',
   name: 'Dice Roller',
-  version: '2.1.0',
+  version: '2.1.1',
   compat: '>=3.3.0'
 };
 
@@ -12,6 +12,13 @@ export function setup(api) {
 
   api.injectCSS(meta.id, `
     /* The Fix: Force the absolute outer container to be invisible */
+
+    #dice-roller {
+      background: transparent !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+    }
+
     #dice-roller, 
     .dr-container {
       width: 100%;
@@ -40,6 +47,7 @@ export function setup(api) {
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
       font-family: -apple-system, "SF Pro Display", system-ui;
       overflow: hidden; /* Clips internal elements to the radius */
+      isolation: isolate;
     }
 
     .dr-close {
@@ -172,12 +180,15 @@ export function setup(api) {
     // 1. Fixed Close Logic
     const closeBtn = container.querySelector('#dr-close-trigger');
     closeBtn.addEventListener('click', (e) => {
-      e.stopPropagation(); // Prevents triggers on parent elements
+      e.stopPropagation();
+
       if (api.removeWidget) {
         api.removeWidget(meta.id);
       } else {
-        // Fallback: Remove the DOM element manually if the API is restricted
         container.innerHTML = '';
+        container.style.background = 'transparent';
+        container.style.boxShadow = 'none';
+        container.style.backdropFilter = 'none';
       }
     });
 
