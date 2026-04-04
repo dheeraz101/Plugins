@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.7.1',
+  version: '1.7.2',
   compat: '>=3.3.0'
 };
 
@@ -22,6 +22,12 @@ export function setup(api) {
     style.textContent = `
     .pm-action-group .toggle-btn {
       display: none !important;
+    }
+
+    .pm-action-group .reload-btn:disabled {
+      pointer-events: none !important;
+      opacity: 0.4 !important;
+      cursor: default !important;
     }
 
     .pm-action-group {
