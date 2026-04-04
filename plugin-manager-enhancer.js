@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.7.0',
+  version: '1.7.1',
   compat: '>=3.3.0'
 };
 
@@ -331,7 +331,7 @@ export function setup(api) {
         //}
 
         // ── FORCE TOGGLE FIX (runs every time)
-      if (actionGroup && !actionGroup.dataset.switchEnhanced) {
+      if (actionGroup && !actionGroup.querySelector('.apple-switch')) {
         let attempts = 0;
         const tryInject = () => {
           if (!document.body.contains(item)) return;
