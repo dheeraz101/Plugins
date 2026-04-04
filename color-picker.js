@@ -3,7 +3,7 @@ let currentApi = null;
 export const meta = {
   id: 'color-picker',
   name: 'Color Picker',
-  version: '1.4.0',
+  version: '1.4.1',
   compat: '>=3.3.0'
 };
 
@@ -61,11 +61,18 @@ export function setup(api) {
       color: #fff;
       font-size: 13px;
       line-height: 1;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.1s;
     }
 
     .cp-close-btn:hover {
-      background: rgba(255,255,255,0.22);
+      background: #ff4d4f; /* red */
+      color: #fff;
+      box-shadow: 0 0 8px rgba(255, 77, 79, 0.6);
+    }
+
+    .cp-close-btn:active {
+      background: #d9363e; /* darker red */
+      transform: scale(0.92);
     }
 
     .cp-preview {
