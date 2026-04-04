@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.6.4',
+  version: '1.6.5',
   compat: '>=3.3.0'
 };
 
@@ -20,27 +20,40 @@ export function setup(api) {
     style.id = 'pm-enhancer-style';
 
     style.textContent = `
-    .pm-root:not(.pm-ready) .plugin-item {
-      visibility: hidden;
+    .pm-action-group .toggle-btn,
+    .pm-action-group .reload-btn,
+    .pm-action-group .delete-btn,
+    .pm-action-group [data-install],
+    .pm-action-group [data-update] {
+      opacity: 0 !important;
+      pointer-events: none;
     }
 
-    .plugin-item {
+    .pm-action-group {
+      min-width: 120px; /* adjust to your layout */
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      position: relative;
+    }
+
+    /* Temporary skeleton (prevents empty flash) */
+    .pm-action-group::after {
+      content: '';
+      width: 42px;
+      height: 24px;
+      border-radius: 12px;
+      background: rgba(120,120,128,0.15);
+      position: absolute;
+      right: 0;
+    }
+
+    /* Remove skeleton when enhanced */
+    .pm-action-group[data-switch-enhanced="true"]::after {
       opacity: 0;
-      transition: opacity 0.15s ease;
+      transition: opacity 0.2s ease;
     }
 
-    .plugin-item.enhanced {
-      opacity: 1;
-    }
-
-    .pm-root {
-      opacity: 0;
-      transition: opacity 0.15s ease;
-    }
-    .pm-root.pm-ready {
-      opacity: 1;
-    }
-    
     /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
     .pm-content::-webkit-scrollbar { 
       width: 6px; 
@@ -87,8 +100,8 @@ export function setup(api) {
       margin: 0 0 4px 0 !important;
     }
 
-    /* Force hide original text buttons */
-    .toggle-btn { display: none !important; }
+    /* Force hide original text buttons 
+    .toggle-btn { display: none !important; } */
 
     /* 4. Modern Apple Toggle Switch */
     .apple-switch {
@@ -290,7 +303,10 @@ export function setup(api) {
   }
 
   // ───────────────── SCROLL BUTTON ─────────────────
+  let scrollInjected = false;
   const injectScrollButton = () => {
+      if (scrollInjected) return;
+      scrollInjected = true;
     const pmRoot = document.querySelector('.pm-root');
     const content = document.querySelector('.pm-content');
 
@@ -325,39 +341,49 @@ export function setup(api) {
   };
 
   function enhanceItem(item) {
-    const isFullyEnhanced = item.dataset.enhanced === 'true';
     const actionGroup = item.querySelector('.pm-action-group');
     const info = item.querySelector('.plugin-info');
 
        // ── LIGHT SKIP (only for static parts)
-        if (!item.dataset.staticEnhanced) {
+        //if (!item.dataset.staticEnhanced) {
           // version pill + badges
-          item.dataset.staticEnhanced = 'true';
-        }
+          //item.dataset.staticEnhanced = 'true';
+        //}
 
         // ── FORCE TOGGLE FIX (runs every time)
       if (actionGroup && !actionGroup.dataset.switchEnhanced) {
-        const toggleBtn = actionGroup.querySelector('.toggle-btn');
+        let attempts = 0;
+        const tryInject = () => {
+          if (!document.body.contains(item)) return;
+          const toggleBtn = actionGroup.querySelector('.toggle-btn');
 
-        if (!toggleBtn) return; // 🔥 WAIT until real button exists
+            if (!toggleBtn) {
+              if (attempts++ < 20) {
+                requestAnimationFrame(tryInject);
+              }
+              return;
+            }
 
-        const isEnabled = toggleBtn.textContent.trim() === 'Disable';
+          const isEnabled = toggleBtn.textContent.trim() === 'Disable';
 
-        const wrapper = document.createElement('label');
-        wrapper.className = 'apple-switch';
+          const wrapper = document.createElement('label');
+          wrapper.className = 'apple-switch';
 
-        wrapper.innerHTML = `
-          <input type="checkbox" ${isEnabled ? 'checked' : ''}>
-          <span class="apple-slider"></span>
-        `;
+          wrapper.innerHTML = `
+            <input type="checkbox" ${isEnabled ? 'checked' : ''}>
+            <span class="apple-slider"></span>
+          `;
 
-        wrapper.querySelector('input').onchange = () => {
-          toggleBtn.click();
+          wrapper.querySelector('input').onchange = () => {
+            const freshToggle = actionGroup.querySelector('.toggle-btn');
+            freshToggle?.click();
+          };
+
+          actionGroup.dataset.switchEnhanced = 'true'; // set first
+          actionGroup.insertBefore(wrapper, actionGroup.firstChild);
         };
 
-        actionGroup.insertBefore(wrapper, toggleBtn);
-
-        actionGroup.dataset.switchEnhanced = 'true'; // ✅ ONLY after success
+        tryInject();
       }
 
       // ── VERSION PILL ──
@@ -542,39 +568,20 @@ export function setup(api) {
       item.classList.add('enhanced');
   }
 
-  // ───────────────── UI TRANSFORM ─────────────────
-  const transformUI = () => {
-    injectScrollButton();
-    document.querySelectorAll('.plugin-item').forEach(enhanceItem);
-  };
-
   // ───────────────── OBSERVER ─────────────────
-  let rafId = null;
 
   observer = new MutationObserver((mutations) => {
-    if (rafId) cancelAnimationFrame(rafId);
+    for (const m of mutations) {
+      for (const node of m.addedNodes) {
+        if (node.nodeType !== 1) continue;
 
-    rafId = requestAnimationFrame(() => {
-      mutations.forEach(m => {
-        m.addedNodes.forEach(node => {
-          if (node.nodeType !== 1) return;
+        if (node.matches?.('.plugin-item')) {
+          enhanceItem(node);
+        }
 
-          if (node.classList?.contains('plugin-item')) {
-            enhanceItem(node);
-          }
-
-          if (node.matches?.('.plugin-item')) {
-            enhanceItem(node);
-          }
-
-          node.children && Array.from(node.children).forEach(child => {
-            if (child.matches?.('.plugin-item')) {
-              enhanceItem(child);
-            }
-          });
-        });
-      });
-    });
+        node.querySelectorAll?.('.plugin-item').forEach(enhanceItem);
+      }
+    }
   });
 
   const start = () => {
@@ -585,14 +592,10 @@ export function setup(api) {
       return;
     }
 
+    injectScrollButton(); // ✅ move here
+
     observer.observe(root, { childList: true, subtree: true });
-
-    // 🔥 First full transform BEFORE showing
-    transformUI();
-
-    requestAnimationFrame(() => {
-      root.classList.add('pm-ready');
-    });
+    root.querySelectorAll('.plugin-item').forEach(enhanceItem);
   };
 
   start();
