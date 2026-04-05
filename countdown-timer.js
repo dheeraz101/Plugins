@@ -4,7 +4,7 @@ let interval = null;
 export const meta = {
   id: 'countdown-timer',
   name: 'Countdown Timer',
-  version: '1.0.1',
+  version: '1.0.2',
   compat: '>=3.3.0'
 };
 
@@ -110,7 +110,7 @@ export function setup(api) {
     container.querySelector('#cd-toggle').addEventListener('click', toggle);
     container.querySelector('#cd-reset').addEventListener('click', reset);
     container.querySelector('#cd-close').addEventListener('click', () => {
-      currentApi.deletePlugin(meta.id); // 🔥 actual removal
+        container.style.display = 'none';
     });
 
     if (!running) {
