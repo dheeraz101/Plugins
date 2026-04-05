@@ -4,7 +4,7 @@ let saveDebounced = null;
 export const meta = {
   id: 'notes-widget',
   name: 'Notes Widget',
-  version: '2.1.1',
+  version: '2.1.2',
   compat: '>=3.3.0'
 };
 
@@ -87,7 +87,7 @@ export function setup(api) {
   container.innerHTML = `
     <div class="notes-container">
       <div class="notes-header">
-        <div class="notes-btn">
+        <div class="notes-btn" id="notes-menu">
            <svg viewBox="0 0 24 24" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
         </div>
         <div class="notes-btn" id="notes-share">
@@ -125,6 +125,12 @@ export function setup(api) {
     navigator.clipboard.writeText(textarea.value);
     indicator.innerText = 'Copied!';
     setTimeout(() => indicator.innerText = 'Saved', 2000);
+  });
+
+  const menuBtn = container.querySelector('#notes-menu');
+
+  menuBtn.addEventListener('click', () => {
+    container.style.display = 'none';
   });
 
   // Resizing works automatically now
