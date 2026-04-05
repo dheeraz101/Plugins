@@ -3,62 +3,181 @@ let currentApi = null;
 export const meta = {
   id: 'random-quote',
   name: 'Random Quotes',
-  version: '1.0.0',
+  version: '1.1.0',
   compat: '>=3.3.0'
 };
 
 export function setup(api) {
   currentApi = api;
 
-  const quotes = [
-    { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-    { text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs" },
-    { text: "Stay hungry, stay foolish.", author: "Steve Jobs" },
-    { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
-    { text: "It is during our darkest moments that we must focus to see the light.", author: "Aristotle" },
-    { text: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb" },
-    { text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" },
-    { text: "The only impossible journey is the one you never begin.", author: "Tony Robbins" },
-    { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
-    { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
-    { text: "In the middle of difficulty lies opportunity.", author: "Albert Einstein" },
-    { text: "What you get by achieving your goals is not as important as what you become.", author: "Zig Ziglar" },
-    { text: "The mind is everything. What you think you become.", author: "Buddha" },
-    { text: "Strive not to be a success, but rather to be of value.", author: "Albert Einstein" },
-    { text: "Life is what happens when you're busy making other plans.", author: "John Lennon" },
-    { text: "The journey of a thousand miles begins with one step.", author: "Lao Tzu" },
-    { text: "Simplicity is the ultimate sophistication.", author: "Leonardo da Vinci" },
-    { text: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
-    { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
-    { text: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.", author: "Martin Fowler" }
-  ];
-
   api.injectCSS(meta.id, `
-    .rq-widget { width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: system-ui, sans-serif; padding: 24px; box-sizing: border-box; text-align: center; }
-    .rq-quote { font-size: 16px; color: #e0e0e0; line-height: 1.6; font-style: italic; margin-bottom: 16px; }
-    .rq-author { font-size: 13px; color: #7c6fff; font-weight: 600; margin-bottom: 20px; }
-    .rq-btn { padding: 8px 20px; background: rgba(124,111,255,0.2); color: #7c6fff; border: 1px solid rgba(124,111,255,0.3); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
-    .rq-btn:hover { background: rgba(124,111,255,0.3); }
+    [data-plugin-id="${meta.id}"].bb-plugin-container {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      overflow: visible !important;
+    }
+
+    .rq-widget {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1f1f2e, #141423);
+      border-radius: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+      box-sizing: border-box;
+      font-family: system-ui, sans-serif;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+      color: #fff;
+    }
+
+    .rq-header {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .rq-close {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .rq-close:hover {
+      background: #ff4d4f;
+    }
+
+    .rq-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .rq-quote {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #e6e6f0;
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+
+    .rq-loading {
+      opacity: 0.6;
+    }
+
+    .rq-author {
+      font-size: 13px;
+      color: #8b7dff;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .rq-footer {
+      display: flex;
+      justify-content: center;
+    }
+
+    .rq-btn {
+      padding: 8px 18px;
+      background: rgba(139,125,255,0.2);
+      border: 1px solid rgba(139,125,255,0.3);
+      border-radius: 10px;
+      color: #8b7dff;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .rq-btn:hover {
+      background: rgba(139,125,255,0.3);
+    }
   `);
 
   const container = api.container;
-  let current = quotes[Math.floor(Math.random() * quotes.length)];
+
+  // Ensure proper clipping
+  container.style.borderRadius = '22px';
+  container.style.overflow = 'hidden';
+
+  let current = { text: 'Loading...', author: '' };
+  let isFetching = false;
+
+  function setLoading() {
+    current = { text: 'Loading...', author: '' };
+    render();
+  }
+
+  async function fetchQuote() {
+    if (isFetching) return;
+    isFetching = true;
+
+    try {
+      const res = await fetch('https://api.quotable.io/quotes/random');
+      const data = await res.json();
+      const q = Array.isArray(data) ? data[0] : data;
+
+      if (!q || !q.content) throw new Error();
+
+      current = {
+        text: q.content,
+        author: q.author
+      };
+    } catch {
+      current = {
+        text: "Network failed. So here's truth: discipline beats consistency.",
+        author: "System"
+      };
+    }
+
+    isFetching = false;
+    render();
+  }
 
   function render() {
+    const isLoading = current.text === 'Loading...';
+
     container.innerHTML = `
       <div class="rq-widget">
-        <div class="rq-quote">"${current.text}"</div>
-        <div class="rq-author">— ${current.author}</div>
-        <button class="rq-btn" id="rq-new">✨ New Quote</button>
+        
+        <div class="rq-header">
+          <button class="rq-close" id="rq-close">✕</button>
+        </div>
+
+        <div class="rq-content">
+          <div class="rq-quote ${isLoading ? 'rq-loading' : ''}">
+            "${current.text}"
+          </div>
+          <div class="rq-author">— ${current.author}</div>
+        </div>
+
+        <div class="rq-footer">
+          <button class="rq-btn" id="rq-new">✨ New Quote</button>
+        </div>
+
       </div>
     `;
+
+    // New quote
     container.querySelector('#rq-new').addEventListener('click', () => {
-      current = quotes[Math.floor(Math.random() * quotes.length)];
-      render();
+      setLoading();
+      fetchQuote();
+    });
+
+    // Close (hide only)
+    container.querySelector('#rq-close').addEventListener('click', () => {
+      container.style.display = 'none';
     });
   }
 
+  // Initial load
   render();
+  fetchQuote();
 }
 
 export function teardown() {
