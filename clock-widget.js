@@ -5,7 +5,7 @@ let resizeHandler = null;
 export const meta = {
   id: 'clock-widget',
   name: 'Clock Widget Pro',
-  version: '3.0.3',
+  version: '3.0.4',
   compat: '>=3.3.0'
 };
 
@@ -225,9 +225,7 @@ export function teardown() {
   if (currentApi) {
     currentApi.removeCSS(meta.id);
     currentApi.bus.off('board:resize', resizeHandler);
-  }
-  // Clear any remaining HTML to ensure "completely hides" requirement
-  if (currentApi && currentApi.container) {
-    currentApi.container.innerHTML = '';
+    const container = currentApi.getContainer(meta.id);
+    if (container) container.innerHTML = '';
   }
 }
