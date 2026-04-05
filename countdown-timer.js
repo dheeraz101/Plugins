@@ -4,7 +4,7 @@ let interval = null;
 export const meta = {
   id: 'countdown-timer',
   name: 'Countdown Timer',
-  version: '1.0.0',
+  version: '1.0.1',
   compat: '>=3.3.0'
 };
 
@@ -12,7 +12,49 @@ export function setup(api) {
   currentApi = api;
 
   api.injectCSS(meta.id, `
-    .cd-widget { width: 100%; height: 100%; background: #1a1a2e; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: system-ui, sans-serif; padding: 20px; box-sizing: border-box; }
+    .cd-root {
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+      overflow: hidden; /* 🔥 FIX: kills square bleed */
+      display: flex;
+      flex-direction: column;
+      background: #1a1a2e;
+    }
+
+    .cd-header {
+      display: flex;
+      justify-content: flex-end;
+      padding: 6px;
+      background: transparent;
+    }
+
+    .cd-close {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: none;
+      background: #ff3b30;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .cd-close:hover {
+      background: #ff5c50;
+    }
+
+    .cd-widget {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, sans-serif;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
     .cd-time { font-size: 48px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; margin-bottom: 12px; }
     .cd-time.urgent { color: #e94560; }
     .cd-inputs { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
@@ -34,27 +76,42 @@ export function setup(api) {
     const s = remaining % 60;
     const urgent = remaining <= 10 && remaining > 0 && running;
 
-    container.innerHTML = `
+  container.innerHTML = `
+    <div class="cd-root">
+      <div class="cd-header">
+        <button class="cd-close" id="cd-close">✕</button>
+      </div>
+
       <div class="cd-widget">
-        <div class="cd-time ${urgent ? 'urgent' : ''}">${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}</div>
+        <div class="cd-time ${urgent ? 'urgent' : ''}">
+          ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}
+        </div>
+
         ${!running ? `
           <div class="cd-inputs">
-            <input class="cd-input" id="cd-h" type="number" min="0" max="99" value="${h}" placeholder="H">
+            <input class="cd-input" id="cd-h" type="number" min="0" max="99" value="${h}">
             <span class="cd-sep">:</span>
-            <input class="cd-input" id="cd-m" type="number" min="0" max="59" value="${m}" placeholder="M">
+            <input class="cd-input" id="cd-m" type="number" min="0" max="59" value="${m}">
             <span class="cd-sep">:</span>
-            <input class="cd-input" id="cd-s" type="number" min="0" max="59" value="${s}" placeholder="S">
+            <input class="cd-input" id="cd-s" type="number" min="0" max="59" value="${s}">
           </div>
         ` : ''}
+
         <div class="cd-controls">
-          <button class="cd-btn ${running ? 'cd-pause' : 'cd-start'}" id="cd-toggle">${running ? 'Pause' : 'Start'}</button>
+          <button class="cd-btn ${running ? 'cd-pause' : 'cd-start'}" id="cd-toggle">
+            ${running ? 'Pause' : 'Start'}
+          </button>
           <button class="cd-btn cd-reset" id="cd-reset">Reset</button>
         </div>
       </div>
-    `;
+    </div>
+  `;
 
     container.querySelector('#cd-toggle').addEventListener('click', toggle);
     container.querySelector('#cd-reset').addEventListener('click', reset);
+    container.querySelector('#cd-close').addEventListener('click', () => {
+      currentApi.deletePlugin(meta.id); // 🔥 actual removal
+    });
 
     if (!running) {
       const hIn = container.querySelector('#cd-h');
