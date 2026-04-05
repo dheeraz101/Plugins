@@ -4,7 +4,7 @@ let interval = null;
 export const meta = {
   id: 'pomodoro-timer',
   name: 'Pomodoro Timer',
-  version: '1.1.0',
+  version: '1.1.1',
   compat: '>=3.3.0'
 };
 
@@ -123,7 +123,7 @@ export function setup(api) {
   function render() {
     const mins = Math.floor(state.remaining / 60).toString().padStart(2, '0');
     const secs = (state.remaining % 60).toString().padStart(2, '0');
-    const modeLabel = state.mode === 'work' ? '🍅 Focus Time' : '☕ Break Time';
+    const modeLabel = state.mode === 'work' ? '🍅 Focus' : '☕ Break Time';
 
     container.innerHTML = `
       <div class="pomodoro">
