@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.7.2',
+  version: '1.8.0',
   compat: '>=3.3.0'
 };
 
@@ -31,7 +31,7 @@ export function setup(api) {
     }
 
     .pm-action-group {
-      min-width: 120px; /* adjust to your layout */
+      min-width: 120px; 
       display: flex;
       align-items: center;
       justify-content: flex-end;
@@ -84,9 +84,6 @@ export function setup(api) {
       margin: 0 0 4px 0 !important;
     }
 
-    /* Force hide original text buttons 
-    .toggle-btn { display: none !important; } */
-
     /* 4. Modern Apple Toggle Switch */
     .apple-switch {
       position: relative;
@@ -118,7 +115,7 @@ export function setup(api) {
     input:checked + .apple-slider { background-color: #34C759; }
     input:checked + .apple-slider:before { transform: translateX(18px); }
 
-    /* 5. Action Icons (Reload & Delete) */
+    /* 5. Action Icons (Reload, Delete, Update, Rollback) */
     .apple-icon-btn {
       opacity: 1 !important;
       pointer-events: auto !important;
@@ -137,10 +134,12 @@ export function setup(api) {
     .apple-icon-btn:hover { background: rgba(0,0,0,0.05); color: #1d1d1f; }
     .apple-icon-btn:active { transform: scale(0.9); }
     .apple-icon-btn.delete-icon:hover { color: #FF3B30; background: rgba(255, 59, 48, 0.1); }
+    .apple-icon-btn.rollback-btn { color: #d97706; }
+    .apple-icon-btn.rollback-btn:hover { color: #b45309; background: rgba(255, 149, 0, 0.15); }
 
- /* 6. Floating Scroll Button - FIXED POSITIONING & UI */
-     .pm-scroll-top {
-      position: fixed; /* Changed to fixed so it stays in place */
+    /* 6. Floating Scroll Button */
+    .pm-scroll-top {
+      position: fixed;
       bottom: 40px; 
       left: 50%;
       transform: translateX(-50%) translateY(100px);
@@ -157,108 +156,95 @@ export function setup(api) {
       opacity: 0; 
       z-index: 9999;
       color: #1d1d1f;
-      pointer-events: none; /* Disable when hidden */
+      pointer-events: none;
     }
 
     .pm-scroll-top.visible {
       transform: translateX(-50%) translateY(0);
       opacity: 1;
-      pointer-events: auto; /* Enable when shown */
+      pointer-events: auto;
     }
 
     .pm-scroll-top:hover {
       background: rgba(255, 255, 255, 1);
       box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-      color: #007AFF; /* Apple Blue on hover for better UI */
+      color: #007AFF;
       transform: translateX(-50%) translateY(-2px);
     }
 
-    .plugin-badge svg {
-      display: block;
+    /* 7. Layered Icon Update Badge (Apple Style) */
+    .plugin-icon-box {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .icon-base-dimmed {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.3;
+      filter: saturate(0.5) blur(1.5px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-
-    .plugin-badge {
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-
-      width: 24px !important;
-      height: 24px !important;
-
-      border-radius: 50% !important;
-      margin: 0 4px;
-
-      padding: 0 !important; /* 🔥 REMOVE internal spacing inconsistencies */
+    .icon-update-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+      color: #ffffff;
+      z-index: 2;
     }
 
     @keyframes apple-breathe {
-      0%, 100% { 
-        transform: scale(0.9);
-        opacity: 0.6;
-        box-shadow: 0 0 4px rgba(52, 199, 89, 0.4);
-      }
-      50% { 
-        transform: scale(1.1);
-        opacity: 1;
-        box-shadow: 0 0 10px rgba(52, 199, 89, 0.9);
-      }
+      0%, 100% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 4px rgba(52, 199, 89, 0.4); }
+      50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 10px rgba(52, 199, 89, 0.9); }
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #34C759;
+      width: 8px; height: 8px; border-radius: 50%; background: #34C759;
       animation: apple-breathe 2.4s ease-in-out infinite;
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
     .status-active-wrapper {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background: rgba(52, 199, 89, 0.12);
+      width: 18px; height: 18px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; background: rgba(52, 199, 89, 0.12);
+      transition: background 0.3s ease;
     }
+    .plugin-item:hover .status-active-wrapper { background: rgba(52, 199, 89, 0.18); }
 
     .status-inactive-wrapper {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background: rgba(255, 59, 48, 0.12);
+      width: 18px; height: 18px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; background: rgba(255, 59, 48, 0.12);
     }
 
     .status-update-wrapper {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background: rgba(52, 199, 89, 0.15);
+      width: 18px; height: 18px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; background: rgba(52, 199, 89, 0.15);
     }
 
-    .status-active-wrapper {
-      transition: background 0.3s ease;
+    .plugin-badge {
+      display: inline-flex !important; align-items: center !important;
+      justify-content: center !important; width: 24px !important;
+      height: 24px !important; border-radius: 50% !important;
+      margin: 0 4px; padding: 0 !important;
     }
+    .plugin-badge svg { display: block; }
 
-    .plugin-item:hover .status-active-wrapper {
-      background: rgba(52, 199, 89, 0.18);
+    /* 8. Logger & Sidebar Buttons Aesthetic Support */
+    #pm-actions .pm-btn {
+      border-radius: 10px !important; /* Squircle Apple styling */
+      justify-content: flex-start;
+      padding: 8px 14px;
+      font-weight: 500;
     }
         
-    /* 7. Dark Mode Overrides */
+    /* 9. Dark Mode Overrides */
     @media (prefers-color-scheme: dark) {
       .pm-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
       .pm-content::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
@@ -266,23 +252,13 @@ export function setup(api) {
       .apple-icon-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
       .apple-icon-btn.update-btn-enhanced { color: #0A84FF; }
       .apple-icon-btn.update-btn-enhanced:hover { background: rgba(10, 132, 255, 0.15); }
+      .apple-icon-btn.rollback-btn { color: #ffb340; }
+      .apple-icon-btn.rollback-btn:hover { background: rgba(255, 149, 0, 0.2); }
       .apple-slider { background-color: rgba(255, 255, 255, 0.2); }
-      .pm-scroll-top { 
-        background: rgba(50, 50, 50, 0.8); 
-        color: #fff; 
-        border-color: rgba(255, 255, 255, 0.1); 
-      }
-      .status-active-wrapper {
-        background: rgba(48, 209, 88, 0.18);
-      }
-      .status-inactive-wrapper {
-        background: rgba(255, 69, 58, 0.18);
-      }
-
-      .status-update-wrapper {
-        background: rgba(48, 209, 88, 0.18);
-      }
+      .pm-scroll-top { background: rgba(50, 50, 50, 0.8); color: #fff; border-color: rgba(255, 255, 255, 0.1); }
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
+      .status-active-wrapper, .status-update-wrapper { background: rgba(48, 209, 88, 0.18); }
+      .status-inactive-wrapper { background: rgba(255, 69, 58, 0.18); }
     }
     `;
     document.head.appendChild(style);
@@ -291,8 +267,8 @@ export function setup(api) {
   // ───────────────── SCROLL BUTTON ─────────────────
   let scrollInjected = false;
   const injectScrollButton = () => {
-      if (scrollInjected) return;
-      scrollInjected = true;
+    if (scrollInjected) return;
+    scrollInjected = true;
     const pmRoot = document.querySelector('.pm-root');
     const content = document.querySelector('.pm-content');
 
@@ -329,247 +305,253 @@ export function setup(api) {
   function enhanceItem(item) {
     const actionGroup = item.querySelector('.pm-action-group');
     const info = item.querySelector('.plugin-info');
+    const iconBox = item.querySelector('.plugin-icon-box');
 
-       // ── LIGHT SKIP (only for static parts)
-        //if (!item.dataset.staticEnhanced) {
-          // version pill + badges
-          //item.dataset.staticEnhanced = 'true';
-        //}
+    // ── FORCE TOGGLE FIX (runs every time)
+    if (actionGroup && !actionGroup.querySelector('.apple-switch')) {
+      let attempts = 0;
+      const tryInject = () => {
+        if (!document.body.contains(item)) return;
+        const toggleBtn = actionGroup.querySelector('.toggle-btn');
 
-        // ── FORCE TOGGLE FIX (runs every time)
-      if (actionGroup && !actionGroup.querySelector('.apple-switch')) {
-        let attempts = 0;
-        const tryInject = () => {
-          if (!document.body.contains(item)) return;
-          const toggleBtn = actionGroup.querySelector('.toggle-btn');
+        if (!toggleBtn) {
+          if (attempts++ < 20) requestAnimationFrame(tryInject);
+          return;
+        }
 
-            if (!toggleBtn) {
-              if (attempts++ < 20) {
-                requestAnimationFrame(tryInject);
-              }
-              return;
-            }
+        const isEnabled = toggleBtn.textContent.trim() === 'Disable';
 
-          const isEnabled = toggleBtn.textContent.trim() === 'Disable';
+        const wrapper = document.createElement('label');
+        wrapper.className = 'apple-switch';
 
-          const wrapper = document.createElement('label');
-          wrapper.className = 'apple-switch';
+        wrapper.innerHTML = `
+          <input type="checkbox" ${isEnabled ? 'checked' : ''}>
+          <span class="apple-slider"></span>
+        `;
 
-          wrapper.innerHTML = `
-            <input type="checkbox" ${isEnabled ? 'checked' : ''}>
-            <span class="apple-slider"></span>
-          `;
-
-          wrapper.querySelector('input').onchange = () => {
-            const freshToggle = actionGroup.querySelector('.toggle-btn');
-            freshToggle?.click();
-          };
-
-          actionGroup.dataset.switchEnhanced = 'true'; // set first
-          actionGroup.insertBefore(wrapper, actionGroup.firstChild);
+        wrapper.querySelector('input').onchange = () => {
+          const freshToggle = actionGroup.querySelector('.toggle-btn');
+          freshToggle?.click();
         };
 
-        tryInject();
-      }
+        actionGroup.dataset.switchEnhanced = 'true';
+        actionGroup.insertBefore(wrapper, actionGroup.firstChild);
+      };
 
-      // ── VERSION PILL ──
-      if (info) {
-        const nameEl = info.querySelector('.plugin-name');
-        const metaEl = info.querySelector('.plugin-meta');
+      tryInject();
+    }
 
-        if (nameEl && metaEl) {
+    // ── VERSION PILL ──
+    if (info) {
+      const nameEl = info.querySelector('.plugin-name');
+      const metaEl = info.querySelector('.plugin-meta');
 
-          if (!metaEl.dataset.originalText) {
-            metaEl.dataset.originalText = metaEl.textContent;
-          }
+      if (nameEl && metaEl) {
+        if (!metaEl.dataset.originalText) {
+          metaEl.dataset.originalText = metaEl.textContent;
+        }
 
-          const original = metaEl.dataset.originalText;
-          const match = original.match(/v?\d+\.\d+\.\d+/);
+        const original = metaEl.dataset.originalText;
+        const match = original.match(/v?\d+\.\d+\.\d+/);
+        const existing = nameEl.querySelector('.apple-version-pill');
 
-          const existing = nameEl.querySelector('.apple-version-pill');
+        if (match && !existing) {
+          const pill = document.createElement('span');
+          pill.className = 'apple-version-pill';
+          pill.textContent = match[0];
 
-          if (match && !existing) {
-            const pill = document.createElement('span');
-            pill.className = 'apple-version-pill';
-            pill.textContent = match[0];
-
-            nameEl.appendChild(pill);
-            const metaText = metaEl.textContent;
-            const cleaned = metaText.replace(match[0], '').replace(/^[\s•]+/, '').trim();
-            if (cleaned) {
-              metaEl.textContent = cleaned;
-            }
+          nameEl.appendChild(pill);
+          const metaText = metaEl.textContent;
+          const cleaned = metaText.replace(match[0], '').replace(/^[\s•]+/, '').trim();
+          if (cleaned) {
+            metaEl.textContent = cleaned;
           }
         }
       }
+    }
 
-      if (actionGroup) {
-        const reloadBtn = actionGroup.querySelector('.reload-btn');
-        const toggleBtn = actionGroup.querySelector('.toggle-btn');
-        const deleteBtn = actionGroup.querySelector('.delete-btn');
+    // ── LAYERED ICON BADGE (Update Check) ──
+    const updateBtn = actionGroup?.querySelector('[data-update]');
+    if (iconBox && !iconBox.dataset.updateEnhanced) {
+      if (updateBtn) {
+        const originalIconHtml = iconBox.innerHTML;
+        iconBox.innerHTML = `
+          <div class="icon-base-dimmed">${originalIconHtml}</div>
+          <div class="icon-update-overlay" title="Update Available">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+          </div>
+        `;
+      }
+      iconBox.dataset.updateEnhanced = 'true';
+    }
 
-        if (reloadBtn && !reloadBtn.dataset.iconified) {
-          reloadBtn.className = 'apple-icon-btn reload-btn';
-          reloadBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" stroke-width="2.2"
+    // ── ACTION BUTTONS REWRITE ──
+    if (actionGroup) {
+      const reloadBtn = actionGroup.querySelector('.reload-btn');
+      const deleteBtn = actionGroup.querySelector('.delete-btn');
+      const installBtn = actionGroup.querySelector('[data-install]');
+      
+      // Rollback Manager integration
+      const rollbackBtn = actionGroup.querySelector('[data-rb-rollback]');
+      if (rollbackBtn && !rollbackBtn.dataset.iconified) {
+        rollbackBtn.className = 'apple-icon-btn rollback-btn';
+        rollbackBtn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 14 4 9 9 4"/>
+            <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+          </svg>
+        `;
+        // Strip out any text from Rollback Manager and just keep the icon
+        rollbackBtn.dataset.iconified = 'true';
+      }
+
+      if (reloadBtn && !reloadBtn.dataset.iconified) {
+        reloadBtn.className = 'apple-icon-btn reload-btn';
+        reloadBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+          <polyline points="21 3 21 8 16 8"/>
+        </svg>`;
+        reloadBtn.dataset.iconified = 'true';
+      }
+
+      if (deleteBtn && !deleteBtn.dataset.iconified) {
+        deleteBtn.className = 'apple-icon-btn delete-icon delete-btn';
+        deleteBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18"/>
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>`;
+        deleteBtn.dataset.iconified = 'true';
+      }
+
+      if (installBtn && !installBtn.dataset.iconified) {
+        installBtn.className = 'apple-icon-btn';
+        installBtn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
-            <polyline points="21 3 21 8 16 8"/>
-          </svg>`;
-          reloadBtn.dataset.iconified = 'true';
-        }
-
-        if (deleteBtn && !deleteBtn.dataset.iconified) {
-          deleteBtn.className = 'apple-icon-btn delete-icon delete-btn';
-          deleteBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" stroke-width="2.2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 6h18"/>
-            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-            <line x1="10" y1="11" x2="10" y2="17"/>
-            <line x1="14" y1="11" x2="14" y2="17"/>
-          </svg>`;
-          deleteBtn.dataset.iconified = 'true';
-        }
-
-        // Install Button → Icon
-        const installBtn = actionGroup.querySelector('[data-install]');
-        if (installBtn && !installBtn.dataset.iconified) {
-          installBtn.className = 'apple-icon-btn';
-          installBtn.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2.2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3v12"/>
-              <path d="M7 10l5 5 5-5"/>
-              <path d="M5 21h14"/>
-            </svg>
-          `;
-          installBtn.dataset.iconified = 'true';
-        }
-
-        // Update Button → Icon
-        const updateBtn = actionGroup.querySelector('[data-update]');
-        if (updateBtn && !updateBtn.dataset.iconified) {
-          updateBtn.className = 'apple-icon-btn update-btn-enhanced';
-          updateBtn.innerHTML = `
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M7 19L5.78311 18.9954C3.12231 18.8818 1 16.6888 1 14
-              C1 11.3501 3.06139 9.18169 5.66806 9.01084
-              C6.78942 6.64027 9.20316 5 12 5
-              C15.5268 5 18.4445 7.60822 18.9293 11.001
-              L19 11C21.2091 11 23 12.7909 23 15
-              C23 17.1422 21.316 18.8911 19.1996 18.9951
-              L17 19M12 10V18M12 18L15 15M12 18L9 15"
-              stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          `;
-          updateBtn.dataset.iconified = 'true';
-        }
-
+            <path d="M12 3v12"/>
+            <path d="M7 10l5 5 5-5"/>
+            <path d="M5 21h14"/>
+          </svg>
+        `;
+        installBtn.dataset.iconified = 'true';
       }
 
-      // ── BADGES ──
-      item.querySelectorAll('.plugin-badge').forEach(badge => {
-        if (badge.dataset.iconified) return;
+      if (updateBtn && !updateBtn.dataset.iconified) {
+        updateBtn.className = 'apple-icon-btn update-btn-enhanced';
+        updateBtn.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M7 19L5.78311 18.9954C3.12231 18.8818 1 16.6888 1 14
+            C1 11.3501 3.06139 9.18169 5.66806 9.01084
+            C6.78942 6.64027 9.20316 5 12 5
+            C15.5268 5 18.4445 7.60822 18.9293 11.001
+            L19 11C21.2091 11 23 12.7909 23 15
+            C23 17.1422 21.316 18.8911 19.1996 18.9951
+            L17 19M12 10V18M12 18L15 15M12 18L9 15"
+            stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `;
+        updateBtn.dataset.iconified = 'true';
+      }
+    }
 
-        const text = badge.textContent.trim().toLowerCase();
+    // ── STATUS BADGES ──
+    item.querySelectorAll('.plugin-badge').forEach(badge => {
+      if (badge.dataset.iconified) return;
 
-        let icon = '';
+      const text = badge.textContent.trim().toLowerCase();
+      let icon = '';
 
-        if (text === 'system') {
-          icon = `
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2.2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06
-              a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4
-              a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.33 1.82V22
-              a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-.33-1.82
-              a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.82.33l-.06.06
-              a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15
-              a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.82-.33H2
-              a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.82-.33
-              a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.33-1.82l-.06-.06
-              a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6
-              c.26 0 .52-.06.76-.17A1.7 1.7 0 0 0 10.6 3V2
-              a2 2 0 1 1 4 0v.09c0 .64.38 1.22.96 1.49
-              .24.11.5.17.76.17a1.7 1.7 0 0 0 1-.6l.06-.06
-              a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.15-.33 1.82
-              .11.24.17.5.17.76 0 .26-.06.52-.17.76
-              a1.7 1.7 0 0 0 .33 1.82l.06.06A2 2 0 1 1 19.4 15z"/>
+      if (text === 'system') {
+        icon = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06
+            a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4
+            a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.33 1.82V22
+            a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-.33-1.82
+            a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.82.33l-.06.06
+            a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15
+            a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.82-.33H2
+            a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.82-.33
+            a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.33-1.82l-.06-.06
+            a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6
+            c.26 0 .52-.06.76-.17A1.7 1.7 0 0 0 10.6 3V2
+            a2 2 0 1 1 4 0v.09c0 .64.38 1.22.96 1.49
+            .24.11.5.17.76.17a1.7 1.7 0 0 0 1-.6l.06-.06
+            a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.15-.33 1.82
+            .11.24.17.5.17.76 0 .26-.06.52-.17.76
+            a1.7 1.7 0 0 0 .33 1.82l.06.06A2 2 0 1 1 19.4 15z"/>
+          </svg>
+        `;
+        badge.title = "System Plugin";
+      }
+
+      if (text === 'active') {
+        badge.innerHTML = `
+          <div class="status-active-wrapper">
+            <div class="status-dot"></div>
+          </div>`;
+        badge.style.background = 'none';
+        item.classList.add('active');
+      } else if (text === 'inactive') {
+        badge.innerHTML = `
+          <div class="status-inactive-wrapper">
+            <svg width="10" height="10" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="3.5">
+              <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
-          `;
-          badge.title = "System Plugin";
+          </div>`;
+        badge.style.color = "#FF3B30";
+        badge.style.background = "rgba(255, 59, 48, 0.12)";
+      } else if (text.includes('update')) {
+        badge.innerHTML = `
+          <div class="status-update-wrapper">
+            <svg width="10" height="10" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="3">
+              <path d="M12 19V5M5 12l7 7 7-7"/>
+            </svg>
+          </div>`;
+        badge.style.background = "rgba(52, 199, 89, 0.15)";
+        badge.style.color = "#34C759";
+      }
+
+      if (icon) {
+        badge.innerHTML = icon;
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        badge.style.justifyContent = 'center';
+        badge.style.borderRadius = '50%';
+        if (!badge.style.background) {
+          badge.style.background = 'rgba(120, 120, 128, 0.08)';
         }
+      }
 
-        if (text === 'active') {
-          badge.innerHTML = `
-            <div class="status-active-wrapper">
-              <div class="status-dot"></div>
-            </div>`;
-          badge.style.background = 'none';
-          item.classList.add('active');
-        }
+      badge.dataset.iconified = 'true';
+    });
 
-        else if (text === 'inactive') {
-          badge.innerHTML = `
-            <div class="status-inactive-wrapper">
-              <svg width="10" height="10" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="3.5">
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </div>`;
-          badge.style.color = "#FF3B30";
-          badge.style.background = "rgba(255, 59, 48, 0.12)";
-        }
-
-        else if (text.includes('update')) {
-          badge.innerHTML = `
-            <div class="status-update-wrapper">
-              <svg width="10" height="10" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="3">
-                <path d="M12 19V5M5 12l7 7 7-7"/>
-              </svg>
-            </div>`;
-          badge.style.background = "rgba(52, 199, 89, 0.15)";
-          badge.style.color = "#34C759";
-        }
-
-        // Apply system icon if exists
-        if (icon) {
-          badge.innerHTML = icon;
-          badge.style.display = 'inline-flex';
-          badge.style.alignItems = 'center';
-          badge.style.justifyContent = 'center';
-          badge.style.borderRadius = '50%';
-
-          if (!badge.style.background) {
-            badge.style.background = 'rgba(120, 120, 128, 0.08)';
-          }
-        }
-
-        badge.dataset.iconified = 'true';
-      });
-
-      item.dataset.enhanced = 'true';
-      item.classList.add('enhanced');
+    item.dataset.enhanced = 'true';
+    item.classList.add('enhanced');
   }
 
   // ───────────────── OBSERVER ─────────────────
-
   observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
       for (const node of m.addedNodes) {
         if (node.nodeType !== 1) continue;
-
-        if (node.matches?.('.plugin-item')) {
-          enhanceItem(node);
-        }
-
+        if (node.matches?.('.plugin-item')) enhanceItem(node);
         node.querySelectorAll?.('.plugin-item').forEach(enhanceItem);
       }
     }
@@ -577,14 +559,11 @@ export function setup(api) {
 
   const start = () => {
     const root = document.querySelector('.pm-root');
-
     if (!root) {
       setTimeout(start, 300);
       return;
     }
-
-    injectScrollButton(); // ✅ move here
-
+    injectScrollButton();
     observer.observe(root, { childList: true, subtree: true });
     root.querySelectorAll('.plugin-item').forEach(enhanceItem);
   };
