@@ -3,7 +3,7 @@ let currentApi = null;
 export const meta = {
   id: 'text-counter',
   name: 'Text Counter',
-  version: '1.0.0',
+  version: '1.0.1',
   compat: '>=3.3.0'
 };
 
@@ -11,17 +11,99 @@ export function setup(api) {
   currentApi = api;
 
   api.injectCSS(meta.id, `
-    .tc-widget { width: 100%; height: 100%; background: #1a1a2e; border-radius: 14px; display: flex; flex-direction: column; font-family: system-ui, sans-serif; overflow: hidden; }
-    .tc-header { padding: 12px 16px; border-bottom: 1px solid #2a2a4a; color: #fff; font-size: 14px; font-weight: 600; }
-    .tc-body { flex: 1; display: flex; flex-direction: column; }
-    .tc-textarea { flex: 1; background: transparent; border: none; outline: none; resize: none; padding: 14px; color: #ddd; font-size: 14px; line-height: 1.6; }
-    .tc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #2a2a4a; border-top: 1px solid #2a2a4a; }
-    .tc-stat { background: #1a1a2e; padding: 10px; text-align: center; }
-    .tc-stat-val { color: #7c6fff; font-size: 20px; font-weight: 700; }
-    .tc-stat-label { color: #666; font-size: 11px; margin-top: 2px; }
+    [data-plugin-id="${meta.id}"].bb-plugin-container {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      overflow: visible !important;
+    }
+
+    .tc-widget {
+      width: 100%;
+      height: 100%;
+      background: #1e1e2f;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      font-family: system-ui, sans-serif;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    }
+
+    .tc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .tc-close {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .tc-close:hover {
+      background: #ff4d4f;
+    }
+
+    .tc-body {
+      flex: 1;
+      display: flex;
+    }
+
+    .tc-textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 16px;
+      color: #ddd;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .tc-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .tc-stat {
+      background: #1e1e2f;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .tc-stat-val {
+      color: #8b7dff;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .tc-stat-label {
+      color: #777;
+      font-size: 10px;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
   `);
 
   const container = api.container;
+  container.style.borderRadius = '20px';
+  container.style.overflow = 'hidden';
   const saved = api.storage.getForPlugin(meta.id, 'text') || '';
 
   function count(text) {
@@ -39,7 +121,10 @@ export function setup(api) {
     const c = count(saved);
     container.innerHTML = `
       <div class="tc-widget">
-        <div class="tc-header">📊 Text Counter</div>
+        <div class="tc-header">
+          <span>📊 Text Counter</span>
+          <button class="tc-close" id="tc-close">✕</button>
+        </div>
         <div class="tc-body">
           <textarea class="tc-textarea" id="tc-input" placeholder="Type or paste your text here...">${saved}</textarea>
         </div>
@@ -69,6 +154,10 @@ export function setup(api) {
       }
     }, 200);
     input.addEventListener('input', e => saveDebounced(e.target.value));
+
+    container.querySelector('#tc-close').addEventListener('click', () => {
+      container.style.display = 'none';
+    });
   }
 
   render();
