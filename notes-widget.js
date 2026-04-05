@@ -4,7 +4,7 @@ let saveDebounced = null;
 export const meta = {
   id: 'notes-widget',
   name: 'Notes Widget',
-  version: '2.1.2',
+  version: '2.1.3',
   compat: '>=3.3.0'
 };
 
@@ -13,6 +13,13 @@ export function setup(api) {
 
   // Scoped CSS using the core's injectCSS
   api.injectCSS(meta.id, `
+      [data-plugin-id="${meta.id}"].bb-plugin-container {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+      }
+
     .notes-container {
       display: flex;
       flex-direction: column;
@@ -58,6 +65,8 @@ export function setup(api) {
     .notes-status { font-size: 11px; color: #86868b; font-weight: 500; }
 
     .notes-btn {
+      font-size: 11px;
+      color: #ff3b30;
       background: transparent;
       border: none;
       cursor: pointer;
@@ -97,7 +106,10 @@ export function setup(api) {
       <textarea class="notes-textarea" placeholder="New Note..."></textarea>
       <div class="notes-footer">
         <span class="notes-status" id="save-indicator">Saved</span>
-        <span class="notes-status" id="char-count">0 chars</span>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span class="notes-status" id="char-count">0 chars</span>
+          <button class="notes-btn" id="notes-clear">Clear</button>
+        </div>
       </div>
     </div>
   `;
@@ -125,6 +137,15 @@ export function setup(api) {
     navigator.clipboard.writeText(textarea.value);
     indicator.innerText = 'Copied!';
     setTimeout(() => indicator.innerText = 'Saved', 2000);
+  });
+
+  const clearBtn = container.querySelector('#notes-clear');
+
+  clearBtn.addEventListener('click', () => {
+    textarea.value = '';
+    api.storage.set('content', '');
+    countDisplay.innerText = '0 chars';
+    indicator.innerText = 'Cleared';
   });
 
   const menuBtn = container.querySelector('#notes-menu');
