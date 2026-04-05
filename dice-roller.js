@@ -3,7 +3,7 @@ let currentApi = null;
 export const meta = {
   id: 'dice-roller',
   name: 'Dice Roller',
-  version: '2.1.6',
+  version: '2.1.7',
   compat: '>=3.3.0'
 };
 
@@ -196,7 +196,7 @@ export function setup(api) {
             `).join('')}
           </div>
 
-          <button class="dr-action-btn" id="roll-trigger">Roll!!</button>
+          <button class="dr-action-btn" id="roll-trigger">Roll the dice!</button>
         </div>
       </div>
     `;
