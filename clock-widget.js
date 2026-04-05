@@ -5,7 +5,7 @@ let resizeHandler = null;
 export const meta = {
   id: 'clock-widget',
   name: 'Clock Widget Pro',
-  version: '3.0.2',
+  version: '3.0.3',
   compat: '>=3.3.0'
 };
 
@@ -166,7 +166,10 @@ export function setup(api) {
   const update = () => {
     const timeEl = container.querySelector('#display-time');
     const dateEl = container.querySelector('#display-date');
-    if (!timeEl || !dateEl) return;
+    const closeBtn = container.querySelector('#btn-close-clock');
+    const card = container.querySelector('.cw-card');
+
+    if (!timeEl || !dateEl || !closeBtn || !card) return;
 
     const now = new Date();
 
@@ -182,12 +185,29 @@ export function setup(api) {
       day: 'numeric' 
     }).toUpperCase();
 
-    // ✅ Stable scaling (fixed)
     const baseWidth = 320;
     const scale = Math.min(container.offsetWidth / baseWidth, 1);
 
+    // Scale typography
     timeEl.style.fontSize = (64 * scale) + 'px';
     dateEl.style.fontSize = (14 * scale) + 'px';
+
+    // ✅ Scale spacing
+    dateEl.style.marginTop = (10 * scale) + 'px';
+    card.style.padding = (28 * scale) + 'px';
+
+    // ✅ Scale close button properly
+    closeBtn.style.width = (30 * scale) + 'px';
+    closeBtn.style.height = (30 * scale) + 'px';
+    closeBtn.style.top = (14 * scale) + 'px';
+    closeBtn.style.right = (14 * scale) + 'px';
+
+    // Optional: scale icon inside
+    const svg = closeBtn.querySelector('svg');
+    if (svg) {
+      svg.style.width = (14 * scale) + 'px';
+      svg.style.height = (14 * scale) + 'px';
+    }
   };
 
   render();
