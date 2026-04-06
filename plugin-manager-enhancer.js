@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.9.7',
+  version: '1.9.8',
   compat: '>=3.3.0'
 };
 
@@ -220,12 +220,11 @@ export function setup(api) {
       width: 14px; height: 14px; border-radius: 50%; display: flex;
       align-items: center; justify-content: center;
       transition: background 0.3s ease;
-      background: transparent !important;
     }
     
-    /*.status-active-wrapper { background: rgba(52, 199, 89, 0.15); }*/
-    /*.status-inactive-wrapper { background: rgba(255, 59, 48, 0.15); }*/
-    /*.status-system-wrapper { background: rgba(142, 142, 147, 0.15); color: #8e8e93; }*/
+    .status-active-wrapper { background: rgba(52, 199, 89, 0.15); }
+    .status-inactive-wrapper { background: rgba(255, 59, 48, 0.15); }
+    .status-system-wrapper { background: rgba(142, 142, 147, 0.15); color: #8e8e93; }
 
     .plugin-item:hover .status-active-wrapper { background: rgba(52, 199, 89, 0.22); }
     .plugin-item:hover .status-inactive-wrapper { background: rgba(255, 59, 48, 0.22); }
@@ -301,9 +300,10 @@ export function setup(api) {
         background: transparent !important;
         border: none !important;
       }
-      .status-active-wrapper, .status-inactive-wrapper, .status-system-wrapper { 
-              background: transparent !important; 
-      }
+
+      .status-active-wrapper { background: rgba(48, 209, 88, 0.18); }
+      .status-inactive-wrapper { background: rgba(255, 69, 58, 0.18); }
+      .status-system-wrapper { background: rgba(142, 142, 147, 0.18); color: #98989d; }
       
       .apple-update-circle {
         background: rgba(0, 0, 0, 0.5);
@@ -532,14 +532,31 @@ export function setup(api) {
       if (text === 'system') {
         badge.innerHTML = `
           <div class="status-system-wrapper" title="System Plugin">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#0A84FF"
-              stroke="#0A84FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.7 1.7 0 0 0-1.82-.33 1.7 1.7 0 0 0-1 .6L13.6 22h-3.2l-.46-2.02a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.7 1.7 0 0 0 .33-1.82 1.7 1.7 0 0 0-.6-1L2 13.6v-3.2l2.02-.46a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.7 1.7 0 0 0 1.82.33H9a1.7 1.7 0 0 0 1-.6L10.4 2h3.2l.46 2.02a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.7 1.7 0 0 0-.33 1.82V9a1.7 1.7 0 0 0 .6 1l2.02.46v3.2l-2.02.46a1.7 1.7 0 0 0-.6 1z"/>
-            </svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06
+                        a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4
+                        a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.33 1.82V22
+                        a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-.33-1.82
+                        a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.82.33l-.06.06
+                        a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15
+                        a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.82-.33H2
+                        a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.82-.33
+                        a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.33-1.82l-.06-.06
+                        a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6
+                        c.26 0 .52-.06.76-.17A1.7 1.7 0 0 0 10.6 3V2
+                        a2 2 0 1 1 4 0v.09c0 .64.38 1.22.96 1.49
+                        .24.11.5.17.76.17a1.7 1.7 0 0 0 1-.6l.06-.06
+                        a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.15-.33 1.82
+                        .11.24.17.5.17.76 0 .26-.06.52-.17.76
+                        a1.7 1.7 0 0 0 .33 1.82l.06.06A2 2 0 1 1 19.4 15z"/>
+              </svg>
           </div>
         `;
-        badge.style.background = 'none';
+        badge.style.color = "#FF3B30";
+        badge.style.background = "rgba(120, 120, 128, 0.08)";
         isStatusBadge = true;
       }
       // Handle Active Badge
