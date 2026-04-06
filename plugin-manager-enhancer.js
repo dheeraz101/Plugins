@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.9.5',
+  version: '1.9.6',
   compat: '>=3.3.0'
 };
 
@@ -172,10 +172,11 @@ export function setup(api) {
       transform: translateX(-50%) translateY(-2px);
     }
 
-    /* 7. Layered Icon Update Badge (Apple Style) */
+    /* 7. Layered Icon Box & Status Badges */
     .plugin-icon-box {
       position: relative;
-      overflow: hidden;
+      /* IMPORTANT: Allow the status badge at bottom to overflow the box edges */
+      overflow: visible !important;
     }
     
     .icon-base-dimmed {
@@ -187,12 +188,58 @@ export function setup(api) {
       opacity: 0.95;
       filter: brightness(0.85); 
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      /* Keep the plugin icon art strictly rounded */
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    /* The new absolute positioned status badge wrapper half-in and half-out */
+    .plugin-badge.icon-status-badge {
+      position: absolute !important;
+      bottom: 0 !important;
+      left: 50% !important;
+      transform: translate(-50%, 50%) !important;
+      z-index: 10;
+      margin: 0 !important;
+      /* Glassmorphism cutout background to separate it from the icon */
+      background: rgba(255, 255, 255, 0.9) !important;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      padding: 3px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: auto !important;
+      height: auto !important;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.06) !important;
+    }
+
+    /* Sized perfectly for bottom-center */
+    .status-active-wrapper, .status-inactive-wrapper, .status-system-wrapper {
+      width: 14px; height: 14px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center;
+      transition: background 0.3s ease;
+    }
+    
+    .status-active-wrapper { background: rgba(52, 199, 89, 0.15); }
+    .status-inactive-wrapper { background: rgba(255, 59, 48, 0.15); }
+    .status-system-wrapper { background: rgba(142, 142, 147, 0.15); color: #8e8e93; }
+
+    .plugin-item:hover .status-active-wrapper { background: rgba(52, 199, 89, 0.22); }
+    .plugin-item:hover .status-inactive-wrapper { background: rgba(255, 59, 48, 0.22); }
+
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #34C759;
+      animation: apple-breathe 2.4s ease-in-out infinite;
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
     .icon-update-overlay {
       position: absolute;
-      top: 4px;
-      right: 4px;
+      top: -4px;
+      right: -4px;
       z-index: 2;
       display: flex;
       align-items: center;
@@ -219,29 +266,6 @@ export function setup(api) {
       50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 10px rgba(52, 199, 89, 0.9); }
     }
 
-    .status-dot {
-      width: 8px; height: 8px; border-radius: 50%; background: #34C759;
-      animation: apple-breathe 2.4s ease-in-out infinite;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-
-    .status-active-wrapper {
-      width: 18px; height: 18px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; background: rgba(52, 199, 89, 0.12);
-      transition: background 0.3s ease;
-    }
-    .plugin-item:hover .status-active-wrapper { background: rgba(52, 199, 89, 0.18); }
-
-    .status-inactive-wrapper {
-      width: 18px; height: 18px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; background: rgba(255, 59, 48, 0.12);
-    }
-
-    .status-update-wrapper {
-      width: 18px; height: 18px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; background: rgba(52, 199, 89, 0.15);
-    }
-
     .plugin-badge {
       display: inline-flex !important; align-items: center !important;
       justify-content: center !important; width: 24px !important;
@@ -249,12 +273,11 @@ export function setup(api) {
       margin: 0 4px; padding: 0 !important;
     }
     .plugin-badge svg { display: block; }
-
     .plugin-badge.badge-update { display: none !important; }
 
     /* 8. Logger & Sidebar Buttons Aesthetic Support */
     #pm-actions .pm-btn {
-      border-radius: 10px !important; /* Squircle Apple styling */
+      border-radius: 10px !important;
       justify-content: flex-start;
       padding: 8px 14px;
       font-weight: 500;
@@ -273,13 +296,19 @@ export function setup(api) {
       .apple-slider { background-color: rgba(255, 255, 255, 0.2); }
       .pm-scroll-top { background: rgba(50, 50, 50, 0.8); color: #fff; border-color: rgba(255, 255, 255, 0.1); }
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
-      .status-active-wrapper, .status-update-wrapper { background: rgba(48, 209, 88, 0.18); }
+      
+      .plugin-badge.icon-status-badge {
+        background: rgba(44, 44, 46, 0.9) !important;
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+      .status-active-wrapper { background: rgba(48, 209, 88, 0.18); }
       .status-inactive-wrapper { background: rgba(255, 69, 58, 0.18); }
+      .status-system-wrapper { background: rgba(142, 142, 147, 0.18); color: #98989d; }
       
       .apple-update-circle {
         background: rgba(0, 0, 0, 0.5);
         border-color: rgba(255, 255, 255, 0.15);
-        color: #0A84FF; /* Apple System Blue */
+        color: #0A84FF; 
       }
     }
     `;
@@ -329,7 +358,7 @@ export function setup(api) {
     const info = item.querySelector('.plugin-info');
     const iconBox = item.querySelector('.plugin-icon-box');
 
-    // ── FORCE TOGGLE FIX (runs every time)
+    // ── FORCE TOGGLE FIX
     if (actionGroup && !actionGroup.querySelector('.apple-switch')) {
       let attempts = 0;
       const tryInject = () => {
@@ -395,13 +424,16 @@ export function setup(api) {
     // ── LAYERED ICON BADGE (Update Check) ──
     const updateBtn = actionGroup?.querySelector('[data-update]');
     if (iconBox && !iconBox.dataset.updateEnhanced) {
+      const originalIconHtml = iconBox.innerHTML;
+      
+      // We wrap the original icon in .icon-base-dimmed to handle border-radius centrally
+      let newHtml = `<div class="icon-base-dimmed">${originalIconHtml}</div>`;
+      
       if (updateBtn) {
-        const originalIconHtml = iconBox.innerHTML;
-        iconBox.innerHTML = `
-          <div class="icon-base-dimmed">${originalIconHtml}</div>
+        newHtml += `
           <div class="icon-update-overlay" title="Update Available">
             <div class="apple-update-circle">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="4" x2="12" y2="20"></line>
                 <polyline points="18 14 12 20 6 14"></polyline>
               </svg>
@@ -409,6 +441,7 @@ export function setup(api) {
           </div>
         `;
       }
+      iconBox.innerHTML = newHtml;
       iconBox.dataset.updateEnhanced = 'true';
     }
 
@@ -417,9 +450,8 @@ export function setup(api) {
       const reloadBtn = actionGroup.querySelector('.reload-btn');
       const deleteBtn = actionGroup.querySelector('.delete-btn');
       const installBtn = actionGroup.querySelector('[data-install]');
-      
-      // Rollback Manager integration
       const rollbackBtn = actionGroup.querySelector('[data-rb-rollback]');
+
       if (rollbackBtn && !rollbackBtn.dataset.iconified) {
         rollbackBtn.className = 'apple-icon-btn rollback-btn';
         rollbackBtn.innerHTML = `
@@ -428,7 +460,6 @@ export function setup(api) {
             <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
           </svg>
         `;
-        // Strip out any text from Rollback Manager and just keep the icon
         rollbackBtn.dataset.iconified = 'true';
       }
 
@@ -490,71 +521,63 @@ export function setup(api) {
       }
     }
 
-    // ── STATUS BADGES ──
+    // ── STATUS BADGES (Moved to bottom center of the Icon Box) ──
     item.querySelectorAll('.plugin-badge').forEach(badge => {
       if (badge.dataset.iconified) return;
 
       const text = badge.textContent.trim().toLowerCase();
-      let icon = '';
+      let isStatusBadge = false;
 
+      // Handle System Badge 
       if (text === 'system') {
-        icon = `
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2.2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06
-            a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4
-            a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.33 1.82V22
-            a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-.33-1.82
-            a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.82.33l-.06.06
-            a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15
-            a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.82-.33H2
-            a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.82-.33
-            a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.33-1.82l-.06-.06
-            a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6
-            c.26 0 .52-.06.76-.17A1.7 1.7 0 0 0 10.6 3V2
-            a2 2 0 1 1 4 0v.09c0 .64.38 1.22.96 1.49
-            .24.11.5.17.76.17a1.7 1.7 0 0 0 1-.6l.06-.06
-            a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.15-.33 1.82
-            .11.24.17.5.17.76 0 .26-.06.52-.17.76
-            a1.7 1.7 0 0 0 .33 1.82l.06.06A2 2 0 1 1 19.4 15z"/>
-          </svg>
-        `;
-        badge.title = "System Plugin";
-      }
-
-      if (text === 'active') {
         badge.innerHTML = `
-          <div class="status-active-wrapper">
+          <div class="status-system-wrapper" title="System Plugin">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.33 1.82V22a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-.33-1.82 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.82-.33H2a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.82-.33 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6c.26 0 .52-.06.76-.17A1.7 1.7 0 0 0 10.6 3V2a2 2 0 1 1 4 0v.09c0 .64.38 1.22.96 1.49.24.11.5.17.76.17a1.7 1.7 0 0 0 1-.6l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.15-.33 1.82.11.24.17.5.17.76 0 .26-.06.52-.17.76a1.7 1.7 0 0 0 .33 1.82l.06.06A2 2 0 1 1 19.4 15z"/>
+            </svg>
+          </div>
+        `;
+        badge.style.background = 'none';
+        isStatusBadge = true;
+      } 
+      // Handle Active Badge
+      else if (text === 'active') {
+        badge.innerHTML = `
+          <div class="status-active-wrapper" title="Active">
             <div class="status-dot"></div>
           </div>`;
         badge.style.background = 'none';
         item.classList.add('active');
-      } else if (text === 'inactive') {
+        isStatusBadge = true;
+      } 
+      // Handle Inactive Badge
+      else if (text === 'inactive') {
         badge.innerHTML = `
-          <div class="status-inactive-wrapper">
-            <svg width="10" height="10" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="3.5">
+          <div class="status-inactive-wrapper" title="Inactive">
+            <svg width="8" height="8" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round">
               <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
           </div>`;
         badge.style.color = "#FF3B30";
-        badge.style.background = "rgba(255, 59, 48, 0.12)";
-      } else if (text.includes('update')) {
-        // We hide the badge entirely because the icon box now handles this visual state
+        badge.style.background = "none";
+        isStatusBadge = true;
+      } 
+      // Hide standard update text badge, as the layered corner icon handles this
+      else if (text.includes('update')) {
         badge.style.display = 'none';
       }
 
-      if (icon) {
-        badge.innerHTML = icon;
-        badge.style.display = 'inline-flex';
-        badge.style.alignItems = 'center';
-        badge.style.justifyContent = 'center';
-        badge.style.borderRadius = '50%';
-        if (!badge.style.background) {
-          badge.style.background = 'rgba(120, 120, 128, 0.08)';
-        }
+      // If it's a status badge, physically move it into the Icon Box wrapper!
+      if (isStatusBadge && iconBox) {
+        badge.classList.add('icon-status-badge');
+        iconBox.appendChild(badge);
+      } else if (!isStatusBadge && !text.includes('update') && badge.innerHTML) {
+         // Fallback for random badges
+         badge.style.display = 'inline-flex';
       }
 
       badge.dataset.iconified = 'true';
