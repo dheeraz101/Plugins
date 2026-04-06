@@ -184,26 +184,27 @@ export function setup(api) {
       display: flex;
       align-items: center;
       justify-content: center;
-      opacity: 0.85; 
-      filter: brightness(0.65); /* Gently dim the icon but keep it visible and sharp */
+      opacity: 0.95;
+      filter: brightness(0.85); 
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .icon-update-overlay {
       position: absolute;
-      inset: 0;
+      top: 4px;
+      right: 4px;
+      z-index: 2;
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 2;
     }
 
     .apple-update-circle {
-      width: 26px;
-      height: 26px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
@@ -248,6 +249,10 @@ export function setup(api) {
       margin: 0 4px; padding: 0 !important;
     }
     .plugin-badge svg { display: block; }
+
+    .plugin-badge[data-update] {
+      display: none !important;
+    }
 
     /* 8. Logger & Sidebar Buttons Aesthetic Support */
     #pm-actions .pm-btn {
