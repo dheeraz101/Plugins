@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.9.9',
+  version: '2.0.0',
   compat: '>=3.3.0'
 };
 
@@ -533,7 +533,7 @@ export function setup(api) {
         badge.innerHTML = `
           <div class="status-system-wrapper" title="System Plugin">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2.2"
+                        stroke="#0A84FF" stroke-width="2.2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"/>
                         <path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06
@@ -555,7 +555,6 @@ export function setup(api) {
               </svg>
           </div>
         `;
-        badge.style.color = "#FF3B30";
         badge.style.background = "rgba(120, 120, 128, 0.08)";
         isStatusBadge = true;
       }
