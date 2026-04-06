@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.9.3',
+  version: '1.9.4',
   compat: '>=3.3.0'
 };
 
@@ -175,7 +175,7 @@ export function setup(api) {
     /* 7. Layered Icon Update Badge (Apple Style) */
     .plugin-icon-box {
       position: relative;
-      overflow: hidden;
+      overflow: visible; 
     }
     
     .icon-base-dimmed {
@@ -220,26 +220,45 @@ export function setup(api) {
     }
 
     .status-dot {
-      width: 8px; height: 8px; border-radius: 50%; background: #34C759;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #34C759;
       animation: apple-breathe 2.4s ease-in-out infinite;
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
-    .status-active-wrapper {
-      width: 18px; height: 18px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; background: rgba(52, 199, 89, 0.12);
-      transition: background 0.3s ease;
+    .status-active-wrapper,
+    .status-inactive-wrapper,
+    .status-update-wrapper {
+      position: absolute;
+      bottom: -6px;           /* half of the 12px badge height sticks outside */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+      box-shadow: 0 0 0 2px var(--pm-card, rgba(255,255,255,0.82));  /* ring matches card bg */
     }
-    .plugin-item:hover .status-active-wrapper { background: rgba(52, 199, 89, 0.18); }
+
+    .status-active-wrapper {
+      background: rgba(52, 199, 89, 0.15);
+    }
 
     .status-inactive-wrapper {
-      width: 18px; height: 18px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; background: rgba(255, 59, 48, 0.12);
+      background: rgba(255, 59, 48, 0.12);
     }
 
     .status-update-wrapper {
-      width: 18px; height: 18px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; background: rgba(52, 199, 89, 0.15);
+      background: rgba(52, 199, 89, 0.15);
+    }
+
+    .plugin-item:hover .status-active-wrapper {
+      background: rgba(52, 199, 89, 0.25);
     }
 
     .plugin-badge {
@@ -273,8 +292,11 @@ export function setup(api) {
       .apple-slider { background-color: rgba(255, 255, 255, 0.2); }
       .pm-scroll-top { background: rgba(50, 50, 50, 0.8); color: #fff; border-color: rgba(255, 255, 255, 0.1); }
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
-      .status-active-wrapper, .status-update-wrapper { background: rgba(48, 209, 88, 0.18); }
-      .status-inactive-wrapper { background: rgba(255, 69, 58, 0.18); }
+      .status-active-wrapper,
+      .status-inactive-wrapper,
+      .status-update-wrapper {
+        box-shadow: 0 0 0 2px rgba(255,255,255,0.05); /* matches dark --pm-card */
+      }
       
       .apple-update-circle {
         background: rgba(0, 0, 0, 0.5);
