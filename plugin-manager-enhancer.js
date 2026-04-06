@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.9.0',
+  version: '1.9.1',
   compat: '>=3.3.0'
 };
 
@@ -184,8 +184,8 @@ export function setup(api) {
       display: flex;
       align-items: center;
       justify-content: center;
-      opacity: 0.6; /* Increased slightly for dark effect */
-      filter: saturate(0) brightness(0.2) blur(1.5px); /* Forces it to be dimmed dark */
+      opacity: 0.85; 
+      filter: brightness(0.65); /* Gently dim the icon but keep it visible and sharp */
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -195,9 +195,22 @@ export function setup(api) {
       display: flex;
       align-items: center;
       justify-content: center;
-      filter: drop-shadow(0 0 8px rgba(10, 132, 255, 0.6));
-      color: #0A84FF; /* Apple System Blue */
       z-index: 2;
+    }
+
+    .apple-update-circle {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border: 1px solid rgba(255, 255, 255, 0.5);
     }
 
     @keyframes apple-breathe {
@@ -259,6 +272,12 @@ export function setup(api) {
       .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
       .status-active-wrapper, .status-update-wrapper { background: rgba(48, 209, 88, 0.18); }
       .status-inactive-wrapper { background: rgba(255, 69, 58, 0.18); }
+      
+      .apple-update-circle {
+        background: rgba(0, 0, 0, 0.5);
+        border-color: rgba(255, 255, 255, 0.15);
+        color: #0A84FF; /* Apple System Blue */
+      }
     }
     `;
     document.head.appendChild(style);
@@ -378,9 +397,12 @@ export function setup(api) {
         iconBox.innerHTML = `
           <div class="icon-base-dimmed">${originalIconHtml}</div>
           <div class="icon-update-overlay" title="Update Available">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 5v14M5 12l7 7 7-7"/>
-            </svg>
+            <div class="apple-update-circle">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="4" x2="12" y2="20"></line>
+                <polyline points="18 14 12 20 6 14"></polyline>
+              </svg>
+            </div>
           </div>
         `;
       }
