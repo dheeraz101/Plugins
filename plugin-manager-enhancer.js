@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.9.8',
+  version: '1.9.9',
   compat: '>=3.3.0'
 };
 
@@ -217,7 +217,7 @@ export function setup(api) {
 
     /* Sized perfectly for bottom-center */
     .status-active-wrapper, .status-inactive-wrapper, .status-system-wrapper {
-      width: 14px; height: 14px; border-radius: 50%; display: flex;
+      width: 16px; height: 16px; border-radius: 50%; display: flex;
       align-items: center; justify-content: center;
       transition: background 0.3s ease;
     }
@@ -230,7 +230,7 @@ export function setup(api) {
     .plugin-item:hover .status-inactive-wrapper { background: rgba(255, 59, 48, 0.22); }
 
     .status-dot {
-      width: 6px; height: 6px; border-radius: 50%; background: #34C759;
+      width: 8px; height: 8px; border-radius: 50%; background: #34C759;
       animation: apple-breathe 2.4s ease-in-out infinite;
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
