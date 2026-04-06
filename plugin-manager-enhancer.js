@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '1.9.2',
+  version: '1.9.3',
   compat: '>=3.3.0'
 };
 
@@ -250,9 +250,7 @@ export function setup(api) {
     }
     .plugin-badge svg { display: block; }
 
-    .plugin-badge[data-update] {
-      display: none !important;
-    }
+    .plugin-badge.badge-update { display: none !important; }
 
     /* 8. Logger & Sidebar Buttons Aesthetic Support */
     #pm-actions .pm-btn {
