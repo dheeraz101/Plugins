@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.0.7',
+  version: '2.0.8',
   compat: '>=3.3.0'
 };
 
@@ -311,6 +311,37 @@ export function setup(api) {
       padding: 8px 14px;
       font-weight: 500;
     }
+
+    /* 9. Community Plugin Description - 2 lines with ellipsis and tooltip */
+    .plugin-meta[style*="margin-top"] {
+      display: -webkit-box !important;
+      -webkit-line-clamp: 2 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      line-height: 1.4 !important;
+      max-height: 2.8em !important;
+      position: relative !important;
+      cursor: default !important;
+    }
+    .plugin-meta[style*="margin-top"]:hover::after {
+      content: attr(title) !important;
+      position: absolute !important;
+      left: 0 !important;
+      top: 100% !important;
+      background: rgba(0, 0, 0, 0.85) !important;
+      color: #fff !important;
+      padding: 8px 12px !important;
+      border-radius: 8px !important;
+      font-size: 12px !important;
+      max-width: 280px !important;
+      white-space: normal !important;
+      word-wrap: break-word !important;
+      z-index: 9999 !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+      line-height: 1.4 !important;
+      margin-top: 6px !important;
+    }
         
     /* 9. Dark Mode Overrides */
     @media (prefers-color-scheme: dark) {
@@ -342,6 +373,11 @@ export function setup(api) {
         background: rgba(0, 0, 0, 0.5);
         border-color: rgba(255, 255, 255, 0.15);
         color: #0A84FF; 
+      }
+
+      .plugin-meta[style*="margin-top"]:hover::after {
+        background: rgba(40, 40, 43, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
       }
     }
     `;
