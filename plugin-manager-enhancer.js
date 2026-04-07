@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.0.5',
+  version: '2.0.6',
   compat: '>=3.3.0'
 };
 
@@ -518,6 +518,36 @@ export function setup(api) {
           </svg>
         `;
         updateBtn.dataset.iconified = 'true';
+      }
+
+      // ── REORDER BUTTONS: Reload → Switch → Delete ──
+      if (!actionGroup.dataset.reordered) {
+        const appleSwitch = actionGroup.querySelector('.apple-switch');
+        const reloadBtnEl = actionGroup.querySelector('.reload-btn');
+        const deleteBtnEl = actionGroup.querySelector('.delete-btn');
+        const updateBtnEl = actionGroup.querySelector('.update-btn-enhanced');
+        const rollbackBtnEl = actionGroup.querySelector('.rollback-btn');
+
+        if (appleSwitch && reloadBtnEl && deleteBtnEl) {
+          // Remove all relevant elements
+          const elements = [];
+          if (reloadBtnEl) elements.push(reloadBtnEl);
+          if (appleSwitch) elements.push(appleSwitch);
+          if (deleteBtnEl) elements.push(deleteBtnEl);
+          if (updateBtnEl) elements.push(updateBtnEl);
+          if (rollbackBtnEl) elements.push(rollbackBtnEl);
+
+          elements.forEach(el => el.remove());
+
+          // Re-append in desired order: Reload → Switch → Delete → Update → Rollback
+          if (reloadBtnEl) actionGroup.appendChild(reloadBtnEl);
+          if (appleSwitch) actionGroup.appendChild(appleSwitch);
+          if (deleteBtnEl) actionGroup.appendChild(deleteBtnEl);
+          if (updateBtnEl) actionGroup.appendChild(updateBtnEl);
+          if (rollbackBtnEl) actionGroup.appendChild(rollbackBtnEl);
+
+          actionGroup.dataset.reordered = 'true';
+        }
       }
     }
 
