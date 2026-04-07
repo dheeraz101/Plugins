@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.0.6',
+  version: '2.0.7',
   compat: '>=3.3.0'
 };
 
@@ -38,20 +38,50 @@ export function setup(api) {
       position: relative;
     }
 
-    /* 1. Custom Aesthetic Scrollbar (Light & Dark) */
+    /* 1. Custom Aesthetic Scrollbar (Light & Dark) with padding from edges */
+    .pm-content { 
+      padding-top: 8px !important;
+      padding-bottom: 8px !important;
+    }
     .pm-content::-webkit-scrollbar { 
       width: 6px; 
     }
     .pm-content::-webkit-scrollbar-track { 
       background: transparent; 
+      margin-top: 8px;
+      margin-bottom: 8px;
     }
     .pm-content::-webkit-scrollbar-thumb {
       background: rgba(0, 0, 0, 0.1);
       border-radius: 10px;
       transition: background 0.2s;
+      min-height: 40px;
     }
     .pm-content::-webkit-scrollbar-thumb:hover {
       background: rgba(0, 0, 0, 0.2);
+    }
+
+    /* System Badge - Animated Spinning Icon */
+    .status-system-wrapper {
+      width: 22px !important;
+      height: 22px !important;
+      border-radius: 50% !important;
+      background: linear-gradient(135deg, rgba(88, 86, 214, 0.2) 0%, rgba(0, 122, 255, 0.2) 100%) !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .status-system-wrapper svg {
+      width: 13px !important;
+      height: 13px !important;
+    }
+    
+    @keyframes system-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .system-icon-running {
+      animation: system-spin 3s linear infinite;
     }
 
     /* 2. Version Pill Styling */
@@ -303,7 +333,10 @@ export function setup(api) {
 
       .status-active-wrapper { background: rgba(48, 209, 88, 0.18); }
       .status-inactive-wrapper { background: rgba(255, 69, 58, 0.18); }
-      .status-system-wrapper { background: rgba(142, 142, 147, 0.18); color: #98989d; }
+      .status-system-wrapper {
+        background: linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(0, 122, 255, 0.25) 100%) !important;
+      }
+      .status-system-wrapper svg { stroke: #8E8EFF !important; }
       
       .apple-update-circle {
         background: rgba(0, 0, 0, 0.5);
@@ -562,14 +595,15 @@ export function setup(api) {
       if (text === 'system') {
         badge.innerHTML = `
           <div class="status-system-wrapper" title="System Plugin">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
-                stroke="#0A84FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="system-icon-running" width="14" height="14" viewBox="0 0 24 24" fill="none" 
+                stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/>
                 <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.93l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.2-1.17.53-1.69.93l-2.49-1c-.22-.08-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.93l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.2 1.17-.53 1.69-.93l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65z"/>
             </svg>
           </div>
         `;
-        badge.style.background = "rgba(19, 19, 20, 0.95)";
+        badge.style.background = "transparent";
+        badge.style.border = "none";
         isStatusBadge = true;
       }
       // Handle Active Badge
