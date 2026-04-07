@@ -1,7 +1,7 @@
 export const meta = {
   id: 'focus',
   name: 'Focus',
-  version: '1.0.0',
+  version: '1.0.1',
   compat: '>=3.3.0'
 };
 
@@ -25,13 +25,12 @@ export function setup(api) {
       position: relative;
       width: 100%;
       height: 100%;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(40px) saturate(200%);
-      -webkit-backdrop-filter: blur(40px) saturate(200%);
-      border: 0.5px solid rgba(255, 255, 255, 0.5);
-      border-radius: 32px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-      font-family: -apple-system, "SF Pro Display", system-ui;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(45px) saturate(220%);
+      -webkit-backdrop-filter: blur(45px) saturate(220%);
+      border: 0.5px solid rgba(0, 0, 0, 0.06);
+      border-radius: 28px;
+      font-family: -apple-system, "SF Pro Display", "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -39,34 +38,34 @@ export function setup(api) {
       overflow: hidden;
       isolation: isolate;
       user-select: none;
+      -webkit-user-select: none;
     }
 
     .focus-close-btn {
       position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 30px;
-      height: 30px;
+      top: 16px;
+      right: 16px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.05);
+      background: transparent;
       border: none;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       z-index: 10;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       color: #86868b;
     }
 
     .focus-close-btn:hover {
-      background: rgba(255, 59, 48, 0.15);
-      color: #FF3B30;
-      transform: scale(1.05);
+      background: rgba(0, 0, 0, 0.06);
+      color: #1d1d1f;
     }
 
     .focus-close-btn:active {
-      transform: scale(0.9);
+      transform: scale(0.88);
     }
 
     /* ── SETUP VIEW ── */
@@ -74,17 +73,36 @@ export function setup(api) {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
-      padding: 32px;
+      gap: 20px;
+      padding: 48px 40px 40px;
       text-align: center;
     }
 
+    .focus-setup-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+      box-shadow: 0 8px 24px rgba(0, 122, 255, 0.25);
+    }
+
+    .focus-setup-icon svg {
+      width: 36px;
+      height: 36px;
+      color: #fff;
+    }
+
     .focus-setup-title {
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 700;
       letter-spacing: -0.5px;
       color: #1d1d1f;
       margin: 0;
+      font-family: "SF Pro Display", -apple-system, system-ui;
     }
 
     .focus-setup-sub {
@@ -92,32 +110,37 @@ export function setup(api) {
       color: #86868b;
       margin: 0;
       font-weight: 400;
+      max-width: 220px;
+      line-height: 1.4;
     }
 
     .focus-sessions-row {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
+      margin: 8px 0;
     }
 
     .focus-session-btn {
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.08);
       background: rgba(0, 0, 0, 0.04);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      font-weight: 600;
+      font-size: 22px;
+      font-weight: 500;
       color: #1d1d1f;
-      transition: all 0.15s ease;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: "SF Pro Text", -apple-system, system-ui;
     }
 
     .focus-session-btn:hover {
       background: rgba(0, 0, 0, 0.08);
+      transform: scale(1.05);
     }
 
     .focus-session-btn:active {
@@ -125,40 +148,47 @@ export function setup(api) {
     }
 
     .focus-session-count {
-      font-size: 48px;
+      font-size: 44px;
       font-weight: 700;
       color: #1d1d1f;
-      min-width: 60px;
+      min-width: 52px;
       text-align: center;
-      letter-spacing: -1px;
+      letter-spacing: -1.5px;
+      font-family: "SF Pro Display", -apple-system, system-ui;
+      line-height: 1;
     }
 
     .focus-session-label {
-      font-size: 13px;
+      font-size: 12px;
       color: #86868b;
       font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .focus-start-btn {
-      padding: 14px 48px;
+      padding: 15px 56px;
       border-radius: 999px;
       border: none;
-      background: #007AFF;
+      background: linear-gradient(135deg, #007AFF 0%, #0055CC 100%);
       color: #fff;
       font-size: 17px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       letter-spacing: -0.2px;
+      font-family: "SF Pro Text", -apple-system, system-ui;
+      box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+      margin-top: 8px;
     }
 
     .focus-start-btn:hover {
-      background: #0066dd;
-      transform: scale(1.02);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 122, 255, 0.35);
     }
 
     .focus-start-btn:active {
-      transform: scale(0.96);
+      transform: translateY(0) scale(0.98);
     }
 
     /* ── SESSION VIEW ── */
@@ -169,7 +199,8 @@ export function setup(api) {
       justify-content: center;
       width: 100%;
       height: 100%;
-      gap: 20px;
+      gap: 24px;
+      padding: 40px;
     }
 
     .focus-session.active {
@@ -181,114 +212,125 @@ export function setup(api) {
     }
 
     .focus-phase-text {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 600;
       color: #1d1d1f;
       letter-spacing: -0.3px;
       opacity: 0;
-      transition: opacity 0.4s ease;
+      transform: translateY(8px);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: "SF Pro Display", -apple-system, system-ui;
     }
 
     .focus-phase-text.visible {
       opacity: 1;
+      transform: translateY(0);
     }
 
     .focus-circle-container {
       position: relative;
-      width: 160px;
-      height: 160px;
+      width: 180px;
+      height: 180px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .focus-circle {
-      width: 120px;
-      height: 120px;
+      width: 130px;
+      height: 130px;
       border-radius: 50%;
       background: linear-gradient(135deg, #007AFF, #5856D6);
       transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1),
-                  box-shadow 4s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 8px 30px rgba(0, 122, 255, 0.25);
+                  box-shadow 4s cubic-bezier(0.4, 0, 0.2, 1),
+                  background 0.6s ease;
+      box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     }
 
     .focus-circle.inhale {
-      transform: scale(1.35);
-      box-shadow: 0 12px 40px rgba(0, 122, 255, 0.4);
+      transform: scale(1.4);
+      box-shadow: 0 16px 48px rgba(0, 122, 255, 0.35);
     }
 
     .focus-circle.hold {
-      transform: scale(1.35);
-      box-shadow: 0 12px 40px rgba(88, 86, 214, 0.4);
+      transform: scale(1.4);
+      box-shadow: 0 16px 48px rgba(88, 86, 214, 0.35);
+      background: linear-gradient(135deg, #5856D6, #AF52DE);
     }
 
     .focus-circle.exhale {
       transform: scale(1);
-      box-shadow: 0 8px 30px rgba(0, 122, 255, 0.25);
+      box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     }
 
     .focus-circle.complete {
-      transform: scale(1.1);
-      box-shadow: 0 10px 35px rgba(52, 199, 89, 0.4);
+      transform: scale(1.15);
+      box-shadow: 0 12px 36px rgba(52, 199, 89, 0.4);
       background: linear-gradient(135deg, #34C759, #30D158);
     }
 
     .focus-ring {
       position: absolute;
-      width: 160px;
-      height: 160px;
+      width: 180px;
+      height: 180px;
       border-radius: 50%;
-      border: 2px solid rgba(0, 122, 255, 0.15);
+      border: 1.5px solid rgba(0, 122, 255, 0.12);
       transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1),
-                  opacity 4s cubic-bezier(0.4, 0, 0.2, 1);
+                  opacity 4s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-color 0.6s ease;
+      pointer-events: none;
     }
 
     .focus-ring.inhale {
-      transform: scale(1.15);
-      opacity: 0.5;
+      transform: scale(1.12);
+      opacity: 0.4;
     }
 
     .focus-ring.hold {
-      transform: scale(1.15);
-      opacity: 0.5;
+      transform: scale(1.12);
+      opacity: 0.4;
+      border-color: rgba(88, 86, 214, 0.2);
     }
 
     .focus-ring.exhale {
       transform: scale(1);
-      opacity: 0.3;
+      opacity: 0.2;
     }
 
     .focus-ring.complete {
-      transform: scale(1.1);
-      opacity: 0.6;
-      border-color: rgba(52, 199, 89, 0.3);
+      transform: scale(1.12);
+      opacity: 0.5;
+      border-color: rgba(52, 199, 89, 0.25);
     }
 
     .focus-counter {
       font-size: 13px;
       color: #86868b;
       font-weight: 500;
+      font-family: "SF Pro Text", -apple-system, system-ui;
+      letter-spacing: 0.2px;
     }
 
     .focus-skip-btn {
-      padding: 10px 28px;
+      padding: 11px 28px;
       border-radius: 999px;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      background: rgba(0, 0, 0, 0.04);
+      border: none;
+      background: rgba(0, 0, 0, 0.05);
       color: #86868b;
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: "SF Pro Text", -apple-system, system-ui;
     }
 
     .focus-skip-btn:hover {
-      background: rgba(0, 0, 0, 0.08);
+      background: rgba(0, 0, 0, 0.1);
       color: #1d1d1f;
     }
 
     .focus-skip-btn:active {
-      transform: scale(0.95);
+      transform: scale(0.96);
     }
 
     /* ── DONE VIEW ── */
@@ -297,7 +339,7 @@ export function setup(api) {
       flex-direction: column;
       align-items: center;
       gap: 16px;
-      padding: 32px;
+      padding: 40px;
       text-align: center;
     }
 
@@ -306,14 +348,15 @@ export function setup(api) {
     }
 
     .focus-done-icon {
-      width: 64px;
-      height: 64px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       background: linear-gradient(135deg, #34C759, #30D158);
       display: flex;
       align-items: center;
       justify-content: center;
-      animation: focus-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: focus-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 8px 24px rgba(52, 199, 89, 0.3);
     }
 
     @keyframes focus-pop {
@@ -322,8 +365,8 @@ export function setup(api) {
     }
 
     .focus-done-icon svg {
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
       color: #fff;
     }
 
@@ -333,47 +376,57 @@ export function setup(api) {
       color: #1d1d1f;
       margin: 0;
       letter-spacing: -0.4px;
+      font-family: "SF Pro Display", -apple-system, system-ui;
     }
 
     .focus-done-sub {
       font-size: 15px;
       color: #86868b;
       margin: 0;
+      font-weight: 400;
+      line-height: 1.4;
     }
 
     .focus-done-btn {
-      padding: 12px 36px;
+      padding: 14px 40px;
       border-radius: 999px;
       border: none;
-      background: #007AFF;
+      background: linear-gradient(135deg, #007AFF 0%, #0055CC 100%);
       color: #fff;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: "SF Pro Text", -apple-system, system-ui;
+      box-shadow: 0 4px 16px rgba(0, 122, 255, 0.25);
+      margin-top: 8px;
     }
 
     .focus-done-btn:hover {
-      background: #0066dd;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 122, 255, 0.3);
     }
 
     .focus-done-btn:active {
-      transform: scale(0.96);
+      transform: scale(0.98);
     }
 
     /* ── Dark Mode ── */
     @media (prefers-color-scheme: dark) {
       .focus-widget {
-        background: rgba(28, 28, 30, 0.85);
-        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(28, 28, 30, 0.88);
+        border-color: rgba(255, 255, 255, 0.08);
       }
       .focus-close-btn {
-        background: rgba(255, 255, 255, 0.1);
-        color: #a1a1a6;
+        background: transparent;
+        color: #98989d;
       }
       .focus-close-btn:hover {
-        background: rgba(255, 59, 48, 0.2);
-        color: #FF6961;
+        background: rgba(255, 255, 255, 0.1);
+        color: #f5f5f7;
+      }
+      .focus-setup-icon {
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.35);
       }
       .focus-setup-title,
       .focus-session-count,
@@ -385,23 +438,22 @@ export function setup(api) {
       .focus-session-label,
       .focus-counter,
       .focus-done-sub {
-        color: #6e6e73;
+        color: #98989d;
       }
       .focus-session-btn {
         background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.1);
         color: #f5f5f7;
       }
       .focus-session-btn:hover {
-        background: rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.12);
       }
       .focus-skip-btn {
         background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.12);
-        color: #6e6e73;
+        color: #98989d;
       }
       .focus-skip-btn:hover {
-        background: rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.12);
         color: #f5f5f7;
       }
     }
@@ -437,17 +489,23 @@ export function setup(api) {
     const setupView = document.createElement('div');
     setupView.className = 'focus-setup';
     setupView.innerHTML = `
+      <div class="focus-setup-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+      </div>
       <h2 class="focus-setup-title">Focus</h2>
-      <p class="focus-setup-sub">Breathe in, hold, breathe out.</p>
+      <p class="focus-setup-sub">Take a moment to breathe. Inhale, hold, and exhale.</p>
       <div class="focus-sessions-row">
         <button class="focus-session-btn" id="focus-minus">−</button>
         <div style="display:flex;flex-direction:column;align-items:center;">
           <span class="focus-session-count" id="focus-count">3</span>
-          <span class="focus-session-label">sessions</span>
+          <span class="focus-session-label">Sessions</span>
         </div>
         <button class="focus-session-btn" id="focus-plus">+</button>
       </div>
-      <button class="focus-start-btn" id="focus-start">Begin</button>
+      <button class="focus-start-btn" id="focus-start">Begin Session</button>
     `;
 
     // Session view
