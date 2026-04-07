@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.0.4',
+  version: '2.0.5',
   compat: '>=3.3.0'
 };
 
@@ -539,7 +539,7 @@ export function setup(api) {
             </svg>
           </div>
         `;
-        badge.style.background = "rgba(30, 30, 32, 0.08)";
+        badge.style.background = "rgba(19, 19, 20, 0.95)";
         isStatusBadge = true;
       }
       // Handle Active Badge
