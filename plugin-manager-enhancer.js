@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.1.0',
+  version: '2.1.1',
   compat: '>=3.3.0'
 };
 
@@ -248,20 +248,34 @@ export function setup(api) {
     /* New badge positioned at top-center (half out) */
     .plugin-badge.icon-new-badge {
       position: absolute !important;
-      top: -6px !important;
+      top: -8px !important;
       left: 50% !important;
       transform: translateX(-50%) !important;
-      z-index: 10;
+      z-index: 10 !important;
       margin: 0 !important;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      color: white;
-      background: linear-gradient(135deg, rgba(0,122,255,0.95), rgba(52,199,89,0.95));
-      border: 1px solid rgba(255,255,255,0.8);
-      white-space: nowrap;
-      backdrop-filter: blur(4px);
+      
+      /* --- OVERRIDING THE CIRCLE --- */
+      width: auto !important;     
+      height: auto !important;    
+      border-radius: 12px !important; 
+      padding: 3px 8px !important; 
+      /* ----------------------------- */
+
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+      font-size: 9px !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.05em !important;
+      text-transform: uppercase !important;
+      color: #ffffff !important;
+      
+      /* Vibrant Apple gradient (Orange to Pink/Red) */
+      background: linear-gradient(135deg, #FF9500 0%, #FF2D55 100%) !important;
+      box-shadow: 0 4px 10px rgba(255, 45, 85, 0.3) !important;
+      border: 1px solid rgba(255, 255, 255, 0.4) !important;
+      white-space: nowrap !important;
+      line-height: 1.2 !important;
+      backdrop-filter: blur(4px) !important;
+      -webkit-backdrop-filter: blur(4px) !important;
     }
 
     /* Sized perfectly for bottom-center */
