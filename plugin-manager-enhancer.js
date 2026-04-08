@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.1.6',
+  version: '2.1.7',
   compat: '>=3.3.0'
 };
 
@@ -266,16 +266,26 @@ export function setup(api) {
         align-items: center !important;
         justify-content: center !important;
         
-        /* Standard styling */
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
-        font-size: 9px !important;
-        font-weight: 700 !important;
-        color: #fff !important;
-        text-transform: uppercase !important;
+    /* Fix #2: Font Rendering & Clarity */
+      -webkit-font-smoothing: antialiased !important;
+      -moz-osx-font-smoothing: grayscale !important;
+      text-rendering: optimizeLegibility !important;
+      
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      font-size: 10px !important; /* Bumped slightly to 10px for readability */
+      font-weight: 800 !important; /* Heavier weight looks cleaner at small sizes */
+      line-height: 1 !important;   /* Prevents vertical clipping */
+      letter-spacing: 0.08em !important; /* Gives the letters room to breathe */
+      
+      color: #FFFFFF !important;
+      text-transform: uppercase !important;
+      white-space: nowrap !important; /* Prevents text from trying to wrap */
         
         /* This clips the spinning gradient so it only shows on the "border" */
         overflow: hidden !important;
-        border-radius: 12px !important;
+        border-radius: 20px !important;
+
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
       }
 
       /* The Rotating Gradient (The "Light") */
