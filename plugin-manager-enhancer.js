@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.1.7',
+  version: '2.1.8',
   compat: '>=3.3.0'
 };
 
@@ -256,15 +256,13 @@ export function setup(api) {
 
       width: auto !important;
       height: auto !important;
-      border-radius: 12px !important;
       padding: 4px 10px !important;
-
       border: none !important;
         
-        /* Ensure text stays on top */
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+      /* Ensure text stays on top */
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
         
     /* Fix #2: Font Rendering & Clarity */
       -webkit-font-smoothing: antialiased !important;
@@ -273,7 +271,7 @@ export function setup(api) {
       
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
       font-size: 10px !important; /* Bumped slightly to 10px for readability */
-      font-weight: 800 !important; /* Heavier weight looks cleaner at small sizes */
+      font-weight: 400 !important; /* Heavier weight looks cleaner at small sizes */
       line-height: 1 !important;   /* Prevents vertical clipping */
       letter-spacing: 0.08em !important; /* Gives the letters room to breathe */
       
