@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.1.2',
+  version: '2.1.3',
   compat: '>=3.3.0'
 };
 
@@ -253,81 +253,42 @@ export function setup(api) {
       transform: translateX(-50%) !important;
       z-index: 10 !important;
       margin: 0 !important;
-      
-      /* --- OVERRIDING THE CIRCLE --- */
-      width: auto !important;     
-      height: auto !important;    
-      border-radius: 12px !important; 
-      padding: 3px 8px !important; 
-      /* ----------------------------- */
 
-      /* Typography */
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #fff;
+      width: auto !important;
+      height: auto !important;
+      border-radius: 12px !important;
+      padding: 4px 10px !important;
 
-      /* 🔥 Premium Gradient (more depth than flat Apple one) */
-      background: linear-gradient(135deg, #ff9500 0%, #ff2d55 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+      font-size: 9px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.06em !important;
+      text-transform: uppercase !important;
+      color: #fff !important;
 
-      /* Depth */
-      box-shadow: 
-        0 4px 12px rgba(255, 45, 85, 0.35),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.5);
+      /* --- Apple glass base --- */
+      background: rgba(255, 255, 255, 0.15) !important;
+      backdrop-filter: blur(12px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
 
-      border: 1px solid rgba(255, 255, 255, 0.35);
+      /* --- subtle tint (Apple uses layered color, not heavy gradients) --- */
+      background-image: linear-gradient(
+        135deg,
+        rgba(255, 149, 0, 0.35),
+        rgba(255, 45, 85, 0.35)
+      ) !important;
 
-      white-space: nowrap;
-      line-height: 1.2;
+      /* --- borders & highlights --- */
+      border: 1px solid rgba(255, 255, 255, 0.25) !important;
 
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      /* --- depth (outer + inner light reflection) --- */
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.15),          /* outer depth */
+        inset 0 1px 0 rgba(255, 255, 255, 0.35), /* top highlight */
+        inset 0 -1px 0 rgba(255, 255, 255, 0.1); /* bottom softness */
 
-      /* ✨ subtle entrance animation */
-      animation: badge-pop 0.4s ease-out;
-    }
-
-    .plugin-badge.icon-new-badge::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -120%;
-      width: 60%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.85),
-        transparent
-      );
-      animation: shimmer-sweep 2.8s infinite ease-in-out;
-    }
-
-    /* 🎬 Animations */
-    @keyframes shimmer-sweep {
-      0% {
-        left: -120%;
-      }
-      50%,
-      100% {
-        left: 220%;
-      }
-    }
-
-    @keyframes badge-pop {
-      0% {
-        transform: translateX(-50%) scale(0.6);
-        opacity: 0;
-      }
-      60% {
-        transform: translateX(-50%) scale(1.08);
-      }
-      100% {
-        transform: translateX(-50%) scale(1);
-        opacity: 1;
-      }
+      white-space: nowrap !important;
+      line-height: 1.2 !important;
     }
 
     /* Sized perfectly for bottom-center */
@@ -485,21 +446,6 @@ export function setup(api) {
       .plugin-meta[style*="margin-top"]:hover::after {
         background: rgba(40, 40, 43, 0.95) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      }
-
-      .plugin-badge.icon-new-badge {
-        box-shadow: 
-          0 4px 14px rgba(255, 45, 85, 0.45),
-          inset 0 0.5px 0 rgba(255, 255, 255, 0.25);
-      }
-
-      .plugin-badge.icon-new-badge::after {
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 255, 255, 0.25),
-          transparent
-        );
       }
     }
     `;
