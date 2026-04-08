@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.1.3',
+  version: '2.1.4',
   compat: '>=3.3.0'
 };
 
@@ -266,29 +266,57 @@ export function setup(api) {
       text-transform: uppercase !important;
       color: #fff !important;
 
-      /* --- Apple glass base --- */
+      /* Glass base */
       background: rgba(255, 255, 255, 0.15) !important;
       backdrop-filter: blur(12px) saturate(180%) !important;
       -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
 
-      /* --- subtle tint (Apple uses layered color, not heavy gradients) --- */
-      background-image: linear-gradient(
-        135deg,
-        rgba(255, 149, 0, 0.35),
-        rgba(255, 45, 85, 0.35)
-      ) !important;
+      border: 1px solid rgba(255,255,255,0.2) !important;
 
-      /* --- borders & highlights --- */
-      border: 1px solid rgba(255, 255, 255, 0.25) !important;
-
-      /* --- depth (outer + inner light reflection) --- */
       box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.15),          /* outer depth */
-        inset 0 1px 0 rgba(255, 255, 255, 0.35), /* top highlight */
-        inset 0 -1px 0 rgba(255, 255, 255, 0.1); /* bottom softness */
+        0 4px 12px rgba(0,0,0,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.35);
 
-      white-space: nowrap !important;
-      line-height: 1.2 !important;
+      overflow: hidden !important;
+    }
+
+    .plugin-badge.icon-new-badge::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+
+      /* rotating arc */
+      background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        transparent 300deg,
+        rgba(255,255,255,0.9) 320deg,
+        transparent 360deg
+      );
+
+      animation: spin 2.5s linear infinite;
+
+      z-index: 0;
+    }
+
+    .plugin-badge.icon-new-badge::after {
+      content: "";
+      position: absolute;
+      inset: 1px; /* thickness of border */
+      border-radius: inherit;
+
+      background: inherit;
+      z-index: 1;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     /* Sized perfectly for bottom-center */
