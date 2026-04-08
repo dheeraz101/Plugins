@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.0.9',
+  version: '2.1.0',
   compat: '>=3.3.0'
 };
 
@@ -245,14 +245,23 @@ export function setup(api) {
       box-shadow: none;
     }
 
-    /* New badge positioned at top-center */
+    /* New badge positioned at top-center (half out) */
     .plugin-badge.icon-new-badge {
       position: absolute !important;
-      top: 0 !important;
+      top: -6px !important;
       left: 50% !important;
-      transform: translate(-50%, -50%) !important;
+      transform: translateX(-50%) !important;
       z-index: 10;
       margin: 0 !important;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+      background: linear-gradient(135deg, rgba(0,122,255,0.95), rgba(52,199,89,0.95));
+      border: 1px solid rgba(255,255,255,0.8);
+      white-space: nowrap;
+      backdrop-filter: blur(4px);
     }
 
     /* Sized perfectly for bottom-center */
@@ -658,6 +667,17 @@ export function setup(api) {
 
       const text = badge.textContent.trim().toLowerCase();
       let isStatusBadge = false;
+      // New: place a top-centered 'New' badge on the plugin icon box
+      if (text === 'new' && iconBox) {
+        badge.classList.remove('icon-status-badge');
+        badge.classList.add('icon-new-badge');
+        if (badge.parentElement !== iconBox) {
+          iconBox.appendChild(badge);
+        }
+        badge.style.display = 'inline-flex';
+        badge.dataset.iconified = 'true';
+        return;
+      }
 
       // Handle System Badge 
       if (text === 'system') {
