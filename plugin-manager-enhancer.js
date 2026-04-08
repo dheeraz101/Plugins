@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.1.5',
+  version: '2.1.6',
   compat: '>=3.3.0'
 };
 
@@ -259,64 +259,69 @@ export function setup(api) {
       border-radius: 12px !important;
       padding: 4px 10px !important;
 
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
-      font-size: 9px !important;
-      font-weight: 700 !important;
-      letter-spacing: 0.06em !important;
-      text-transform: uppercase !important;
-      color: #fff !important;
-
-      /* Glass base */
-      background: rgba(255, 255, 255, 0.15) !important;
-      backdrop-filter: blur(12px) saturate(180%) !important;
-      -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
-
-      border: 1px solid rgba(255,255,255,0.2) !important;
-
-      box-shadow:
-        0 4px 12px rgba(0,0,0,0.15),
-        inset 0 1px 0 rgba(255,255,255,0.35);
-
-      overflow: hidden !important;
-    }
-
-    .plugin-badge.icon-new-badge::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      padding: 1px; /* border thickness */
-
-      background: conic-gradient(
-        from 0deg,
-        transparent 0deg,
-        transparent 300deg,
-        rgba(255,255,255,0.9) 320deg,
-        transparent 360deg
-      );
-
-      animation: spin 2.5s linear infinite;
-
-      /* 🔑 THIS CREATES THE BORDER CUTOUT */
-      -webkit-mask: 
-        linear-gradient(#000 0 0) content-box, 
-        linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor;
-
-      mask-composite: exclude;
-
-      z-index: 2;
-      pointer-events: none;
-    }
-
-    @keyframes spin {
-      from {
-        transform: rotate(0deg);
+      border: none !important;
+        
+        /* Ensure text stays on top */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        
+        /* Standard styling */
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif !important;
+        font-size: 9px !important;
+        font-weight: 700 !important;
+        color: #fff !important;
+        text-transform: uppercase !important;
+        
+        /* This clips the spinning gradient so it only shows on the "border" */
+        overflow: hidden !important;
+        border-radius: 12px !important;
       }
-      to {
-        transform: rotate(360deg);
+
+      /* The Rotating Gradient (The "Light") */
+      .plugin-badge.icon-new-badge::before {
+        content: "";
+        position: absolute;
+        z-index: -2;
+        /* Make this much larger than the badge so the rotation doesn't show corners */
+        left: -50%;
+        top: -50%;
+        width: 200%;
+        height: 200%;
+        
+        background: conic-gradient(
+          transparent,
+          transparent,
+          transparent,
+          rgba(255, 255, 255, 0.8), /* The "glint" color */
+          transparent
+        );
+        animation: spin 3s linear infinite;
       }
-    }
+
+      /* The Inner Cover (The "Body") */
+      .plugin-badge.icon-new-badge::after {
+        content: "NEW"; /* Put your text here or keep it in HTML */
+        position: absolute;
+        z-index: -1;
+        /* This creates the thickness of your border */
+        inset: 1px; 
+        border-radius: 11px; /* Slightly smaller than parent radius */
+        
+        /* This must be solid enough to hide the animation behind it */
+        background: rgba(30, 30, 30, 0.8) !important; /* Adjust to match your UI depth */
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
 
     /* Sized perfectly for bottom-center */
     .status-active-wrapper, .status-inactive-wrapper, .status-system-wrapper {
