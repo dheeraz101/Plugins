@@ -455,36 +455,6 @@ export function setup(api) {
       line-height: 1.4 !important;
       margin-top: 6px !important;
     }
-
-    .pm-empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 20px;
-      color: #999;
-    }
-
-    .empty-icon {
-      font-size: 32px;
-      margin-bottom: 12px;
-      opacity: 0.3;
-    }
-
-    .pm-empty-state button {
-      margin-top: 15px;
-      background: #eee;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .pm-empty-state button:hover {
-      background: #e0e0e0;
-    }
         
     /* 9. Dark Mode Overrides */
     @media (prefers-color-scheme: dark) {
@@ -855,27 +825,6 @@ export function setup(api) {
       }
     }
   });
-
-  const checkEmptyState = () => {
-  const containers = document.querySelectorAll('.plugin-list-container'); // Adjust selector to your list wrapper
-  containers.forEach(container => {
-    const hasItems = container.querySelector('.plugin-item');
-    let emptyMsg = container.querySelector('.pm-empty-state');
-    
-    if (!hasItems && !emptyMsg) {
-        const div = document.createElement('div');
-        div.className = 'pm-empty-state';
-        div.innerHTML = `
-          <div class="empty-icon">󰍉</div>
-          <p>No plugins found matching your search</p>
-          <button onclick="document.querySelector('#pm-search-clear').click()">Clear Filters</button>
-        `;
-        container.appendChild(div);
-      } else if (hasItems && emptyMsg) {
-        emptyMsg.remove();
-      }
-    });
-  };
 
   const start = () => {
     const root = document.querySelector('.pm-root');
