@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.0.8',
+  version: '2.0.9',
   compat: '>=3.3.0'
 };
 
@@ -245,6 +245,16 @@ export function setup(api) {
       box-shadow: none;
     }
 
+    /* New badge positioned at top-center */
+    .plugin-badge.icon-new-badge {
+      position: absolute !important;
+      top: 0 !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      z-index: 10;
+      margin: 0 !important;
+    }
+
     /* Sized perfectly for bottom-center */
     .status-active-wrapper, .status-inactive-wrapper, .status-system-wrapper {
       width: 16px; height: 16px; border-radius: 50%; display: flex;
@@ -256,13 +266,35 @@ export function setup(api) {
     .status-inactive-wrapper { background: rgba(255, 59, 48, 0.15); }
     .status-system-wrapper { background: rgba(142, 142, 147, 0.15); color: #8e8e93; }
 
+    /* New badge styling */
+    .status-new-wrapper {
+      width: 18px; height: 18px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #FF9500, #FF6B35);
+      box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
     .plugin-item:hover .status-active-wrapper { background: rgba(52, 199, 89, 0.22); }
     .plugin-item:hover .status-inactive-wrapper { background: rgba(255, 59, 48, 0.22); }
+    .plugin-item:hover .status-new-wrapper { 
+      background: linear-gradient(135deg, #FFB347, #FF8C42);
+      box-shadow: 0 3px 10px rgba(255, 149, 0, 0.4);
+    }
 
     .status-dot {
       width: 8px; height: 8px; border-radius: 50%; background: #34C759;
       animation: apple-breathe 2.4s ease-in-out infinite;
       transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* New badge text */
+    .status-new-text {
+      font-size: 9px;
+      font-weight: 600;
+      color: white;
+      letter-spacing: -0.3px;
+      text-transform: uppercase;
     }
 
     .icon-update-overlay {
