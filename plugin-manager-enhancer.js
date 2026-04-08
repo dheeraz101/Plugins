@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.1.4',
+  version: '2.1.5',
   compat: '>=3.3.0'
 };
 
@@ -283,10 +283,10 @@ export function setup(api) {
     .plugin-badge.icon-new-badge::before {
       content: "";
       position: absolute;
-      inset: -1px;
+      inset: 0;
       border-radius: inherit;
+      padding: 1px; /* border thickness */
 
-      /* rotating arc */
       background: conic-gradient(
         from 0deg,
         transparent 0deg,
@@ -297,17 +297,16 @@ export function setup(api) {
 
       animation: spin 2.5s linear infinite;
 
-      z-index: 0;
-    }
+      /* 🔑 THIS CREATES THE BORDER CUTOUT */
+      -webkit-mask: 
+        linear-gradient(#000 0 0) content-box, 
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
 
-    .plugin-badge.icon-new-badge::after {
-      content: "";
-      position: absolute;
-      inset: 1px; /* thickness of border */
-      border-radius: inherit;
+      mask-composite: exclude;
 
-      background: inherit;
-      z-index: 1;
+      z-index: 2;
+      pointer-events: none;
     }
 
     @keyframes spin {
