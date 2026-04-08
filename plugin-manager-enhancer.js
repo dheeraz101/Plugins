@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.1.8',
+  version: '2.1.9',
   compat: '>=3.3.0'
 };
 
@@ -14,12 +14,17 @@ export function setup(api) {
   if (isInitialized) return;
   isInitialized = true;
 
-  // ───────────────── STYLE INJECTION ─────────────────
-  if (!document.querySelector('#pm-enhancer-style')) {
-    style = document.createElement('style');
-    style.id = 'pm-enhancer-style';
+  // ───────────────── GRACEFUL STYLE HANDOFF ─────────────────
+  const OLD_STYLE_ID = 'pm-enhancer-style';
+  const NEW_STYLE_ID = 'pm-enhancer-style-new';
+  
+  const oldStyle = document.querySelector(`#${OLD_STYLE_ID}`);
+  
+  style = document.createElement('style');
+  // If old style exists, we give the new one a temporary ID
+  style.id = oldStyle ? NEW_STYLE_ID : OLD_STYLE_ID;
 
-    style.textContent = `
+  style.textContent = `
     .pm-action-group .toggle-btn {
       display: none !important;
     }
@@ -490,7 +495,12 @@ export function setup(api) {
     }
     `;
     document.head.appendChild(style);
-  }
+    if (oldStyle) {
+      setTimeout(() => {
+        oldStyle.remove();
+        style.id = OLD_STYLE_ID; // Revert new style to the main ID
+      }, 60); // Tiny delay prevents the "flash" to default UI
+    }
 
   // ───────────────── SCROLL BUTTON ─────────────────
   let scrollInjected = false;
@@ -831,8 +841,15 @@ export function setup(api) {
 }
 
 export function teardown() {
-  if (style) style.remove();
+  isInitialized = false; // Important: Allow setup to run again on update
+  
   if (observer) observer.disconnect();
+
+  // Only remove the style if we aren't in the middle of a smooth update
+  const updating = document.querySelector('#pm-enhancer-style-new');
+  if (style && !updating) {
+    style.remove();
+  }
 
   const content = document.querySelector('.pm-content');
   if (content && scrollListener) {
@@ -843,5 +860,5 @@ export function teardown() {
     .querySelectorAll('.apple-switch, .pm-scroll-top, .apple-version-pill')
     .forEach(el => el.remove());
 
-  isInitialized = false;
+  //isInitialized = false;
 }
