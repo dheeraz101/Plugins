@@ -1,864 +1,883 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '2.2.1',
-  compat: '>=3.3.0'
+  version: '3.1.0',
+  compat: '>=4.0.0',
+  coreVersion: '4.1.0',
+  icon: '⚡',
+  author: 'Dheeraz',
+  description: 'A refined visual polish layer for Plugin Manager.',
+  category: 'system',
+  trust: 'official',
+  permissions: ['ui', 'globalCSS', 'bus'],
+  whatsNew: [
+    {
+      version: '3.1.0',
+      title: 'Animated section badges',
+      text: 'Adds refined animated System and Standard Extension badges while preserving Plugin Manager behavior.'
+    },
+    {
+      version: '3.0.0',
+      title: 'No more button hijacking',
+      text: 'The enhancer no longer rewrites toggles, reload buttons, install buttons, or delete buttons.'
+    },
+    {
+      version: '3.0.0',
+      title: 'Cleaner visual polish',
+      text: 'Improved version pills, filter categories, card spacing, scroll-to-top positioning, and subtle Apple-style details.'
+    }
+  ],
+  changelogText: 'v3.1.0 adds animated System and Standard section badges while staying compatible with Plugin Manager v5.7.x and Core v4.1.0.'
 };
 
 let style = null;
 let observer = null;
 let scrollListener = null;
-let isInitialized = false;
+let resizeListener = null;
+let uiReadyOff = null;
+let rafId = null;
+let scrollButton = null;
+let mounted = false;
+
+const STYLE_ID = 'pm-enhancer-v31-style';
+const SCROLL_BTN_ID = 'pm-enhancer-scroll-top';
 
 export function setup(api) {
-  if (isInitialized) return;
-  isInitialized = true;
+  if (mounted) return;
+  mounted = true;
 
-  // ───────────────── GRACEFUL STYLE HANDOFF ─────────────────
-  const OLD_STYLE_ID = 'pm-enhancer-style';
-  const NEW_STYLE_ID = 'pm-enhancer-style-new';
-  
-  const oldStyle = document.querySelector(`#${OLD_STYLE_ID}`);
-  
+  injectStyle();
+  bootEnhancer();
+
+  const rerun = () => {
+    requestEnhance();
+  };
+
+  if (api?.bus?.on) {
+    uiReadyOff = api.bus.on('pm:ui-slots-ready', rerun, meta.id);
+  }
+
+  return () => teardown();
+}
+
+function injectStyle() {
+  document.querySelector(`#${STYLE_ID}`)?.remove();
+
   style = document.createElement('style');
-  // If old style exists, we give the new one a temporary ID
-  style.id = oldStyle ? NEW_STYLE_ID : OLD_STYLE_ID;
+  style.id = STYLE_ID;
 
   style.textContent = `
-    .pm-action-group .toggle-btn {
-      display: none !important;
+    /* PM Enhancer v3.1: visual polish only. No PM behavior hijacking. */
+
+    .pm-root {
+      --pme-radius-card: 22px;
+      --pme-border-soft: rgba(255,255,255,0.12);
+      --pme-shadow-card: 0 10px 30px rgba(0,0,0,0.06);
     }
 
-    .pm-action-group .reload-btn:disabled {
-      pointer-events: none !important;
-      opacity: 0.4 !important;
-      cursor: default !important;
+    .pm-content {
+      padding-top: 34px !important;
+      padding-bottom: 34px !important;
+      scroll-behavior: smooth;
     }
 
-    .pm-action-group {
-      min-width: 120px; 
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      position: relative;
+    .pm-content::-webkit-scrollbar {
+      width: 8px !important;
     }
 
-    /* 1. Custom Aesthetic Scrollbar (Light & Dark) with padding from edges */
-    .pm-content { 
-      padding-top: 8px !important;
-      padding-bottom: 8px !important;
+    .pm-content::-webkit-scrollbar-track {
+      background: transparent !important;
+      margin-top: 12px !important;
+      margin-bottom: 12px !important;
     }
-    .pm-content::-webkit-scrollbar { 
-      width: 6px; 
-    }
-    .pm-content::-webkit-scrollbar-track { 
-      background: transparent; 
-      margin-top: 8px;
-      margin-bottom: 8px;
-    }
+
     .pm-content::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 10px;
-      transition: background 0.2s;
-      min-height: 40px;
+      background: rgba(120,120,128,0.22) !important;
+      border-radius: 999px !important;
+      border: 2px solid transparent !important;
+      background-clip: padding-box !important;
+      min-height: 44px !important;
     }
+
     .pm-content::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(120,120,128,0.36) !important;
+      border: 2px solid transparent !important;
+      background-clip: padding-box !important;
     }
 
-    /* System Badge - Animated Spinning Icon */
-    .status-system-wrapper {
-      width: 22px !important;
-      height: 22px !important;
-      border-radius: 50% !important;
-      background: linear-gradient(135deg, rgba(88, 86, 214, 0.2) 0%, rgba(0, 122, 255, 0.2) 100%) !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .status-system-wrapper svg {
-      width: 13px !important;
-      height: 13px !important;
-    }
-    
-    @keyframes system-spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .system-icon-running {
-      animation: system-spin 3s linear infinite;
+    .pm-view-title {
+      letter-spacing: -0.035em !important;
     }
 
-    /* 2. Version Pill Styling */
-    .apple-version-pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 8px;
-      background: rgba(120, 120, 128, 0.12);
-      color: #86868b;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      margin-left: 10px;
-      white-space: nowrap;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    .pm-view-subtitle {
+      max-width: 520px;
+      line-height: 1.45 !important;
     }
 
-    /* 3. Layout Adjustments for Info & Alignment */
+    /* Minimal category/filter pills */
+    .pm-filter-bar {
+      gap: 7px !important;
+      padding: 3px !important;
+      border-radius: 999px !important;
+      background: rgba(120,120,128,0.08) !important;
+      width: fit-content !important;
+      max-width: 100% !important;
+    }
+
+    .pm-filter-btn {
+      height: 27px !important;
+      padding: 0 12px !important;
+      border-radius: 999px !important;
+      font-size: 12px !important;
+      font-weight: 650 !important;
+      letter-spacing: -0.01em !important;
+      background: transparent !important;
+      color: var(--pm-muted) !important;
+      transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        transform 0.15s ease,
+        box-shadow 0.18s ease !important;
+    }
+
+    .pm-filter-btn:hover {
+      background: rgba(120,120,128,0.12) !important;
+      color: var(--pm-text) !important;
+    }
+
+    .pm-filter-btn.active {
+      background: rgba(0,113,227,0.92) !important;
+      color: #fff !important;
+      box-shadow: 0 4px 12px rgba(0,113,227,0.22) !important;
+    }
+
+    .pm-filter-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Plugin cards */
     .plugin-item {
-      display: flex !important;
+      border-radius: var(--pme-radius-card) !important;
+      padding: 17px 20px !important;
+      min-height: 82px !important;
+      border-color: rgba(128,128,128,0.16) !important;
+      box-shadow: none !important;
+      transition:
+        transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease !important;
+    }
+
+    .plugin-item:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: var(--pme-shadow-card) !important;
+      border-color: rgba(128,128,128,0.24) !important;
+    }
+
+    .plugin-name-row {
+      gap: 8px !important;
       align-items: center !important;
-      padding: 14px 16px !important;
-      border-bottom: 1px solid rgba(0,0,0,0.05) !important;
-    }
-    
-    .plugin-info h4 {
-      display: flex;
-      align-items: center;
-      margin: 0 0 4px 0 !important;
     }
 
-    /* 4. Modern Apple Toggle Switch */
-    .apple-switch {
-      position: relative;
-      display: inline-flex;
-      width: 42px;
-      height: 24px;
-      cursor: pointer;
-      margin: 0 10px;
-      flex-shrink: 0;
+    .plugin-name {
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      letter-spacing: -0.018em !important;
     }
-    .apple-switch input { opacity: 0; width: 0; height: 0; }
-    .apple-slider {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(120, 120, 128, 0.32);
-      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
-      border-radius: 34px;
-    }
-    .apple-slider:before {
-      position: absolute;
-      content: "";
-      height: 20px; width: 20px;
-      left: 2px; bottom: 2px;
-      background-color: white;
-      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
-      border-radius: 50%;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
-    }
-    input:checked + .apple-slider { background-color: #34C759; }
-    input:checked + .apple-slider:before { transform: translateX(18px); }
 
-    /* 5. Action Icons (Reload, Delete, Update, Rollback) */
-    .apple-icon-btn {
-      opacity: 1 !important;
-      pointer-events: auto !important;
-      background: none;
-      border: none;
-      padding: 8px;
-      cursor: pointer;
-      border-radius: 10px;
+    .plugin-meta {
+      margin-top: 3px !important;
+      font-size: 12.8px !important;
+      letter-spacing: -0.005em !important;
+    }
+
+    .plugin-desc {
+      max-width: 460px !important;
+    }
+
+    /* Better version pill. PM uses .badge-disabled for version inside .plugin-name-row. */
+    .plugin-name-row > .plugin-badge.badge-disabled {
+      height: 19px !important;
+      padding: 0 7px !important;
+      border-radius: 999px !important;
+      background: rgba(120,120,128,0.16) !important;
+      color: rgba(245,245,247,0.68) !important;
+      font-size: 10.8px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.015em !important;
+      text-transform: none !important;
+      line-height: 1 !important;
+      transform: translateY(-0.5px);
+    }
+
+    @media (prefers-color-scheme: light) {
+      .plugin-name-row > .plugin-badge.badge-disabled {
+        color: rgba(60,60,67,0.66) !important;
+        background: rgba(60,60,67,0.10) !important;
+      }
+    }
+
+    /* Badges: less shouty, more Apple-like */
+    .pm-badge-row {
+      gap: 5px !important;
+      margin-top: 7px !important;
+    }
+
+    .plugin-badge,
+    .perm-badge,
+    .trust-badge {
+      min-height: 18px !important;
+      padding: 0 7px !important;
+      font-size: 10.6px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.01em !important;
+      border-radius: 999px !important;
+      text-transform: none !important;
+      line-height: 18px !important;
+    }
+
+    .badge-enabled {
+      background: rgba(52,199,89,0.16) !important;
+      color: #30d158 !important;
+    }
+
+    .badge-disabled {
+      background: rgba(142,142,147,0.18) !important;
+      color: #a1a1a6 !important;
+    }
+
+    .badge-system {
+      background: rgba(94,92,230,0.18) !important;
+      color: #b2b0ff !important;
+    }
+
+    .perm-badge {
+      background: rgba(142,142,147,0.14) !important;
+      color: rgba(245,245,247,0.68) !important;
+    }
+
+    .perm-badge.risky,
+    .badge-risk {
+      background: rgba(255,159,10,0.16) !important;
+      color: #ffd08a !important;
+    }
+
+    .trust-badge {
+      background: rgba(142,142,147,0.14) !important;
+      color: rgba(245,245,247,0.72) !important;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .perm-badge,
+      .trust-badge {
+        background: rgba(60,60,67,0.08) !important;
+        color: rgba(60,60,67,0.70) !important;
+      }
+
+      .badge-system {
+        background: rgba(88,86,214,0.13) !important;
+        color: #5856d6 !important;
+      }
+
+      .badge-enabled {
+        background: rgba(52,199,89,0.13) !important;
+        color: #248a3d !important;
+      }
+
+      .badge-disabled {
+        background: rgba(142,142,147,0.13) !important;
+        color: #6e6e73 !important;
+      }
+
+      .perm-badge.risky,
+      .badge-risk {
+        background: rgba(255,149,0,0.14) !important;
+        color: #b76e00 !important;
+      }
+    }
+
+    /* Icons */
+    .plugin-icon-box {
+      border-radius: 14px !important;
+      box-shadow:
+        0 8px 18px rgba(0,0,0,0.12),
+        inset 0 1px 0 rgba(255,255,255,0.18) !important;
+    }
+
+    .pm-icon-btn,
+    .pm-toggle,
+    .pm-btn {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Animated System / Standard section badges */
+    .pme-section-badge {
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
-      color: #86868b;
-      flex-shrink: 0;
+      gap: 7px;
+      width: fit-content;
+      margin: 18px auto 20px auto;
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: 0.075em;
+      text-transform: uppercase;
+      color: rgba(245,245,247,0.78);
+      background: rgba(120,120,128,0.12);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.10),
+        0 6px 18px rgba(0,0,0,0.10);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      position: relative;
+      overflow: hidden;
+      user-select: none;
     }
-    .apple-icon-btn:hover { background: rgba(0,0,0,0.05); color: #1d1d1f; }
-    .apple-icon-btn:active { transform: scale(0.9); }
-    .apple-icon-btn.delete-icon:hover { color: #FF3B30; background: rgba(255, 59, 48, 0.1); }
-    .apple-icon-btn.rollback-btn { color: #d97706; }
-    .apple-icon-btn.rollback-btn:hover { color: #b45309; background: rgba(255, 149, 0, 0.15); }
 
-    /* 6. Floating Scroll Button */
-    .pm-scroll-top {
-      position: fixed;
-      bottom: 40px; 
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      width: 42px; height: 42px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      opacity: 0; 
-      z-index: 9999;
-      color: #1d1d1f;
+    .pme-section-badge::before {
+      content: "";
+      position: absolute;
+      inset: -120%;
+      background:
+        conic-gradient(
+          from 0deg,
+          transparent 0deg,
+          transparent 80deg,
+          rgba(255,255,255,0.46) 110deg,
+          transparent 145deg,
+          transparent 360deg
+        );
+      animation: pme-badge-glint 5.5s linear infinite;
+      opacity: 0.55;
       pointer-events: none;
     }
 
+    .pme-section-badge::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background: rgba(28,28,30,0.72);
+      z-index: 0;
+    }
+
+    .pme-section-badge > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .pme-section-badge-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 18px;
+    }
+
+    .pme-section-badge-icon svg {
+      width: 12.5px;
+      height: 12.5px;
+      stroke-width: 2.35;
+    }
+
+    .pme-section-system {
+      color: #b9b8ff;
+      background: rgba(94,92,230,0.12);
+      border-color: rgba(94,92,230,0.22);
+    }
+
+    .pme-section-system .pme-section-badge-icon {
+      background: rgba(94,92,230,0.18);
+      color: #b9b8ff;
+      box-shadow: 0 0 0 3px rgba(94,92,230,0.08);
+    }
+
+    .pme-section-system .pme-section-badge-icon svg {
+      animation: pme-system-orbit 4.8s linear infinite;
+    }
+
+    .pme-section-standard {
+      color: #c7c7cc;
+      background: rgba(142,142,147,0.10);
+      border-color: rgba(142,142,147,0.18);
+    }
+
+    .pme-section-standard .pme-section-badge-icon {
+      background: rgba(142,142,147,0.16);
+      color: #c7c7cc;
+      box-shadow: 0 0 0 3px rgba(142,142,147,0.07);
+    }
+
+    .pme-section-standard .pme-section-badge-icon svg {
+      animation: pme-standard-float 2.8s ease-in-out infinite;
+    }
+
+    .pme-section-badge-text {
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .pme-section-badge {
+        color: rgba(60,60,67,0.76);
+        background: rgba(255,255,255,0.72);
+        border-color: rgba(60,60,67,0.10);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.65),
+          0 6px 16px rgba(0,0,0,0.06);
+      }
+
+      .pme-section-badge::after {
+        background: rgba(255,255,255,0.78);
+      }
+
+      .pme-section-system {
+        color: #5856d6;
+        border-color: rgba(88,86,214,0.20);
+      }
+
+      .pme-section-system .pme-section-badge-icon {
+        background: rgba(88,86,214,0.12);
+        color: #5856d6;
+      }
+
+      .pme-section-standard {
+        color: #6e6e73;
+        border-color: rgba(60,60,67,0.12);
+      }
+
+      .pme-section-standard .pme-section-badge-icon {
+        background: rgba(60,60,67,0.08);
+        color: #6e6e73;
+      }
+    }
+
+    @keyframes pme-badge-glint {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pme-system-orbit {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pme-standard-float {
+      0%, 100% { transform: translateY(0); opacity: 0.82; }
+      50% { transform: translateY(-1px); opacity: 1; }
+    }
+
+    /* Content-centered scroll-to-top button */
+    .pm-scroll-top {
+      position: fixed;
+      left: var(--pme-scroll-x, 50%);
+      bottom: var(--pme-scroll-bottom, 48px);
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(44,44,46,0.78);
+      color: #f5f5f7;
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      box-shadow:
+        0 12px 34px rgba(0,0,0,0.30),
+        inset 0 1px 0 rgba(255,255,255,0.10);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2147483640;
+      transform: translate(-50%, 18px) scale(0.94);
+      transition:
+        opacity 0.22s ease,
+        transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.18s ease,
+        color 0.18s ease;
+    }
+
     .pm-scroll-top.visible {
-      transform: translateX(-50%) translateY(0);
       opacity: 1;
       pointer-events: auto;
+      transform: translate(-50%, 0) scale(1);
     }
 
     .pm-scroll-top:hover {
-      background: rgba(255, 255, 255, 1);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-      color: #007AFF;
-      transform: translateX(-50%) translateY(-2px);
+      background: rgba(58,58,60,0.92);
+      color: #0a84ff;
+      transform: translate(-50%, -2px) scale(1.02);
     }
 
-    /* 7. Layered Icon Box & Status Badges */
-    .plugin-icon-box {
-      position: relative;
-      overflow: visible !important;
-    }
-    
-    .icon-base-dimmed {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0.95;
-      filter: brightness(0.85); 
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      /* Keep the plugin icon art strictly rounded */
-      border-radius: 12px;
-      overflow: hidden;
+    .pm-scroll-top svg {
+      width: 19px;
+      height: 19px;
+      stroke-width: 2.35;
     }
 
-    /* The new absolute positioned status badge wrapper half-in and half-out */
-    .plugin-badge.icon-status-badge {
-      position: absolute !important;
-      bottom: 0 !important;
-      left: 50% !important;
-      transform: translate(-50%, 50%) !important;
-      z-index: 10;
-      margin: 0 !important;
-      /* Glassmorphism cutout background to separate it from the icon */
-      background: transparent !important;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: none;
-      padding: 0px !important;
-      border-radius: 50% !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      width: auto !important;
-      height: auto !important;
-      box-shadow: none;
-    }
-
-    /* New badge positioned at top-center (half out) */
-    .plugin-badge.icon-new-badge {
-      position: absolute !important;
-      top: -8px !important;
-      left: 50% !important;
-      transform: translateX(-50%) !important;
-      z-index: 10 !important;
-      margin: 0 !important;
-
-      width: auto !important;
-      height: auto !important;
-      padding: 4px 10px !important;
-      border: none !important;
-        
-      /* Ensure text stays on top */
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-        
-    /* Fix #2: Font Rendering & Clarity */
-      -webkit-font-smoothing: antialiased !important;
-      -moz-osx-font-smoothing: grayscale !important;
-      text-rendering: optimizeLegibility !important;
-      
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-      font-size: 10px !important; /* Bumped slightly to 10px for readability */
-      font-weight: 400 !important; /* Heavier weight looks cleaner at small sizes */
-      line-height: 1 !important;   /* Prevents vertical clipping */
-      letter-spacing: 0.08em !important; /* Gives the letters room to breathe */
-      
-      color: #FFFFFF !important;
-      text-transform: uppercase !important;
-      white-space: nowrap !important; /* Prevents text from trying to wrap */
-        
-        /* This clips the spinning gradient so it only shows on the "border" */
-        overflow: hidden !important;
-        border-radius: 20px !important;
-
-        text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+    @media (prefers-color-scheme: light) {
+      .pm-scroll-top {
+        background: rgba(255,255,255,0.78);
+        color: #1d1d1f;
+        border-color: rgba(0,0,0,0.10);
+        box-shadow:
+          0 10px 28px rgba(0,0,0,0.13),
+          inset 0 1px 0 rgba(255,255,255,0.55);
       }
 
-      /* The Rotating Gradient (The "Light") */
-      .plugin-badge.icon-new-badge::before {
-        content: "";
-        position: absolute;
-        z-index: -2;
-        /* Make this much larger than the badge so the rotation doesn't show corners */
-        left: -50%;
-        top: -50%;
-        width: 200%;
-        height: 200%;
-        
-        background: conic-gradient(
-          transparent,
-          transparent,
-          transparent,
-          rgba(255, 255, 255, 0.8), /* The "glint" color */
-          transparent
-        );
-        animation: spin 3s linear infinite;
-      }
-
-      /* The Inner Cover (The "Body") */
-      .plugin-badge.icon-new-badge::after {
-        content: "NEW"; /* Put your text here or keep it in HTML */
-        position: absolute;
-        z-index: -1;
-        /* This creates the thickness of your border */
-        inset: 1px; 
-        border-radius: 11px; /* Slightly smaller than parent radius */
-        
-        /* This must be solid enough to hide the animation behind it */
-        background: rgba(30, 30, 30, 0.8) !important; /* Adjust to match your UI depth */
-        backdrop-filter: blur(12px) !important;
-        -webkit-backdrop-filter: blur(12px) !important;
-        
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-
-    /* Sized perfectly for bottom-center */
-    .status-active-wrapper, .status-inactive-wrapper, .status-system-wrapper {
-      width: 16px; height: 16px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center;
-      transition: background 0.3s ease;
-    }
-    
-    .status-active-wrapper { background: rgba(52, 199, 89, 0.15); }
-    .status-inactive-wrapper { background: rgba(255, 59, 48, 0.15); }
-    .status-system-wrapper { background: rgba(142, 142, 147, 0.15); color: #8e8e93; }
-
-    /* New badge styling */
-    .status-new-wrapper {
-      width: 18px; height: 18px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #FF9500, #FF6B35);
-      box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .plugin-item:hover .status-active-wrapper { background: rgba(52, 199, 89, 0.22); }
-    .plugin-item:hover .status-inactive-wrapper { background: rgba(255, 59, 48, 0.22); }
-    .plugin-item:hover .status-new-wrapper { 
-      background: linear-gradient(135deg, #FFB347, #FF8C42);
-      box-shadow: 0 3px 10px rgba(255, 149, 0, 0.4);
-    }
-
-    .status-dot {
-      width: 8px; height: 8px; border-radius: 50%; background: #34C759;
-      animation: apple-breathe 2.4s ease-in-out infinite;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-
-    /* New badge text */
-    .status-new-text {
-      font-size: 9px;
-      font-weight: 600;
-      color: white;
-      letter-spacing: -0.3px;
-      text-transform: uppercase;
-    }
-
-    .icon-update-overlay {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .apple-update-circle {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      border: 1px solid rgba(255, 255, 255, 0.5);
-    }
-
-    @keyframes apple-breathe {
-      0%, 100% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 4px rgba(52, 199, 89, 0.4); }
-      50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 10px rgba(52, 199, 89, 0.9); }
-    }
-
-    .plugin-badge {
-      display: inline-flex !important; align-items: center !important;
-      justify-content: center !important; width: 24px !important;
-      height: 24px !important; border-radius: 50% !important;
-      margin: 0 4px; padding: 0 !important;
-    }
-    .plugin-badge svg { display: block; }
-    .plugin-badge.badge-update { display: none !important; }
-
-    /* 8. Logger & Sidebar Buttons Aesthetic Support */
-    #pm-actions .pm-btn {
-      border-radius: 10px !important;
-      justify-content: flex-start;
-      padding: 8px 14px;
-      font-weight: 500;
-    }
-
-    /* 9. Community Plugin Description - 2 lines with ellipsis and tooltip */
-    .plugin-meta[style*="margin-top"] {
-      display: -webkit-box !important;
-      -webkit-line-clamp: 2 !important;
-      -webkit-box-orient: vertical !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      line-height: 1.4 !important;
-      max-height: 2.8em !important;
-      position: relative !important;
-      cursor: default !important;
-    }
-    .plugin-meta[style*="margin-top"]:hover::after {
-      content: attr(title) !important;
-      position: absolute !important;
-      left: 0 !important;
-      top: 100% !important;
-      background: rgba(0, 0, 0, 0.85) !important;
-      color: #fff !important;
-      padding: 8px 12px !important;
-      border-radius: 8px !important;
-      font-size: 12px !important;
-      max-width: 280px !important;
-      white-space: normal !important;
-      word-wrap: break-word !important;
-      z-index: 9999 !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-      line-height: 1.4 !important;
-      margin-top: 6px !important;
-    }
-        
-    /* 9. Dark Mode Overrides */
-    @media (prefers-color-scheme: dark) {
-      .pm-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
-      .pm-content::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
-      .apple-version-pill { background: rgba(255, 255, 255, 0.1); color: #a1a1a6; }
-      .apple-icon-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-      .apple-icon-btn.update-btn-enhanced { color: #0A84FF; }
-      .apple-icon-btn.update-btn-enhanced:hover { background: rgba(10, 132, 255, 0.15); }
-      .apple-icon-btn.rollback-btn { color: #ffb340; }
-      .apple-icon-btn.rollback-btn:hover { background: rgba(255, 149, 0, 0.2); }
-      .apple-slider { background-color: rgba(255, 255, 255, 0.2); }
-      .pm-scroll-top { background: rgba(50, 50, 50, 0.8); color: #fff; border-color: rgba(255, 255, 255, 0.1); }
-      .pm-scroll-top:hover { background: rgba(70, 70, 70, 1); color: #0A84FF; }
-      
-      .plugin-badge.icon-status-badge {
-        background: transparent !important;
-        border: none !important;
-      }
-
-      .status-active-wrapper { background: rgba(48, 209, 88, 0.18); }
-      .status-inactive-wrapper { background: rgba(255, 69, 58, 0.18); }
-      .status-system-wrapper {
-        background: linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(0, 122, 255, 0.25) 100%) !important;
-      }
-      .status-system-wrapper svg { stroke: #8E8EFF !important; }
-      
-      .apple-update-circle {
-        background: rgba(0, 0, 0, 0.5);
-        border-color: rgba(255, 255, 255, 0.15);
-        color: #0A84FF; 
-      }
-
-      .plugin-meta[style*="margin-top"]:hover::after {
-        background: rgba(40, 40, 43, 0.95) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      }
-    }
-    `;
-    document.head.appendChild(style);
-    if (oldStyle) {
-      setTimeout(() => {
-        oldStyle.remove();
-        style.id = OLD_STYLE_ID; // Revert new style to the main ID
-      }, 60); // Tiny delay prevents the "flash" to default UI
-    }
-
-  // ───────────────── SCROLL BUTTON ─────────────────
-  let scrollInjected = false;
-  const injectScrollButton = () => {
-    if (scrollInjected) return;
-    scrollInjected = true;
-    const pmRoot = document.querySelector('.pm-root');
-    const content = document.querySelector('.pm-content');
-
-    if (!pmRoot || !content) return;
-
-    let topBtn = document.querySelector('.pm-scroll-top');
-
-    if (!topBtn) {
-      topBtn = document.createElement('div');
-      topBtn.className = 'pm-scroll-top';
-      topBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-        stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>`;
-
-      topBtn.onclick = (e) => {
-        e.stopPropagation();
-        content.scrollTo({ top: 0, behavior: 'smooth' });
-      };
-
-      pmRoot.appendChild(topBtn);
-    }
-
-    if (scrollListener) {
-      content.removeEventListener('scroll', scrollListener);
-    }
-
-    scrollListener = () => {
-      topBtn.classList.toggle('visible', content.scrollTop > 150);
-    };
-
-    content.addEventListener('scroll', scrollListener);
-  };
-
-  function enhanceItem(item) {
-    const actionGroup = item.querySelector('.pm-action-group');
-    const info = item.querySelector('.plugin-info');
-    const iconBox = item.querySelector('.plugin-icon-box');
-
-    // ── FORCE TOGGLE FIX
-    if (actionGroup && !actionGroup.querySelector('.apple-switch')) {
-      let attempts = 0;
-      const tryInject = () => {
-        if (!document.body.contains(item)) return;
-        const toggleBtn = actionGroup.querySelector('.toggle-btn');
-
-        if (!toggleBtn) {
-          if (attempts++ < 20) requestAnimationFrame(tryInject);
-          return;
-        }
-
-        const isEnabled = toggleBtn.textContent.trim() === 'Disable';
-
-        const wrapper = document.createElement('label');
-        wrapper.className = 'apple-switch';
-
-        wrapper.innerHTML = `
-          <input type="checkbox" ${isEnabled ? 'checked' : ''}>
-          <span class="apple-slider"></span>
-        `;
-
-        wrapper.querySelector('input').onchange = () => {
-          const freshToggle = actionGroup.querySelector('.toggle-btn');
-          freshToggle?.click();
-        };
-
-        actionGroup.dataset.switchEnhanced = 'true';
-        actionGroup.insertBefore(wrapper, actionGroup.firstChild);
-      };
-
-      tryInject();
-    }
-
-    // ── VERSION PILL ──
-    if (info) {
-      const nameEl = info.querySelector('.plugin-name');
-      const metaEl = info.querySelector('.plugin-meta');
-
-      if (nameEl && metaEl) {
-        if (!metaEl.dataset.originalText) {
-          metaEl.dataset.originalText = metaEl.textContent;
-        }
-
-        const original = metaEl.dataset.originalText;
-        const match = original.match(/v?\d+\.\d+\.\d+/);
-        const existing = nameEl.querySelector('.apple-version-pill');
-
-        if (match && !existing) {
-          const pill = document.createElement('span');
-          pill.className = 'apple-version-pill';
-          pill.textContent = match[0];
-
-          nameEl.appendChild(pill);
-          const metaText = metaEl.textContent;
-          const cleaned = metaText.replace(match[0], '').replace(/^[\s•]+/, '').trim();
-          if (cleaned) {
-            metaEl.textContent = cleaned;
-          }
-        }
+      .pm-scroll-top:hover {
+        background: rgba(255,255,255,0.96);
+        color: #0071e3;
       }
     }
 
-    // ── LAYERED ICON BADGE (Update Check) ──
-    const updateBtn = actionGroup?.querySelector('[data-update]');
-    if (iconBox && !iconBox.dataset.updateEnhanced) {
-      const originalIconHtml = iconBox.innerHTML;
-      
-      // We wrap the original icon in .icon-base-dimmed to handle border-radius centrally
-      let newHtml = `<div class="icon-base-dimmed">${originalIconHtml}</div>`;
-      
-      if (updateBtn) {
-        newHtml += `
-          <div class="icon-update-overlay" title="Update Available">
-            <div class="apple-update-circle">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="4" x2="12" y2="20"></line>
-                <polyline points="18 14 12 20 6 14"></polyline>
-              </svg>
-            </div>
-          </div>
-        `;
-      }
-      iconBox.innerHTML = newHtml;
-      iconBox.dataset.updateEnhanced = 'true';
-    }
-
-    // ── ACTION BUTTONS REWRITE ──
-    if (actionGroup) {
-      const reloadBtn = actionGroup.querySelector('.reload-btn');
-      const deleteBtn = actionGroup.querySelector('.delete-btn');
-      const installBtn = actionGroup.querySelector('[data-install]');
-      const rollbackBtn = actionGroup.querySelector('[data-rb-rollback]');
-
-      if (rollbackBtn && !rollbackBtn.dataset.iconified) {
-        rollbackBtn.className = 'apple-icon-btn rollback-btn';
-        rollbackBtn.innerHTML = `
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 14 4 9 9 4"/>
-            <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
-          </svg>
-        `;
-        rollbackBtn.dataset.iconified = 'true';
-      }
-
-      if (reloadBtn && !reloadBtn.dataset.iconified) {
-        reloadBtn.className = 'apple-icon-btn reload-btn';
-        reloadBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" stroke-width="2.2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
-          <polyline points="21 3 21 8 16 8"/>
-        </svg>`;
-        reloadBtn.dataset.iconified = 'true';
-      }
-
-      if (deleteBtn && !deleteBtn.dataset.iconified) {
-        deleteBtn.className = 'apple-icon-btn delete-icon delete-btn';
-        deleteBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" stroke-width="2.2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 6h18"/>
-          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-          <line x1="10" y1="11" x2="10" y2="17"/>
-          <line x1="14" y1="11" x2="14" y2="17"/>
-        </svg>`;
-        deleteBtn.dataset.iconified = 'true';
-      }
-
-      if (installBtn && !installBtn.dataset.iconified) {
-        installBtn.className = 'apple-icon-btn';
-        installBtn.innerHTML = `
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2.2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3v12"/>
-            <path d="M7 10l5 5 5-5"/>
-            <path d="M5 21h14"/>
-          </svg>
-        `;
-        installBtn.dataset.iconified = 'true';
-      }
-
-      if (updateBtn && !updateBtn.dataset.iconified) {
-        updateBtn.className = 'apple-icon-btn update-btn-enhanced';
-        updateBtn.innerHTML = `
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M7 19L5.78311 18.9954C3.12231 18.8818 1 16.6888 1 14
-            C1 11.3501 3.06139 9.18169 5.66806 9.01084
-            C6.78942 6.64027 9.20316 5 12 5
-            C15.5268 5 18.4445 7.60822 18.9293 11.001
-            L19 11C21.2091 11 23 12.7909 23 15
-            C23 17.1422 21.316 18.8911 19.1996 18.9951
-            L17 19M12 10V18M12 18L15 15M12 18L9 15"
-            stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        `;
-        updateBtn.dataset.iconified = 'true';
-      }
-
-      // ── REORDER BUTTONS: Reload → Switch → Delete ──
-      if (!actionGroup.dataset.reordered) {
-        const appleSwitch = actionGroup.querySelector('.apple-switch');
-        const reloadBtnEl = actionGroup.querySelector('.reload-btn');
-        const deleteBtnEl = actionGroup.querySelector('.delete-btn');
-        const updateBtnEl = actionGroup.querySelector('.update-btn-enhanced');
-        const rollbackBtnEl = actionGroup.querySelector('.rollback-btn');
-
-        if (appleSwitch && reloadBtnEl && deleteBtnEl) {
-          // Remove all relevant elements
-          const elements = [];
-          if (reloadBtnEl) elements.push(reloadBtnEl);
-          if (appleSwitch) elements.push(appleSwitch);
-          if (deleteBtnEl) elements.push(deleteBtnEl);
-          if (updateBtnEl) elements.push(updateBtnEl);
-          if (rollbackBtnEl) elements.push(rollbackBtnEl);
-
-          elements.forEach(el => el.remove());
-
-          // Re-append in desired order: Reload → Switch → Delete → Update → Rollback
-          if (reloadBtnEl) actionGroup.appendChild(reloadBtnEl);
-          if (appleSwitch) actionGroup.appendChild(appleSwitch);
-          if (deleteBtnEl) actionGroup.appendChild(deleteBtnEl);
-          if (updateBtnEl) actionGroup.appendChild(updateBtnEl);
-          if (rollbackBtnEl) actionGroup.appendChild(rollbackBtnEl);
-
-          actionGroup.dataset.reordered = 'true';
-        }
+    @media (prefers-reduced-motion: reduce) {
+      .pm-scroll-top,
+      .plugin-item,
+      .pm-filter-btn,
+      .pme-section-badge::before,
+      .pme-section-badge-icon svg {
+        animation: none !important;
+        transition: none !important;
       }
     }
+  `;
 
-    // ── STATUS BADGES (Moved to bottom center of the Icon Box) ──
-    item.querySelectorAll('.plugin-badge').forEach(badge => {
-      if (badge.dataset.iconified) return;
+  document.head.appendChild(style);
+}
 
-      const text = badge.textContent.trim().toLowerCase();
-      let isStatusBadge = false;
-      // New: place a top-centered 'New' badge on the plugin icon box
-      if (text === 'new' && iconBox) {
-        badge.classList.remove('icon-status-badge');
-        badge.classList.add('icon-new-badge');
-        if (badge.parentElement !== iconBox) {
-          iconBox.appendChild(badge);
-        }
-        badge.style.display = 'inline-flex';
-        badge.dataset.iconified = 'true';
-        return;
-      }
-
-      // Handle System Badge 
-      if (text === 'system') {
-        badge.innerHTML = `
-          <div class="status-system-wrapper" title="System Plugin">
-            <svg class="system-icon-running" width="14" height="14" viewBox="0 0 24 24" fill="none" 
-                stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/>
-                <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.93l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.2-1.17.53-1.69.93l-2.49-1c-.22-.08-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.93l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.2 1.17-.53 1.69-.93l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65z"/>
-            </svg>
-          </div>
-        `;
-        badge.style.background = "transparent";
-        badge.style.border = "none";
-        isStatusBadge = true;
-      }
-      // Handle Active Badge
-      else if (text === 'active') {
-        badge.innerHTML = `
-          <div class="status-active-wrapper" title="Active">
-            <div class="status-dot"></div>
-          </div>`;
-        badge.style.background = 'none';
-        item.classList.add('active');
-        isStatusBadge = true;
-      } 
-      // Handle Inactive Badge
-      else if (text === 'inactive') {
-        badge.innerHTML = `
-          <div class="status-inactive-wrapper" title="Inactive">
-            <svg width="8" height="8" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round">
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </div>`;
-        badge.style.color = "#FF3B30";
-        badge.style.background = "none";
-        isStatusBadge = true;
-      } 
-      // Hide standard update text badge, as the layered corner icon handles this
-      else if (text.includes('update')) {
-        badge.style.display = 'none';
-      }
-
-      // If it's a status badge, physically move it into the Icon Box wrapper!
-      if (isStatusBadge && iconBox) {
-        badge.classList.add('icon-status-badge');
-        iconBox.appendChild(badge);
-      } else if (!isStatusBadge && !text.includes('update') && badge.innerHTML) {
-         // Fallback for random badges
-         badge.style.display = 'inline-flex';
-      }
-
-      badge.dataset.iconified = 'true';
-    });
-
-    item.dataset.enhanced = 'true';
-    item.classList.add('enhanced');
-  }
-
-  // ───────────────── OBSERVER ─────────────────
-  observer = new MutationObserver((mutations) => {
-    for (const m of mutations) {
-      for (const node of m.addedNodes) {
-        if (node.nodeType !== 1) continue;
-        if (node.matches?.('.plugin-item')) enhanceItem(node);
-        node.querySelectorAll?.('.plugin-item').forEach(enhanceItem);
-      }
-    }
-  });
-
+function bootEnhancer() {
   const start = () => {
     const root = document.querySelector('.pm-root');
-    if (!root) {
-      setTimeout(start, 300);
+    const content = document.querySelector('.pm-root .pm-content');
+
+    if (!root || !content) {
+      window.setTimeout(start, 250);
       return;
     }
-    injectScrollButton();
-    observer.observe(root, { childList: true, subtree: true });
-    root.querySelectorAll('.plugin-item').forEach(enhanceItem);
+
+    ensureScrollButton(root, content);
+    enhanceAll(root);
+    watch(root);
+
+    resizeListener = () => updateScrollButtonPosition(content);
+    window.addEventListener('resize', resizeListener, { passive: true });
+    updateScrollButtonPosition(content);
   };
 
   start();
 }
 
-export function teardown() {
-  isInitialized = false; // Important: Allow setup to run again on update
-  
+function requestEnhance() {
+  if (rafId) cancelAnimationFrame(rafId);
+
+  rafId = requestAnimationFrame(() => {
+    rafId = null;
+
+    const root = document.querySelector('.pm-root');
+    const content = document.querySelector('.pm-root .pm-content');
+
+    if (!root || !content) return;
+
+    enhanceAll(root);
+    ensureScrollButton(root, content);
+    updateScrollButtonPosition(content);
+  });
+}
+
+function watch(root) {
   if (observer) observer.disconnect();
 
-  // Only remove the style if we aren't in the middle of a smooth update
-  const updating = document.querySelector('#pm-enhancer-style-new');
-  if (style && !updating) {
-    style.remove();
+  observer = new MutationObserver((mutations) => {
+    let shouldRun = false;
+
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (!(node instanceof Element)) continue;
+
+        if (
+          node.matches?.('.plugin-item, .pm-filter-btn, .pm-list, .pm-divider, #installed, #community') ||
+          node.querySelector?.('.plugin-item, .pm-filter-btn, .pm-divider')
+        ) {
+          shouldRun = true;
+          break;
+        }
+      }
+
+      if (shouldRun) break;
+    }
+
+    if (shouldRun) requestEnhance();
+  });
+
+  observer.observe(root, {
+    childList: true,
+    subtree: true
+  });
+}
+
+function enhanceAll(root) {
+  root.querySelectorAll('.plugin-item').forEach(enhancePluginCard);
+  root.querySelectorAll('.pm-filter-btn').forEach(enhanceFilterButton);
+  enhanceSectionBadges(root);
+}
+
+function enhancePluginCard(card) {
+  if (!(card instanceof HTMLElement)) return;
+
+  card.dataset.pmEnhanced = 'true';
+
+  const versionPill = card.querySelector('.plugin-name-row > .plugin-badge.badge-disabled');
+
+  if (versionPill && !versionPill.dataset.pmEnhancedVersion) {
+    versionPill.dataset.pmEnhancedVersion = 'true';
+
+    const raw = versionPill.textContent.trim();
+
+    if (raw && !raw.startsWith('v')) {
+      versionPill.textContent = `v${raw}`;
+    }
   }
 
-  const content = document.querySelector('.pm-content');
+  const badges = card.querySelectorAll('.plugin-badge, .perm-badge, .trust-badge');
+
+  badges.forEach((badge) => {
+    if (!(badge instanceof HTMLElement)) return;
+
+    const text = badge.textContent.trim();
+
+    if (text.length > 18) {
+      badge.title = text;
+    }
+  });
+}
+
+function enhanceFilterButton(button) {
+  if (!(button instanceof HTMLElement)) return;
+  if (button.dataset.pmEnhancedFilter) return;
+
+  button.dataset.pmEnhancedFilter = 'true';
+
+  const text = button.textContent.trim();
+
+  if (text) {
+    button.setAttribute('aria-label', `${text} plugins`);
+  }
+}
+
+function enhanceSectionBadges(root) {
+  const installedList = root.querySelector('#installed .pm-list');
+  if (!installedList) return;
+
+  const systemRows = [];
+  const standardRows = [];
+
+  installedList.querySelectorAll('.plugin-item[data-plugin-id]').forEach((card) => {
+    const isSystem =
+      card.querySelector('.badge-system') ||
+      card.dataset.pluginId === 'plugin-manager' ||
+      card.dataset.pluginId === 'pm-enhancer' ||
+      card.dataset.pluginId === 'logger' ||
+      card.dataset.pluginId === 'rollback-manager';
+
+    if (isSystem) systemRows.push(card);
+    else standardRows.push(card);
+  });
+
+  // Remove Plugin Manager's default divider, then replace with enhanced divider.
+  installedList.querySelectorAll('.pm-divider').forEach((divider) => {
+    if (!divider.classList.contains('pme-managed-divider')) {
+      divider.remove();
+    }
+  });
+
+  installedList.querySelectorAll('.pme-section-badge').forEach((badge) => badge.remove());
+
+  if (systemRows.length) {
+    const systemBadge = createSectionBadge('system', `System Plugins`);
+    installedList.insertBefore(systemBadge, systemRows[0]);
+  }
+
+  if (standardRows.length) {
+    const standardBadge = createSectionBadge('standard', `Standard Extensions`);
+    installedList.insertBefore(standardBadge, standardRows[0]);
+  }
+}
+
+function createSectionBadge(type, label) {
+  const badge = document.createElement('div');
+  badge.className = `pme-section-badge pme-section-${type} pme-managed-divider`;
+  badge.dataset.pluginOwner = meta.id;
+  badge.dataset.pluginId = meta.id;
+
+  badge.innerHTML = `
+    <span class="pme-section-badge-icon">
+      ${type === 'system' ? iconSystem() : iconStandard()}
+    </span>
+    <span class="pme-section-badge-text">${escapeHTML(label)}</span>
+  `;
+
+  return badge;
+}
+
+function ensureScrollButton(root, content) {
+  if (scrollButton?.isConnected) return;
+
+  scrollButton = document.querySelector(`#${SCROLL_BTN_ID}`);
+
+  if (!scrollButton) {
+    scrollButton = document.createElement('button');
+    scrollButton.id = SCROLL_BTN_ID;
+    scrollButton.className = 'pm-scroll-top';
+    scrollButton.type = 'button';
+    scrollButton.title = 'Scroll to top';
+    scrollButton.setAttribute('aria-label', 'Scroll to top');
+    scrollButton.dataset.pluginOwner = meta.id;
+    scrollButton.dataset.pluginId = meta.id;
+
+    scrollButton.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19V5"></path>
+        <path d="M6 11l6-6 6 6"></path>
+      </svg>
+    `;
+
+    scrollButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      content.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+  }
+
+  root.appendChild(scrollButton);
+
+  if (scrollListener) {
+    content.removeEventListener('scroll', scrollListener);
+  }
+
+  scrollListener = () => {
+    scrollButton.classList.toggle('visible', content.scrollTop > 180);
+    updateScrollButtonPosition(content);
+  };
+
+  content.addEventListener('scroll', scrollListener, { passive: true });
+  updateScrollButtonPosition(content);
+}
+
+function updateScrollButtonPosition(content) {
+  if (!scrollButton || !content) return;
+
+  const rect = content.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+
+  scrollButton.style.setProperty('--pme-scroll-x', `${centerX}px`);
+  scrollButton.style.setProperty('--pme-scroll-bottom', `${Math.max(36, window.innerHeight - rect.bottom + 34)}px`);
+}
+
+export function teardown() {
+  mounted = false;
+
+  if (rafId) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+
+  if (observer) {
+    observer.disconnect();
+    observer = null;
+  }
+
+  if (uiReadyOff) {
+    try {
+      uiReadyOff();
+    } catch {}
+    uiReadyOff = null;
+  }
+
+  const content = document.querySelector('.pm-root .pm-content');
+
   if (content && scrollListener) {
     content.removeEventListener('scroll', scrollListener);
   }
 
-  document
-    .querySelectorAll('.apple-switch, .pm-scroll-top, .apple-version-pill')
-    .forEach(el => el.remove());
+  scrollListener = null;
 
-  //isInitialized = false;
+  if (resizeListener) {
+    window.removeEventListener('resize', resizeListener);
+    resizeListener = null;
+  }
+
+  if (scrollButton) {
+    try {
+      scrollButton.remove();
+    } catch {}
+    scrollButton = null;
+  }
+
+  document.querySelectorAll('.pme-section-badge').forEach((el) => {
+    try {
+      el.remove();
+    } catch {}
+  });
+
+  if (style) {
+    try {
+      style.remove();
+    } catch {}
+    style = null;
+  }
+
+  document.querySelectorAll('[data-pm-enhanced], [data-pm-enhanced-filter], [data-pm-enhanced-version]').forEach((el) => {
+    delete el.dataset.pmEnhanced;
+    delete el.dataset.pmEnhancedFilter;
+    delete el.dataset.pmEnhancedVersion;
+  });
+}
+
+function iconSystem() {
+  return `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v3"></path>
+      <path d="M12 18v3"></path>
+      <path d="M3 12h3"></path>
+      <path d="M18 12h3"></path>
+      <path d="m5.6 5.6 2.1 2.1"></path>
+      <path d="m16.3 16.3 2.1 2.1"></path>
+      <path d="m18.4 5.6-2.1 2.1"></path>
+      <path d="m7.7 16.3-2.1 2.1"></path>
+      <circle cx="12" cy="12" r="3.2"></circle>
+    </svg>
+  `;
+}
+
+function iconStandard() {
+  return `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="5" width="6" height="6" rx="1.6"></rect>
+      <rect x="13" y="5" width="6" height="6" rx="1.6"></rect>
+      <rect x="5" y="13" width="6" height="6" rx="1.6"></rect>
+      <rect x="13" y="13" width="6" height="6" rx="1.6"></rect>
+    </svg>
+  `;
+}
+
+function escapeHTML(value = '') {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
