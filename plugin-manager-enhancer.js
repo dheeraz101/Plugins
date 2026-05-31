@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '3.2.1',
+  version: '3.2.2',
   compat: '>=4.0.0',
   coreVersion: '4.1.0',
   icon: '⚡',
@@ -48,6 +48,7 @@ let uiReadyOff = null;
 let rafId = null;
 let scrollButton = null;
 let mounted = false;
+let scrollContent = null;
 
 const STYLE_ID = 'pm-enhancer-style';
 const STYLE_NEXT_ID = 'pm-enhancer-style-new';
@@ -170,34 +171,18 @@ function injectStyle() {
       transform: scale(0.97);
     }
 
-    /* Community install button visual enhancement */
-    .plugin-item[data-community-id] .pm-action-group .pm-btn[data-install] {
-      width: 46px !important;
-      min-width: 46px !important;
-      height: 32px !important;
-      padding: 0 !important;
-      border-radius: 999px !important;
-    }
-
-    .plugin-item[data-community-id] .pm-action-group .pm-btn[data-install] span {
+    /* Community action buttons: keep Plugin Manager's original pill sizing.
+      Enhancer only swaps text for icons. */
+    .plugin-item[data-community-id] .pm-action-group .pm-btn[data-install] span,
+    .plugin-item[data-community-id] .pm-action-group .pm-btn[data-community-remove] span {
       display: none !important;
     }
 
-    .plugin-item[data-community-id] .pm-action-group .pm-btn[data-install] svg {
+    .plugin-item[data-community-id] .pm-action-group .pm-btn[data-install] svg,
+    .plugin-item[data-community-id] .pm-action-group .pm-btn[data-community-remove] svg {
       width: 17px !important;
       height: 17px !important;
       stroke-width: 2.35 !important;
-    }
-
-    .plugin-item[data-community-id] .pm-action-group .pm-btn[disabled] {
-      width: auto !important;
-      min-width: 104px !important;
-      height: 32px !important;
-      padding: 0 18px !important;
-      border-radius: 999px !important;
-      font-size: 13px !important;
-      font-weight: 650 !important;
-      opacity: 0.52 !important;
     }
 
     /* 4. Card polish */
@@ -824,6 +809,7 @@ function enhanceCommunityInstallButton(card) {
   if (!card.matches('[data-community-id]')) return;
 
   const installBtn = card.querySelector('.pm-action-group .pm-btn[data-install]');
+
   if (installBtn instanceof HTMLElement && !installBtn.dataset.pmeInstallIconified) {
     installBtn.dataset.pmeInstallIconified = 'true';
     installBtn.title = 'Install plugin';
@@ -835,13 +821,17 @@ function enhanceCommunityInstallButton(card) {
     `;
   }
 
-  const installedBtn = Array
-    .from(card.querySelectorAll('.pm-action-group .pm-btn[disabled]'))
-    .find(btn => btn.textContent.trim().toLowerCase() === 'installed');
+  const removeBtn = card.querySelector('.pm-action-group .pm-btn[data-community-remove]');
 
-  if (installedBtn instanceof HTMLElement) {
-    installedBtn.dataset.pmeInstalledText = 'true';
-    installedBtn.textContent = 'Installed';
+  if (removeBtn instanceof HTMLElement && !removeBtn.dataset.pmeRemoveIconified) {
+    removeBtn.dataset.pmeRemoveIconified = 'true';
+    removeBtn.title = 'Remove plugin';
+    removeBtn.setAttribute('aria-label', 'Remove plugin');
+
+    removeBtn.innerHTML = `
+      <span>Remove</span>
+      ${iconTrash()}
+    `;
   }
 }
 
@@ -900,9 +890,9 @@ function enhanceFilterButton(button) {
 }
 
 function ensureScrollButton(root, content) {
-  if (scrollButton?.isConnected) return;
+  if (!root || !content) return;
 
-  scrollButton = document.querySelector(`#${SCROLL_BTN_ID}`);
+  scrollButton = document.querySelector(`#${SCROLL_BTN_ID}`) || scrollButton;
 
   if (!scrollButton) {
     scrollButton = document.createElement('button');
@@ -913,7 +903,6 @@ function ensureScrollButton(root, content) {
     scrollButton.setAttribute('aria-label', 'Scroll to top');
     scrollButton.dataset.pluginOwner = meta.id;
     scrollButton.dataset.pluginId = meta.id;
-
     scrollButton.innerHTML = iconChevronUp();
 
     scrollButton.addEventListener('click', (event) => {
@@ -927,19 +916,25 @@ function ensureScrollButton(root, content) {
     });
   }
 
-  root.appendChild(scrollButton);
-
-  if (scrollListener) {
-    content.removeEventListener('scroll', scrollListener);
+  if (scrollButton.parentElement !== root) {
+    root.appendChild(scrollButton);
   }
 
+  if (scrollListener && scrollContent) {
+    scrollContent.removeEventListener('scroll', scrollListener);
+  }
+
+  scrollContent = content;
+
   scrollListener = () => {
-    scrollButton.classList.toggle('visible', content.scrollTop > 180);
+    const shouldShow = content.scrollTop > 120;
+    scrollButton.classList.toggle('visible', shouldShow);
     updateScrollButtonPosition(content);
   };
 
   content.addEventListener('scroll', scrollListener, { passive: true });
-  updateScrollButtonPosition(content);
+
+  scrollListener();
 }
 
 function updateScrollButtonPosition(content) {
@@ -972,12 +967,11 @@ export function teardown() {
     uiReadyOff = null;
   }
 
-  const content = document.querySelector('.pm-root .pm-content');
-
-  if (content && scrollListener) {
-    content.removeEventListener('scroll', scrollListener);
+  if (scrollContent && scrollListener) {
+    scrollContent.removeEventListener('scroll', scrollListener);
   }
 
+  scrollContent = null;
   scrollListener = null;
 
   if (resizeListener) {
@@ -1076,6 +1070,19 @@ function iconInstallDownload() {
       <path d="M12 3v12"></path>
       <path d="m7 10 5 5 5-5"></path>
       <path d="M5 21h14"></path>
+    </svg>
+  `;
+}
+
+function iconTrash() {
+  return `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 7h16"></path>
+      <path d="M10 11v6"></path>
+      <path d="M14 11v6"></path>
+      <path d="M6.5 7l.8 13h9.4l.8-13"></path>
+      <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"></path>
     </svg>
   `;
 }
