@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '3.2.2',
+  version: '3.2.3',
   compat: '>=4.0.0',
   coreVersion: '4.1.0',
   icon: '⚡',
@@ -118,6 +118,10 @@ function injectStyle() {
       background: rgba(120,120,128,0.36) !important;
       border: 2px solid transparent !important;
       background-clip: padding-box !important;
+    }
+
+    .pm-content > .pm-scroll-top {
+      display: flex;
     }
 
     /* 2. View text polish */
@@ -467,13 +471,14 @@ function injectStyle() {
       display: none !important;
     }
 
-    /* 11. Content-centered scroll-to-top */
+    /* 11. Content-docked scroll-to-top */
     .pm-scroll-top {
-      position: fixed;
-      left: var(--pme-scroll-x, 50%);
-      bottom: var(--pme-scroll-bottom, 48px);
+      position: sticky;
+      left: 50%;
+      bottom: 22px;
       width: 40px;
       height: 40px;
+      margin: 0 auto;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.14);
       background: rgba(44,44,46,0.78);
@@ -489,8 +494,8 @@ function injectStyle() {
       cursor: pointer;
       opacity: 0;
       pointer-events: none;
-      z-index: 2147483640;
-      transform: translate(-50%, 18px) scale(0.94);
+      z-index: 50;
+      transform: translateY(18px) scale(0.94);
       transition:
         opacity 0.22s ease,
         transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
@@ -501,13 +506,13 @@ function injectStyle() {
     .pm-scroll-top.visible {
       opacity: 1;
       pointer-events: auto;
-      transform: translate(-50%, 0) scale(1);
+      transform: translateY(0) scale(1);
     }
 
     .pm-scroll-top:hover {
       background: rgba(58,58,60,0.92);
       color: #0a84ff;
-      transform: translate(-50%, -2px) scale(1.02);
+      transform: translateY(-2px) scale(1.02);
     }
 
     .pm-scroll-top svg {
@@ -638,10 +643,13 @@ function bootEnhancer() {
     enhanceAll(root);
     watch(root);
 
-    resizeListener = () => updateScrollButtonPosition(content);
-    window.addEventListener('resize', resizeListener, { passive: true });
+    resizeListener = () => {
+      if (scrollButton && content) {
+        scrollButton.classList.toggle('visible', content.scrollTop > 140);
+      }
+    };
 
-    updateScrollButtonPosition(content);
+    window.addEventListener('resize', resizeListener, { passive: true });
   };
 
   start();
@@ -660,7 +668,6 @@ function requestEnhance() {
 
     enhanceAll(root);
     ensureScrollButton(root, content);
-    updateScrollButtonPosition(content);
   });
 }
 
@@ -916,35 +923,20 @@ function ensureScrollButton(root, content) {
     });
   }
 
-  if (scrollButton.parentElement !== root) {
-    root.appendChild(scrollButton);
+  if (scrollButton.parentElement !== content) {
+    content.appendChild(scrollButton);
   }
 
-  if (scrollListener && scrollContent) {
-    scrollContent.removeEventListener('scroll', scrollListener);
+  if (scrollListener) {
+    content.removeEventListener('scroll', scrollListener);
   }
-
-  scrollContent = content;
 
   scrollListener = () => {
-    const shouldShow = content.scrollTop > 120;
-    scrollButton.classList.toggle('visible', shouldShow);
-    updateScrollButtonPosition(content);
+    scrollButton.classList.toggle('visible', content.scrollTop > 140);
   };
 
   content.addEventListener('scroll', scrollListener, { passive: true });
-
   scrollListener();
-}
-
-function updateScrollButtonPosition(content) {
-  if (!scrollButton || !content) return;
-
-  const rect = content.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-
-  scrollButton.style.setProperty('--pme-scroll-x', `${centerX}px`);
-  scrollButton.style.setProperty('--pme-scroll-bottom', `${Math.max(36, window.innerHeight - rect.bottom + 34)}px`);
 }
 
 export function teardown() {
