@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '3.2.3',
+  version: '3.2.4',
   compat: '>=4.0.0',
   coreVersion: '4.1.0',
   icon: '⚡',
@@ -374,60 +374,103 @@ function injectStyle() {
       animation: pme-system-spin 4.2s linear infinite;
     }
 
-    /* 9. New badge on icon */
+    /* 9. New badge on icon — modern glass capsule */
     .pme-new-badge {
       position: absolute;
-      top: -9px;
+      top: -8px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 22;
-      height: 19px;
-      min-width: 42px;
-      padding: 0 10px;
+
+      height: 18px;
+      min-width: 38px;
+      padding: 0 9px;
+
       border-radius: 999px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
-      color: #fff;
-      font-size: 9.8px;
+
+      color: rgba(255,255,255,0.92);
+      font-size: 9.6px;
       font-weight: 760;
       line-height: 1;
-      letter-spacing: 0.075em;
+      letter-spacing: 0.055em;
       text-transform: uppercase;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.22);
-      box-shadow: 0 4px 12px rgba(255,149,0,0.22);
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(30,30,30,0.82);
-      backdrop-filter: blur(12px) saturate(180%);
-      -webkit-backdrop-filter: blur(12px) saturate(180%);
+
+      background:
+        linear-gradient(135deg, rgba(10,132,255,0.78), rgba(94,92,230,0.74));
+      border: 1px solid rgba(255,255,255,0.22);
+
+      box-shadow:
+        0 6px 16px rgba(10,132,255,0.22),
+        0 1px 0 rgba(255,255,255,0.18) inset,
+        0 -1px 0 rgba(0,0,0,0.14) inset;
+
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+
+      overflow: hidden;
+      pointer-events: none;
+      user-select: none;
     }
 
     .pme-new-badge::before {
       content: "";
       position: absolute;
-      inset: -120%;
-      background: conic-gradient(
-        transparent,
-        transparent,
-        rgba(255,255,255,0.78),
-        transparent,
-        transparent
-      );
-      animation: pme-glint 3.5s linear infinite;
-      opacity: 0.7;
-      z-index: -2;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(255,255,255,0.30),
+          rgba(255,255,255,0.06) 42%,
+          rgba(255,255,255,0.00)
+        );
+      opacity: 0.72;
+      pointer-events: none;
     }
 
     .pme-new-badge::after {
       content: "";
       position: absolute;
-      inset: 1px;
-      border-radius: inherit;
+      top: -40%;
+      bottom: -40%;
+      left: -60%;
+      width: 42%;
+      transform: rotate(18deg);
       background:
-        linear-gradient(135deg, rgba(255,149,0,0.92), rgba(255,107,53,0.88));
-      z-index: -1;
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(255,255,255,0.42),
+          transparent
+        );
+      opacity: 0;
+      animation: pme-new-sheen 4.8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes pme-new-sheen {
+      0%, 62% {
+        left: -60%;
+        opacity: 0;
+      }
+
+      68% {
+        opacity: 0.7;
+      }
+
+      82% {
+        left: 120%;
+        opacity: 0;
+      }
+
+      100% {
+        left: 120%;
+        opacity: 0;
+      }
     }
 
     /* 10. Update overlay */
@@ -475,7 +518,7 @@ function injectStyle() {
     .pm-scroll-top {
       position: sticky;
       left: 50%;
-      bottom: 22px;
+      bottom: 0px;
       width: 40px;
       height: 40px;
       margin: 0 auto;
@@ -612,9 +655,8 @@ function injectStyle() {
       .pm-filter-btn,
       .pme-status-active::after,
       .pme-status-system svg,
-      .pme-new-badge::before {
+      .pme-new-badge::after {
         animation: none !important;
-        transition: none !important;
       }
     }
   `;
@@ -872,7 +914,7 @@ function createNewBadge() {
   badge.className = 'pme-new-badge';
   badge.dataset.pluginOwner = meta.id;
   badge.dataset.pluginId = meta.id;
-  badge.textContent = 'New';
+  badge.textContent = 'NEW';
   return badge;
 }
 
