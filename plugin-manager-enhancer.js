@@ -1,7 +1,7 @@
 export const meta = {
   id: 'pm-enhancer',
   name: 'PM Enhancer',
-  version: '3.2.0',
+  version: '3.2.1',
   compat: '>=4.0.0',
   coreVersion: '4.1.0',
   icon: '⚡',
@@ -12,22 +12,27 @@ export const meta = {
   permissions: ['ui', 'globalCSS', 'bus'],
   whatsNew: [
     {
-      version: '3.2.0',
+      version: '3.2.1',
+      title: 'Community install button enhancement',
+      text: 'Improved visual feedback for community plugin install buttons.'
+    },
+    {
+      version: '3.1.0',
       title: 'Core v4.1 compatibility',
       text: 'Updated for the latest Blank Board Core and Plugin Manager architecture.'
     },
     {
-      version: '3.2.0',
+      version: '3.0.0',
       title: 'Safer visual enhancement',
       text: 'No more toggle injection, button rewriting, or action reordering. The enhancer now improves visuals without fighting Plugin Manager behavior.'
     },
     {
-      version: '3.2.0',
+      version: '2.0.0',
       title: 'Animated badge system',
       text: 'Keeps the animated system, active, inactive, new, and update badge experience with cleaner DOM handling.'
     },
     {
-      version: '3.2.0',
+      version: '1.0.0',
       title: 'Better cleanup',
       text: 'Teardown now removes enhancer-only overlays, scroll buttons, classes, and styles without leaving broken UI behind.'
     }
@@ -163,6 +168,36 @@ function injectStyle() {
 
     .pm-filter-btn:active {
       transform: scale(0.97);
+    }
+
+    /* Community install button visual enhancement */
+    .plugin-item[data-community-id] .pm-action-group .pm-btn[data-install] {
+      width: 46px !important;
+      min-width: 46px !important;
+      height: 32px !important;
+      padding: 0 !important;
+      border-radius: 999px !important;
+    }
+
+    .plugin-item[data-community-id] .pm-action-group .pm-btn[data-install] span {
+      display: none !important;
+    }
+
+    .plugin-item[data-community-id] .pm-action-group .pm-btn[data-install] svg {
+      width: 17px !important;
+      height: 17px !important;
+      stroke-width: 2.35 !important;
+    }
+
+    .plugin-item[data-community-id] .pm-action-group .pm-btn[disabled] {
+      width: auto !important;
+      min-width: 104px !important;
+      height: 32px !important;
+      padding: 0 18px !important;
+      border-radius: 999px !important;
+      font-size: 13px !important;
+      font-weight: 650 !important;
+      opacity: 0.52 !important;
     }
 
     /* 4. Card polish */
@@ -491,9 +526,9 @@ function injectStyle() {
     }
 
     .pm-scroll-top svg {
-      width: 19px;
-      height: 19px;
-      stroke-width: 2.35;
+      width: 24px;
+      height: 24px;
+      stroke-width: 2.5;
     }
 
     /* Light mode */
@@ -689,6 +724,7 @@ function enhancePluginCard(card) {
   enhanceDescription(card);
   enhanceIconBox(card);
   enhanceBadges(card);
+  enhanceCommunityInstallButton(card);
 }
 
 function enhanceVersionPill(card) {
@@ -781,6 +817,32 @@ function enhanceBadges(card) {
     const text = badge.textContent.trim();
     if (text.length > 18) badge.title = text;
   });
+}
+
+function enhanceCommunityInstallButton(card) {
+  if (!(card instanceof HTMLElement)) return;
+  if (!card.matches('[data-community-id]')) return;
+
+  const installBtn = card.querySelector('.pm-action-group .pm-btn[data-install]');
+  if (installBtn instanceof HTMLElement && !installBtn.dataset.pmeInstallIconified) {
+    installBtn.dataset.pmeInstallIconified = 'true';
+    installBtn.title = 'Install plugin';
+    installBtn.setAttribute('aria-label', 'Install plugin');
+
+    installBtn.innerHTML = `
+      <span>Install</span>
+      ${iconInstallDownload()}
+    `;
+  }
+
+  const installedBtn = Array
+    .from(card.querySelectorAll('.pm-action-group .pm-btn[disabled]'))
+    .find(btn => btn.textContent.trim().toLowerCase() === 'installed');
+
+  if (installedBtn instanceof HTMLElement) {
+    installedBtn.dataset.pmeInstalledText = 'true';
+    installedBtn.textContent = 'Installed';
+  }
 }
 
 function removeEnhancerOverlays(iconBox) {
@@ -999,8 +1061,21 @@ function iconDownloadArrow() {
 
 function iconChevronUp() {
   return `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+      stroke-linejoin="round" aria-hidden="true">
       <path d="m18 15-6-6-6 6"></path>
+    </svg>
+  `;
+}
+
+function iconInstallDownload() {
+  return `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3v12"></path>
+      <path d="m7 10 5 5 5-5"></path>
+      <path d="M5 21h14"></path>
     </svg>
   `;
 }
